@@ -37,8 +37,8 @@ public class CalendarView extends ViewGroup {
       private void init ( Context context ) {
 
             mLayoutStrategy = new VerticalLinearMeasureLayoutStrategy();
-            setWeekBar( new LinearWeekBar( context ) );
-            setMonthLayout( new PagerMonthLayout( context ) );
+            setWeekBar( new LinearWeekBar( context, this ) );
+            setMonthLayout( new PagerMonthLayout( context, this ) );
       }
 
       public void setWeekBar ( ViewComponent weekBar ) {
@@ -49,7 +49,6 @@ public class CalendarView extends ViewGroup {
                   }
                   mWeekBar = weekBar;
                   addView( weekBar.getView() );
-                  mWeekBar.attachParent( this );
                   requestLayout();
             }
       }
@@ -62,7 +61,6 @@ public class CalendarView extends ViewGroup {
                   }
                   mMonthLayout = monthLayout;
                   addView( monthLayout.getView() );
-                  mMonthLayout.attachParent( this );
                   requestLayout();
             }
       }
@@ -163,13 +161,6 @@ public class CalendarView extends ViewGroup {
              * @return view组件
              */
             View getView ( );
-
-            /**
-             * 用于组件attach calendar
-             *
-             * @param parent parent
-             */
-            void attachParent ( CalendarView parent );
       }
 
       /**

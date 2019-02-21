@@ -80,7 +80,7 @@ public class MonthPage extends ViewGroup {
             TextView textView = new TextView( getContext() );
             textView.setGravity( Gravity.CENTER );
             textView.setText( String.valueOf( dayOfMonth ) );
-            textView.setBackgroundColor( ColorUtil.getColor( dayOfMonth ) );
+            textView.setBackgroundResource( R.drawable.rect );
             return textView;
       }
 }

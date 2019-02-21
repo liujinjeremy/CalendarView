@@ -1,14 +1,10 @@
 package tech.threekilogram.calendarview;
 
 import android.content.Context;
-import android.graphics.Color;
-import android.util.AttributeSet;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import androidx.annotation.Nullable;
 import tech.threekilogram.calendarview.CalendarView.ViewComponent;
 import tech.threekilogram.calendarview.CalendarView.WeekDay;
 
@@ -21,26 +17,19 @@ public class LinearWeekBar extends ViewGroup implements ViewComponent {
 
       private CalendarView mParent;
 
-      public LinearWeekBar ( Context context ) {
+      public LinearWeekBar ( Context context, CalendarView parent ) {
 
-            this( context, null, 0 );
-      }
-
-      public LinearWeekBar (
-          Context context, @Nullable AttributeSet attrs ) {
-
-            this( context, attrs, 0 );
-      }
-
-      public LinearWeekBar ( Context context, @Nullable AttributeSet attrs, int defStyleAttr ) {
-
-            super( context, attrs, defStyleAttr );
+            super( context );
+            mParent = parent;
             init();
       }
 
       private void init ( ) {
 
-            setBackgroundColor( Color.GRAY );
+            if( getChildCount() != 0 ) {
+                  removeAllViews();
+            }
+            addChildren( mParent );
       }
 
       @Override
@@ -64,8 +53,6 @@ public class LinearWeekBar extends ViewGroup implements ViewComponent {
                         heightResult = measuredHeight;
                   }
             }
-
-            Log.i( TAG, "onMeasure: " + widthSize + " " + heightResult + " " + childCount );
             setMeasuredDimension( widthSize, heightResult );
       }
 
@@ -86,17 +73,6 @@ public class LinearWeekBar extends ViewGroup implements ViewComponent {
       public View getView ( ) {
 
             return this;
-      }
-
-      @Override
-      public void attachParent ( CalendarView parent ) {
-
-            mParent = parent;
-
-            if( getChildCount() != 0 ) {
-                  removeAllViews();
-            }
-            addChildren( parent );
       }
 
       private void addChildren ( CalendarView parent ) {

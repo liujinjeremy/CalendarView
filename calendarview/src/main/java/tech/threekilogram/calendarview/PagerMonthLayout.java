@@ -1,11 +1,9 @@
 package tech.threekilogram.calendarview;
 
 import android.content.Context;
-import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 import java.util.LinkedList;
@@ -20,15 +18,13 @@ public class PagerMonthLayout extends ViewPager implements ViewComponent {
 
       private CalendarView mParent;
 
-      public PagerMonthLayout ( @NonNull Context context ) {
+      private int mYear;
+      private int mMonth;
 
-            this( context, null );
-      }
+      public PagerMonthLayout ( @NonNull Context context, CalendarView parent ) {
 
-      public PagerMonthLayout (
-          @NonNull Context context, @Nullable AttributeSet attrs ) {
-
-            super( context, attrs );
+            super( context );
+            mParent = parent;
             init();
       }
 
@@ -42,12 +38,6 @@ public class PagerMonthLayout extends ViewPager implements ViewComponent {
       public View getView ( ) {
 
             return this;
-      }
-
-      @Override
-      public void attachParent ( CalendarView parent ) {
-
-            mParent = parent;
       }
 
       private class PagerMonthAdapter extends PagerAdapter {
