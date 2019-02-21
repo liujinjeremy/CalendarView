@@ -1,5 +1,8 @@
 package tech.threekilogram.calendarviewlib;
 
+import java.util.Calendar;
+import java.util.Date;
+
 /**
  * @author Liujin 2019/2/20:17:02:58
  */
@@ -7,30 +10,24 @@ public class Test {
 
       public static void main ( String[] args ) {
 
-            WeekDay[] values = WeekDay.values();
-            for( int i = 0; i < values.length; i++ ) {
+            Date date = new Date();
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime( date );
 
-                  System.out.println( values[ i ].toString() );
-            }
-      }
+            calendar.set( 2019, 2 - 1, 1 );
+            int year = calendar.get( Calendar.YEAR );
+            int month = calendar.get( Calendar.MONTH );
+            int day = calendar.get( Calendar.DAY_OF_MONTH );
+            int week = calendar.get( Calendar.DAY_OF_WEEK );
 
-      public static enum WeekDay {
+            String format = String.format( "%d-%d-%d", year, month, day );
+            System.out.println( format );
 
-            SUNDAY( "Sunday" ),
-            MONDAY( "Monday" ),
-            TUESDAY( "Tuesday" ),
-            WEDNESDAY( "Wednesday" ),
-            THURSDAY( "Thursday" ),
-            FRIDAY( "Friday" ),
-            SATURDAY( "Saturday" );
+            calendar.set( 2019, 3 - 1, 1 );
+            calendar.add( Calendar.DAY_OF_MONTH, -1 );
+            int dayLast = calendar.get( Calendar.DAY_OF_MONTH );
+            int weekLast = calendar.get( Calendar.DAY_OF_WEEK );
 
-            private static int sOffset = 1;
-
-            private final String mDay;
-
-            WeekDay ( String day ) {
-
-                  mDay = day;
-            }
+            System.out.println( day + " " + week + " " + dayLast + " " + weekLast );
       }
 }

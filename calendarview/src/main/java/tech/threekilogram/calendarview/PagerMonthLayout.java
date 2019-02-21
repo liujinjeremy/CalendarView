@@ -1,18 +1,20 @@
 package tech.threekilogram.calendarview;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.util.AttributeSet;
 import android.view.View;
-import android.widget.FrameLayout;
+import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.viewpager.widget.PagerAdapter;
+import androidx.viewpager.widget.ViewPager;
+import java.util.LinkedList;
 import tech.threekilogram.calendarview.CalendarView.ViewComponent;
 
 /**
  * @author Liujin 2019/2/21:13:00:25
  */
-public class PagerMonthLayout extends FrameLayout implements ViewComponent {
+public class PagerMonthLayout extends ViewPager implements ViewComponent {
 
       private static final String TAG = PagerMonthLayout.class.getSimpleName();
 
@@ -20,34 +22,20 @@ public class PagerMonthLayout extends FrameLayout implements ViewComponent {
 
       public PagerMonthLayout ( @NonNull Context context ) {
 
-            this( context, null, 0 );
+            this( context, null );
       }
 
       public PagerMonthLayout (
           @NonNull Context context, @Nullable AttributeSet attrs ) {
 
-            this( context, attrs, 0 );
-      }
-
-      public PagerMonthLayout (
-          @NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr ) {
-
-            super( context, attrs, defStyleAttr );
+            super( context, attrs );
             init();
       }
 
       private void init ( ) {
 
-            setBackgroundColor( Color.BLUE );
-      }
-
-      @Override
-      protected void onMeasure ( int widthMeasureSpec, int heightMeasureSpec ) {
-
-            super.onMeasure( widthMeasureSpec, heightMeasureSpec );
-            int size = MeasureSpec.getSize( widthMeasureSpec );
-            int[] ints = ViewMeasureUtils.measureView( this, widthMeasureSpec, heightMeasureSpec, size, 500 );
-            setMeasuredDimension( ints[ 0 ], ints[ 1 ] );
+            setAdapter( new PagerMonthAdapter() );
+            setCurrentItem( Integer.MAX_VALUE >> 1 );
       }
 
       @Override
@@ -60,5 +48,51 @@ public class PagerMonthLayout extends FrameLayout implements ViewComponent {
       public void attachParent ( CalendarView parent ) {
 
             mParent = parent;
+      }
+
+      private class PagerMonthAdapter extends PagerAdapter {
+
+            private LinkedList<View> mReUsed = new LinkedList<>();
+
+            @Override
+            public int getCount ( ) {
+
+                  return Integer.MAX_VALUE;
+            }
+
+            @NonNull
+            @Override
+            public Object instantiateItem ( @NonNull ViewGroup container, int position ) {
+
+                  MonthPage page;
+                  if( mReUsed.isEmpty() ) {
+                        page = new MonthPage( container.getContext() );
+                  } else {
+                        page = (MonthPage) mReUsed.pollFirst();
+                  }
+
+                  container.addView(
+                      page,
+                      new ViewGroup.LayoutParams(
+                          ViewGroup.LayoutParams.MATCH_PARENT,
+                          ViewGroup.LayoutParams.MATCH_PARENT
+                      )
+                  );
+                  return page;
+            }
+
+            @Override
+            public boolean isViewFromObject ( @NonNull View view, @NonNull Object object ) {
+
+                  return object == view;
+            }
+
+            @Override
+            public void destroyItem ( @NonNull ViewGroup container, int position, @NonNull Object object ) {
+
+                  View view = (View) object;
+                  container.removeView( view );
+                  mReUsed.add( view );
+            }
       }
 }

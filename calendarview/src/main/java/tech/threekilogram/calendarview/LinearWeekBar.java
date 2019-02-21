@@ -103,16 +103,18 @@ public class LinearWeekBar extends ViewGroup implements ViewComponent {
 
             for( int i = 0; i < 7; i++ ) {
                   WeekDay weekDay = parent.getWeekDay( i );
-                  View view = generateItemView( weekDay );
+                  View view = generateItemView( i, weekDay );
                   addView( view );
             }
       }
 
-      protected View generateItemView ( WeekDay weekDay ) {
+      protected View generateItemView ( int index, WeekDay weekDay ) {
 
             TextView textView = new TextView( getContext() );
             textView.setGravity( Gravity.CENTER );
             textView.setText( weekDay.toString().substring( 0, 3 ) );
+            int color = ColorUtil.getColor( index );
+            textView.setBackgroundColor( color );
             return textView;
       }
 }
