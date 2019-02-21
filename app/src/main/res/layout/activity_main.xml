@@ -8,9 +8,9 @@
     android:orientation="vertical"
     tools:context=".MainActivity">
 
-      <tech.threekilogram.calendarview.CalendarViewV2
+      <tech.threekilogram.calendarview.CalendarView
           android:layout_width="match_parent"
-          android:layout_height="wrap_content">
-      </tech.threekilogram.calendarview.CalendarViewV2>
+          android:layout_height="match_parent">
+      </tech.threekilogram.calendarview.CalendarView>
 
 </FrameLayout>
