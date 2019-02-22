@@ -14,14 +14,22 @@ public class MonthPage extends ViewGroup {
 
       private static final String TAG = MonthPage.class.getSimpleName();
 
+      private int mYear;
+      private int mMonth;
+
+      private int mMonthDayCount;
+      private int mFirstDayOffset;
+
       public MonthPage ( Context context ) {
 
-            this( context, null, 0 );
+            super( context );
+            init( context );
       }
 
       public MonthPage ( Context context, AttributeSet attrs ) {
 
-            this( context, attrs, 0 );
+            super( context, attrs );
+            init( context );
       }
 
       public MonthPage ( Context context, AttributeSet attrs, int defStyleAttr ) {
@@ -30,10 +38,38 @@ public class MonthPage extends ViewGroup {
             init( context );
       }
 
-      private void init ( Context context ) {
+      private void init ( Context context ) { }
 
-            for( int i = 0; i < 42; i++ ) {
-                  addView( generateItemView( i ) );
+      public void setDate ( int year, int month, int offset ) {
+
+            mYear = year;
+            mMonth = month;
+
+            mMonthDayCount = CalendarUtils.monthDayCount( year, month );
+            int dayOfWeek = CalendarUtils.dayOfWeek( year, month, mMonthDayCount );
+            mFirstDayOffset = ( dayOfWeek + offset ) % 7;
+
+            adjustChildCount();
+      }
+
+      private void adjustChildCount ( ) {
+
+            int childCount = getChildCount();
+            if( childCount < mMonthDayCount ) {
+                  for( int i = childCount; i < mMonthDayCount; i++ ) {
+                        addView( generateItemView() );
+                  }
+            } else if( mMonthDayCount < childCount ) {
+
+                  for( int i = mMonthDayCount; i < childCount; i++ ) {
+                        removeViewAt( i );
+                  }
+            }
+
+            childCount = getChildCount();
+            for( int i = 0; i < childCount; i++ ) {
+                  View child = getChildAt( i );
+                  bind( child, i );
             }
       }
 
@@ -65,22 +101,25 @@ public class MonthPage extends ViewGroup {
             int cellWidth = child.getMeasuredWidth();
             int cellHeight = child.getMeasuredHeight();
 
-            for( int i = 0; i < 6; i++ ) {
-                  for( int j = 0; j < 7; j++ ) {
-                        int index = j + i * 7;
-                        View view = getChildAt( index );
-                        int left = cellWidth * j;
-                        view.layout( left, cellHeight * i, left + cellWidth, cellHeight * i + cellHeight );
-                  }
+            int count = getChildCount();
+            for( int i = 0; i < count; i++ ) {
+                  View view = getChildAt( i );
+                  int left = ( ( i + mFirstDayOffset ) % 7 ) * cellWidth;
+                  int top = ( i + mFirstDayOffset ) / 7 * cellHeight;
+
+                  view.layout( left, top, left + view.getMeasuredWidth(), top + view.getMeasuredHeight() );
             }
       }
 
-      protected View generateItemView ( int dayOfMonth ) {
+      protected View generateItemView ( ) {
 
             TextView textView = new TextView( getContext() );
             textView.setGravity( Gravity.CENTER );
-            textView.setText( String.valueOf( dayOfMonth ) );
-            textView.setBackgroundResource( R.drawable.rect );
             return textView;
+      }
+
+      protected void bind ( View itemView, int dayOfMonth ) {
+
+            ( (TextView) itemView ).setText( String.valueOf( dayOfMonth + 1 ) );
       }
 }

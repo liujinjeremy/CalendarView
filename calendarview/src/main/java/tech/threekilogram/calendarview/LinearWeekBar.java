@@ -6,7 +6,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import tech.threekilogram.calendarview.CalendarView.ViewComponent;
-import tech.threekilogram.calendarview.CalendarView.WeekDay;
 
 /**
  * @author Liujin 2019/2/21:12:16:29
@@ -78,19 +77,30 @@ public class LinearWeekBar extends ViewGroup implements ViewComponent {
       private void addChildren ( CalendarView parent ) {
 
             for( int i = 0; i < 7; i++ ) {
-                  WeekDay weekDay = parent.getWeekDay( i );
-                  View view = generateItemView( i, weekDay );
+                  View view = generateItemView( i );
                   addView( view );
             }
       }
 
-      protected View generateItemView ( int index, WeekDay weekDay ) {
+      protected View generateItemView ( int index ) {
 
             TextView textView = new TextView( getContext() );
             textView.setGravity( Gravity.CENTER );
-            textView.setText( weekDay.toString().substring( 0, 3 ) );
+            textView.setText( getWeekDayString( index ) );
             int color = ColorUtil.getColor( index );
             textView.setBackgroundColor( color );
             return textView;
+      }
+
+      private String getWeekDayString ( int index ) {
+
+            if( mParent.isFirstDayMonday() ) {
+
+                  String[] temp = { "一", "二", "三", "四", "五", "六", "日" };
+                  return temp[ index ];
+            } else {
+                  String[] temp = { "日", "一", "二", "三", "四", "五", "六" };
+                  return temp[ index ];
+            }
       }
 }

@@ -1,11 +1,13 @@
 package tech.threekilogram.calendarview;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
+import java.util.Date;
 import java.util.LinkedList;
 import tech.threekilogram.calendarview.CalendarView.ViewComponent;
 
@@ -18,8 +20,8 @@ public class PagerMonthLayout extends ViewPager implements ViewComponent {
 
       private CalendarView mParent;
 
-      private int mYear;
-      private int mMonth;
+      private int mBaseYear;
+      private int mBaseMonth;
 
       public PagerMonthLayout ( @NonNull Context context, CalendarView parent ) {
 
@@ -32,6 +34,25 @@ public class PagerMonthLayout extends ViewPager implements ViewComponent {
 
             setAdapter( new PagerMonthAdapter() );
             setCurrentItem( Integer.MAX_VALUE >> 1 );
+
+            Date date = new Date();
+            mBaseYear = CalendarUtils.getYear( date );
+            mBaseMonth = CalendarUtils.getMonth( date );
+      }
+
+      public void setBaseDate ( int year, int month ) {
+
+            mBaseYear = year;
+            mBaseMonth = month;
+
+            setAdapter( new PagerMonthAdapter() );
+            setCurrentItem( Integer.MAX_VALUE / 2 );
+      }
+
+      private Date getDate ( int position ) {
+
+            int step = position - Integer.MAX_VALUE / 2;
+            return CalendarUtils.getMonthByStep( mBaseYear, mBaseMonth, step );
       }
 
       @Override
@@ -61,13 +82,13 @@ public class PagerMonthLayout extends ViewPager implements ViewComponent {
                         page = (MonthPage) mReUsed.pollFirst();
                   }
 
-                  container.addView(
-                      page,
-                      new ViewGroup.LayoutParams(
-                          ViewGroup.LayoutParams.MATCH_PARENT,
-                          ViewGroup.LayoutParams.MATCH_PARENT
-                      )
-                  );
+                  Date date = getDate( position );
+
+                  Log.i( TAG, "instantiateItem: " + date + " " + position );
+
+                  page.setDate( CalendarUtils.getYear( date ), CalendarUtils.getMonth( date ), -1 );
+
+                  container.addView( page );
                   return page;
             }
 

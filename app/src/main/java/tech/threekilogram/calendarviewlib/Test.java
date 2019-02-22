@@ -1,7 +1,6 @@
 package tech.threekilogram.calendarviewlib;
 
 import java.util.Calendar;
-import java.util.Date;
 
 /**
  * @author Liujin 2019/2/20:17:02:58
@@ -10,24 +9,31 @@ public class Test {
 
       public static void main ( String[] args ) {
 
-            Date date = new Date();
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTime( date );
+            int i = CalendarUtils.monthDayCount( 2019, 2 );
+            System.out.println( i );
 
-            calendar.set( 2019, 2 - 1, 1 );
-            int year = calendar.get( Calendar.YEAR );
-            int month = calendar.get( Calendar.MONTH );
-            int day = calendar.get( Calendar.DAY_OF_MONTH );
-            int week = calendar.get( Calendar.DAY_OF_WEEK );
+            int i1 = CalendarUtils.dayOfWeek( 2019, 2, 1 );
+            System.out.println( i1 );
 
-            String format = String.format( "%d-%d-%d", year, month, day );
-            System.out.println( format );
+            int i2 = CalendarUtils.dayOfWeek( 2019, 2, 28 );
+            System.out.println( i2 );
+      }
 
-            calendar.set( 2019, 3 - 1, 1 );
-            calendar.add( Calendar.DAY_OF_MONTH, -1 );
-            int dayLast = calendar.get( Calendar.DAY_OF_MONTH );
-            int weekLast = calendar.get( Calendar.DAY_OF_WEEK );
+      public static class CalendarUtils {
 
-            System.out.println( day + " " + week + " " + dayLast + " " + weekLast );
+            private static Calendar sCalendar = Calendar.getInstance();
+
+            public static int monthDayCount ( int year, int month ) {
+
+                  sCalendar.set( year, month, 1 );
+                  sCalendar.add( Calendar.DAY_OF_MONTH, -1 );
+                  return sCalendar.get( Calendar.DAY_OF_MONTH );
+            }
+
+            public static int dayOfWeek ( int year, int month, int day ) {
+
+                  sCalendar.set( year, month, day );
+                  return sCalendar.get( Calendar.DAY_OF_WEEK );
+            }
       }
 }

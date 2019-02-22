@@ -16,7 +16,7 @@ public class CalendarView extends ViewGroup {
       private ViewComponent         mMonthLayout;
       private MeasureLayoutStrategy mLayoutStrategy;
 
-      private int mWeekDayOffset;
+      private boolean isFirstDayMonday = true;
 
       public CalendarView ( Context context ) {
 
@@ -65,11 +65,9 @@ public class CalendarView extends ViewGroup {
             }
       }
 
-      @Override
-      public void measureChild (
-          View child, int parentWidthMeasureSpec, int parentHeightMeasureSpec ) {
+      public boolean isFirstDayMonday ( ) {
 
-            super.measureChild( child, parentWidthMeasureSpec, parentHeightMeasureSpec );
+            return isFirstDayMonday;
       }
 
       @Override
@@ -133,21 +131,6 @@ public class CalendarView extends ViewGroup {
       protected void onLayout ( boolean changed, int l, int t, int r, int b ) {
 
             mLayoutStrategy.layoutComponent( this, mWeekBar, mMonthLayout );
-      }
-
-      public void setWeekDayOffset ( int weekDayOffset ) {
-
-            mWeekDayOffset = weekDayOffset;
-      }
-
-      public WeekDay getWeekDay ( int index ) {
-
-            index = ( index + mWeekDayOffset ) % 7;
-            return WeekDay.values()[ index ];
-      }
-
-      public enum WeekDay {
-            SUNDAY(), MONDAY(), TUESDAY(), WEDNESDAY(), THURSDAY(), FRIDAY(), SATURDAY();
       }
 
       /**
