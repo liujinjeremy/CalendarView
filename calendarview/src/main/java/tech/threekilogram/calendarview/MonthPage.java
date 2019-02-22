@@ -2,6 +2,7 @@ package tech.threekilogram.calendarview;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,36 +41,24 @@ public class MonthPage extends ViewGroup {
 
       private void init ( Context context ) { }
 
-      public void setDate ( int year, int month, int offset ) {
+      public void setDate ( int year, int month ) {
 
             mYear = year;
             mMonth = month;
 
             mMonthDayCount = CalendarUtils.monthDayCount( year, month );
-            int dayOfWeek = CalendarUtils.dayOfWeek( year, month, mMonthDayCount );
-            mFirstDayOffset = ( dayOfWeek + offset ) % 7;
-
-            adjustChildCount();
-      }
-
-      private void adjustChildCount ( ) {
-
-            int childCount = getChildCount();
-            if( childCount < mMonthDayCount ) {
-                  for( int i = childCount; i < mMonthDayCount; i++ ) {
-                        addView( generateItemView() );
-                  }
-            } else if( mMonthDayCount < childCount ) {
-
-                  for( int i = mMonthDayCount; i < childCount; i++ ) {
-                        removeViewAt( i );
-                  }
+            int dayOfWeek = CalendarUtils.dayOfWeek( year, month, 1 );
+            if( dayOfWeek == 1 ) {
+                  mFirstDayOffset = 6;
+            } else {
+                  mFirstDayOffset = dayOfWeek - 2;
             }
 
-            childCount = getChildCount();
-            for( int i = 0; i < childCount; i++ ) {
-                  View child = getChildAt( i );
-                  bind( child, i );
+            removeAllViews();
+            for( int i = 0; i < mMonthDayCount; i++ ) {
+                  View view = generateItemView();
+                  addView( view );
+                  bind( view, i );
             }
       }
 
@@ -106,6 +95,8 @@ public class MonthPage extends ViewGroup {
                   View view = getChildAt( i );
                   int left = ( ( i + mFirstDayOffset ) % 7 ) * cellWidth;
                   int top = ( i + mFirstDayOffset ) / 7 * cellHeight;
+
+                  Log.i( TAG, "onLayout: " + i + " " + left + " " + top );
 
                   view.layout( left, top, left + view.getMeasuredWidth(), top + view.getMeasuredHeight() );
             }

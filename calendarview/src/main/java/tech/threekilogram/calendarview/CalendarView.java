@@ -37,7 +37,7 @@ public class CalendarView extends ViewGroup {
       private void init ( Context context ) {
 
             mLayoutStrategy = new VerticalLinearMeasureLayoutStrategy();
-            setWeekBar( new LinearWeekBar( context, this ) );
+            setWeekBar( new LinearWeekBar( context ) );
             setMonthLayout( new PagerMonthLayout( context, this ) );
       }
 

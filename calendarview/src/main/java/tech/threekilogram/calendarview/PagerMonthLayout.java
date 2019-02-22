@@ -1,7 +1,6 @@
 package tech.threekilogram.calendarview;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import androidx.annotation.NonNull;
@@ -83,10 +82,7 @@ public class PagerMonthLayout extends ViewPager implements ViewComponent {
                   }
 
                   Date date = getDate( position );
-
-                  Log.i( TAG, "instantiateItem: " + date + " " + position );
-
-                  page.setDate( CalendarUtils.getYear( date ), CalendarUtils.getMonth( date ), -1 );
+                  page.setDate( CalendarUtils.getYear( date ), CalendarUtils.getMonth( date ) );
 
                   container.addView( page );
                   return page;

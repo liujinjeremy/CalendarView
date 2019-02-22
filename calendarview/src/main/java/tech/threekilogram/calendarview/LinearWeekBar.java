@@ -14,12 +14,11 @@ public class LinearWeekBar extends ViewGroup implements ViewComponent {
 
       private static final String TAG = LinearWeekBar.class.getSimpleName();
 
-      private CalendarView mParent;
+      private boolean isFirstDayMonday = true;
 
-      public LinearWeekBar ( Context context, CalendarView parent ) {
+      public LinearWeekBar ( Context context ) {
 
             super( context );
-            mParent = parent;
             init();
       }
 
@@ -28,7 +27,7 @@ public class LinearWeekBar extends ViewGroup implements ViewComponent {
             if( getChildCount() != 0 ) {
                   removeAllViews();
             }
-            addChildren( mParent );
+            addChildren();
       }
 
       @Override
@@ -68,33 +67,52 @@ public class LinearWeekBar extends ViewGroup implements ViewComponent {
             }
       }
 
+      public void setFirstDayMonday ( boolean firstDayMonday ) {
+
+            isFirstDayMonday = firstDayMonday;
+
+            try {
+                  for( int i = 0; i < 7; i++ ) {
+                        bind( getChildAt( i ), i );
+                  }
+            } catch(Exception e) {
+                  /* nothing */
+            }
+      }
+
       @Override
       public View getView ( ) {
 
             return this;
       }
 
-      private void addChildren ( CalendarView parent ) {
+      private void addChildren ( ) {
 
             for( int i = 0; i < 7; i++ ) {
-                  View view = generateItemView( i );
+                  View view = generateItemView();
                   addView( view );
+                  bind( view, i );
             }
       }
 
-      protected View generateItemView ( int index ) {
+      protected View generateItemView ( ) {
 
             TextView textView = new TextView( getContext() );
             textView.setGravity( Gravity.CENTER );
-            textView.setText( getWeekDayString( index ) );
+
+            return textView;
+      }
+
+      protected void bind ( View textView, int index ) {
+
+            ( (TextView) textView ).setText( getWeekDayString( index ) );
             int color = ColorUtil.getColor( index );
             textView.setBackgroundColor( color );
-            return textView;
       }
 
       private String getWeekDayString ( int index ) {
 
-            if( mParent.isFirstDayMonday() ) {
+            if( isFirstDayMonday ) {
 
                   String[] temp = { "一", "二", "三", "四", "五", "六", "日" };
                   return temp[ index ];
