@@ -1,6 +1,7 @@
-package tech.threekilogram.calendarview;
+package tech.threekilogram.calendarview.month;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.view.View;
 import android.view.ViewGroup;
 import androidx.annotation.NonNull;
@@ -8,6 +9,8 @@ import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 import java.util.Date;
 import java.util.LinkedList;
+import tech.threekilogram.calendarview.CalendarUtils;
+import tech.threekilogram.calendarview.CalendarView;
 import tech.threekilogram.calendarview.CalendarView.ViewComponent;
 
 /**
@@ -21,6 +24,10 @@ public class PagerMonthLayout extends ViewPager implements ViewComponent {
 
       private int mBaseYear;
       private int mBaseMonth;
+
+      private int mLeftHeight;
+      private int mCurrentHeight;
+      private int mRightHeight;
 
       public PagerMonthLayout ( @NonNull Context context, CalendarView parent ) {
 
@@ -37,6 +44,8 @@ public class PagerMonthLayout extends ViewPager implements ViewComponent {
             Date date = new Date();
             mBaseYear = CalendarUtils.getYear( date );
             mBaseMonth = CalendarUtils.getMonth( date );
+
+            setBackgroundColor( Color.GRAY );
       }
 
       public void setBaseDate ( int year, int month ) {
@@ -58,6 +67,42 @@ public class PagerMonthLayout extends ViewPager implements ViewComponent {
       public View getView ( ) {
 
             return this;
+      }
+
+      @Override
+      protected void onMeasure ( int widthMeasureSpec, int heightMeasureSpec ) {
+
+            int widthSize = MeasureSpec.getSize( widthMeasureSpec );
+            int heightSize = MeasureSpec.getSize( heightMeasureSpec );
+
+            int cellWidth = widthSize / 7;
+            int cellHeight = heightSize / 6;
+
+            int childCount = getChildCount();
+
+            for( int i = 0; i < childCount; i++ ) {
+                  MonthPage view = (MonthPage) getChildAt( i );
+                  view.setCellSize( cellWidth, cellHeight );
+            }
+            super.onMeasure( widthMeasureSpec, heightMeasureSpec );
+
+            int currentItem = getCurrentItem();
+            for( int i = 0; i < childCount; i++ ) {
+                  MonthPage view = (MonthPage) getChildAt( i );
+                  if( currentItem == view.mPosition ) {
+                        mCurrentHeight = view.getMeasuredHeight();
+                        continue;
+                  }
+                  if( currentItem == view.mPosition - 1 ) {
+                        mLeftHeight = view.getMeasuredHeight();
+                        continue;
+                  }
+                  if( currentItem == view.mPosition + 1 ) {
+                        mRightHeight = view.getMeasuredHeight();
+                  }
+            }
+
+            setMeasuredDimension( widthSize, mCurrentHeight );
       }
 
       private class PagerMonthAdapter extends PagerAdapter {
@@ -82,7 +127,7 @@ public class PagerMonthLayout extends ViewPager implements ViewComponent {
                   }
 
                   Date date = getDate( position );
-                  page.setDate( CalendarUtils.getYear( date ), CalendarUtils.getMonth( date ) );
+                  page.setInfo( CalendarUtils.getYear( date ), CalendarUtils.getMonth( date ), position );
 
                   container.addView( page );
                   return page;

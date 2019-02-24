@@ -1,12 +1,13 @@
-package tech.threekilogram.calendarview;
+package tech.threekilogram.calendarview.month;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import java.util.LinkedList;
+import tech.threekilogram.calendarview.CalendarUtils;
 
 /**
  * @author Liujin 2019/2/21:21:32:09
@@ -17,9 +18,15 @@ public class MonthPage extends ViewGroup {
 
       private int mYear;
       private int mMonth;
+      int mPosition;
 
       private int mMonthDayCount;
       private int mFirstDayOffset;
+
+      private int mCellWidth;
+      private int mCellHeight;
+
+      private LinkedList<View> mReusedChild = new LinkedList<>();
 
       public MonthPage ( Context context ) {
 
@@ -41,10 +48,11 @@ public class MonthPage extends ViewGroup {
 
       private void init ( Context context ) { }
 
-      public void setDate ( int year, int month ) {
+      public void setInfo ( int year, int month, int position ) {
 
             mYear = year;
             mMonth = month;
+            mPosition = position;
 
             mMonthDayCount = CalendarUtils.monthDayCount( year, month );
             int dayOfWeek = CalendarUtils.dayOfWeek( year, month, 1 );
@@ -54,12 +62,28 @@ public class MonthPage extends ViewGroup {
                   mFirstDayOffset = dayOfWeek - 2;
             }
 
+            int childCount = getChildCount();
+            for( int i = 0; i < childCount; i++ ) {
+                  View child = getChildAt( i );
+                  mReusedChild.add( child );
+            }
             removeAllViews();
             for( int i = 0; i < mMonthDayCount; i++ ) {
-                  View view = generateItemView();
-                  addView( view );
-                  bind( view, i );
+                  View child;
+                  if( mReusedChild.isEmpty() ) {
+                        child = generateItemView();
+                  } else {
+                        child = mReusedChild.pollFirst();
+                  }
+                  addView( child );
+                  bind( child, i );
             }
+      }
+
+      void setCellSize ( int cellWidth, int cellHeight ) {
+
+            mCellWidth = cellWidth;
+            mCellHeight = cellHeight;
       }
 
       @Override
@@ -68,11 +92,8 @@ public class MonthPage extends ViewGroup {
             int widthSize = MeasureSpec.getSize( widthMeasureSpec );
             int heightSize = MeasureSpec.getSize( heightMeasureSpec );
 
-            int cellWidth = widthSize / 7;
-            int cellHeight = heightSize / 6;
-
-            int cellWidthSpec = MeasureSpec.makeMeasureSpec( cellWidth, MeasureSpec.EXACTLY );
-            int cellHeightSpec = MeasureSpec.makeMeasureSpec( cellHeight, MeasureSpec.EXACTLY );
+            int cellWidthSpec = MeasureSpec.makeMeasureSpec( mCellWidth, MeasureSpec.EXACTLY );
+            int cellHeightSpec = MeasureSpec.makeMeasureSpec( mCellHeight, MeasureSpec.EXACTLY );
 
             int childCount = getChildCount();
             for( int i = 0; i < childCount; i++ ) {
@@ -80,7 +101,11 @@ public class MonthPage extends ViewGroup {
                   child.measure( cellWidthSpec, cellHeightSpec );
             }
 
-            setMeasuredDimension( widthSize, heightSize );
+            int count = mMonthDayCount + mFirstDayOffset;
+            int lines = count % 7 == 0 ? count / 7 : count / 7 + 1;
+            int resultHeight = lines == 5 ? lines * mCellHeight : heightSize;
+
+            setMeasuredDimension( widthSize, resultHeight );
       }
 
       @Override
@@ -95,9 +120,6 @@ public class MonthPage extends ViewGroup {
                   View view = getChildAt( i );
                   int left = ( ( i + mFirstDayOffset ) % 7 ) * cellWidth;
                   int top = ( i + mFirstDayOffset ) / 7 * cellHeight;
-
-                  Log.i( TAG, "onLayout: " + i + " " + left + " " + top );
-
                   view.layout( left, top, left + view.getMeasuredWidth(), top + view.getMeasuredHeight() );
             }
       }
