@@ -25,9 +25,10 @@ public class PagerMonthLayout extends ViewPager implements ViewComponent {
       private int mBaseYear;
       private int mBaseMonth;
 
-      private int mLeftHeight;
-      private int mCurrentHeight;
-      private int mRightHeight;
+      private boolean isScroll;
+
+      private int mCellWidth  = -1;
+      private int mCellHeight = -1;
 
       public PagerMonthLayout ( @NonNull Context context, CalendarView parent ) {
 
@@ -46,6 +47,8 @@ public class PagerMonthLayout extends ViewPager implements ViewComponent {
             mBaseMonth = CalendarUtils.getMonth( date );
 
             setBackgroundColor( Color.GRAY );
+
+            addOnPageChangeListener( new PagerChangeHeightScrollListener( this ) );
       }
 
       public void setBaseDate ( int year, int month ) {
@@ -72,17 +75,27 @@ public class PagerMonthLayout extends ViewPager implements ViewComponent {
       @Override
       protected void onMeasure ( int widthMeasureSpec, int heightMeasureSpec ) {
 
+            if( isScroll ) {
+                  int widthSize = MeasureSpec.getSize( widthMeasureSpec );
+                  setMeasuredDimension( widthSize, getLayoutParams().height );
+                  return;
+            }
+
             int widthSize = MeasureSpec.getSize( widthMeasureSpec );
             int heightSize = MeasureSpec.getSize( heightMeasureSpec );
 
-            int cellWidth = widthSize / 7;
-            int cellHeight = heightSize / 6;
+            if( mCellWidth == -1 ) {
+                  mCellWidth = widthSize / 7;
+            }
+            if( mCellHeight == -1 ) {
+                  mCellHeight = heightSize / 6;
+            }
 
             int childCount = getChildCount();
 
             for( int i = 0; i < childCount; i++ ) {
                   MonthPage view = (MonthPage) getChildAt( i );
-                  view.setCellSize( cellWidth, cellHeight );
+                  view.setCellSize( mCellWidth, mCellHeight );
             }
             super.onMeasure( widthMeasureSpec, heightMeasureSpec );
 
@@ -90,19 +103,19 @@ public class PagerMonthLayout extends ViewPager implements ViewComponent {
             for( int i = 0; i < childCount; i++ ) {
                   MonthPage view = (MonthPage) getChildAt( i );
                   if( currentItem == view.mPosition ) {
-                        mCurrentHeight = view.getMeasuredHeight();
-                        continue;
-                  }
-                  if( currentItem == view.mPosition - 1 ) {
-                        mLeftHeight = view.getMeasuredHeight();
-                        continue;
-                  }
-                  if( currentItem == view.mPosition + 1 ) {
-                        mRightHeight = view.getMeasuredHeight();
+                        setMeasuredDimension( widthSize, view.getMeasuredHeight() );
+                        break;
                   }
             }
+      }
 
-            setMeasuredDimension( widthSize, mCurrentHeight );
+      @Override
+      protected void onLayout ( boolean changed, int l, int t, int r, int b ) {
+
+            if( isScroll ) {
+                  return;
+            }
+            super.onLayout( changed, l, t, r, b );
       }
 
       private class PagerMonthAdapter extends PagerAdapter {
@@ -145,6 +158,77 @@ public class PagerMonthLayout extends ViewPager implements ViewComponent {
                   View view = (View) object;
                   container.removeView( view );
                   mReUsed.add( view );
+            }
+      }
+
+      private void changeHeight ( int height, int nextHeight, float offset ) {
+
+            ViewGroup.LayoutParams layoutParams = getLayoutParams();
+            layoutParams.height = (int) ( height + ( nextHeight - height ) * offset );
+            requestLayout();
+      }
+
+      /**
+       * 改变页面高度
+       */
+      private class PagerChangeHeightScrollListener extends ViewPagerScrollListener {
+
+            /**
+             * 创建
+             *
+             * @param pager pager
+             */
+            public PagerChangeHeightScrollListener ( ViewPager pager ) {
+
+                  super( pager );
+            }
+
+            @Override
+            protected void onScrolled ( int state, int current, float offset, int offsetPixels ) {
+
+                  if( offset == 1 || offset == -1 ) {
+                        isScroll = false;
+                  } else {
+                        isScroll = true;
+                  }
+
+                  if( offset < 0 ) {
+
+                        int currentHeight = 0;
+                        int nextHeight = 0;
+                        int childCount = getChildCount();
+                        for( int i = 0; i < childCount; i++ ) {
+                              MonthPage child = (MonthPage) getChildAt( i );
+                              if( child.mPosition == current ) {
+                                    currentHeight = child.getMeasuredHeight();
+                                    continue;
+                              }
+                              if( child.mPosition == current + 1 ) {
+                                    nextHeight = child.getMeasuredHeight();
+                              }
+                        }
+
+                        changeHeight( currentHeight, nextHeight, -offset );
+                  }
+
+                  if( offset > 0 ) {
+
+                        int currentHeight = 0;
+                        int nextHeight = 0;
+                        int childCount = getChildCount();
+                        for( int i = 0; i < childCount; i++ ) {
+                              MonthPage child = (MonthPage) getChildAt( i );
+                              if( child.mPosition == current ) {
+                                    currentHeight = child.getMeasuredHeight();
+                                    continue;
+                              }
+                              if( child.mPosition == current - 1 ) {
+                                    nextHeight = child.getMeasuredHeight();
+                              }
+                        }
+
+                        changeHeight( currentHeight, nextHeight, offset );
+                  }
             }
       }
 }
