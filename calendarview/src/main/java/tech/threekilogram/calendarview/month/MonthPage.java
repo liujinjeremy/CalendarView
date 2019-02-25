@@ -1,14 +1,10 @@
 package tech.threekilogram.calendarview.month;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.util.AttributeSet;
-import android.util.Log;
-import android.view.Gravity;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-import android.widget.TextView;
 import java.util.Date;
 import tech.threekilogram.calendarview.CalendarUtils;
 
@@ -19,8 +15,9 @@ public class MonthPage extends ViewGroup implements OnClickListener {
 
       private static final String TAG = MonthPage.class.getSimpleName();
 
-      private Date mDate;
-      int mPosition;
+      private Date             mDate;
+      private MonthDayItemView mCurrentSelected;
+      private int              mPosition;
 
       private int mMonthDayCount;
       private int mFirstDayOffset;
@@ -47,10 +44,10 @@ public class MonthPage extends ViewGroup implements OnClickListener {
       private void init ( ) {
 
             for( int i = 0; i < 6 * 7; i++ ) {
-                  addView( generateItemView() );
+                  View child = generateItemView();
+                  addView( child );
+                  child.setOnClickListener( this );
             }
-
-            setBackgroundColor( Color.GRAY );
       }
 
       public Date getDate ( ) {
@@ -58,10 +55,16 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             return mDate;
       }
 
-      public void setInfo ( boolean isFirstDayMonday, Date date, int position ) {
+      public void setInfo ( boolean isFirstDayMonday, Date date, int position, int selectedDayOfMonth ) {
 
             mDate = date;
             mPosition = position;
+
+            calculateMonthInfo( isFirstDayMonday, date );
+            setChildrenState( selectedDayOfMonth );
+      }
+
+      private void calculateMonthInfo ( boolean isFirstDayMonday, Date date ) {
 
             mMonthDayCount = CalendarUtils.monthDayCount( date );
             int dayOfWeek = CalendarUtils.weekOfMonthFirstDay( date );
@@ -74,22 +77,36 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             } else {
                   mFirstDayOffset = dayOfWeek - 1;
             }
+      }
+
+      private void setChildrenState ( int selectedDayOfMonth ) {
 
             int childCount = getChildCount();
             int offset = -mFirstDayOffset;
-            Date firstDayOfMonth = CalendarUtils.firstDayOfMonth( date );
+            int selected = selectedDayOfMonth <= mMonthDayCount ? selectedDayOfMonth : mMonthDayCount;
+
+            Date firstDayOfMonth = CalendarUtils.firstDayOfMonth( mDate );
 
             for( int i = 0; i < childCount; i++ ) {
-                  View child = getChildAt( i );
+                  MonthDayItemView child = (MonthDayItemView) getChildAt( i );
                   Date day = CalendarUtils.getDayByStep( firstDayOfMonth, offset );
-                  bind( child, CalendarUtils.getDayOfMonth( day ) );
-                  offset++;
+                  child.bind( day );
 
-                  if( offset <= 0 || offset > mMonthDayCount ) {
-                        child.setBackgroundColor( Color.WHITE );
+                  if( offset < 0 || offset > mMonthDayCount - 1 ) {
+
+                        child.setState( IMonthDayItem.OUT_MONTH );
+                        child.setVisibility( INVISIBLE );
                   } else {
-                        child.setBackgroundColor( Color.TRANSPARENT );
+
+                        child.setVisibility( VISIBLE );
+                        if( offset == selected - 1 ) {
+                              child.setState( IMonthDayItem.IN_MONTH_SELECTED );
+                              mCurrentSelected = child;
+                        } else {
+                              child.setState( IMonthDayItem.IN_MONTH_UNSELECTED );
+                        }
                   }
+                  offset++;
             }
       }
 
@@ -151,25 +168,24 @@ public class MonthPage extends ViewGroup implements OnClickListener {
 
       protected View generateItemView ( ) {
 
-            TextView textView = new TextView( getContext() );
-            textView.setGravity( Gravity.CENTER );
-            textView.setTextColor( Color.BLUE );
-            //textView.setOnClickListener( this );
-            return textView;
-      }
-
-      protected void bind ( View itemView, int dayOfMonth ) {
-
-            ( (TextView) itemView ).setText( String.valueOf( dayOfMonth ) );
+            return new MonthDayItemView( getContext() );
       }
 
       @Override
       public void onClick ( View v ) {
 
-            TextView textView = (TextView) v;
-            String text = textView.getText().toString();
-            int day = Integer.parseInt( text );
-            Log.i( TAG, "onClick: " + day );
-            textView.setTextColor( Color.RED );
+            MonthDayItemView itemView = (MonthDayItemView) v;
+            Date date = itemView.getDate();
+            if( !date.equals( mDate ) ) {
+                  mDate = date;
+                  int dayOfMonth = CalendarUtils.getDayOfMonth( date );
+                  setChildrenState( dayOfMonth );
+                  ( (MonthLayout) getParent() ).updateSelectedDayOfMonth( dayOfMonth );
+            }
+      }
+
+      public int getPosition ( ) {
+
+            return mPosition;
       }
 }

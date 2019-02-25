@@ -1,7 +1,6 @@
 package tech.threekilogram.calendarview.month;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,6 +28,7 @@ public class MonthLayout extends ViewPager implements ViewComponent {
        * 基准日期
        */
       private Date         mBaseDate;
+      private int          mSelectedDayOfMonth;
       /**
        * 页面是否是滚动
        */
@@ -44,6 +44,8 @@ public class MonthLayout extends ViewPager implements ViewComponent {
 
       private int mLastX;
       private int mLastY;
+
+      private VerticalExpendFoldHelper mHelper = new VerticalExpendFoldHelper();
 
       public MonthLayout ( @NonNull Context context ) {
 
@@ -65,15 +67,22 @@ public class MonthLayout extends ViewPager implements ViewComponent {
             return this;
       }
 
+      public void updateSelectedDayOfMonth ( int newSelected ) {
+
+            if( mSelectedDayOfMonth != newSelected ) {
+                  mSelectedDayOfMonth = newSelected;
+            }
+      }
+
       @Override
       public void bindParent ( CalendarView calendarView ) {
 
             mCalendarView = calendarView;
             mBaseDate = calendarView.getDate();
+            mSelectedDayOfMonth = CalendarUtils.getDayOfMonth( mBaseDate );
 
             setAdapter( new PagerMonthAdapter() );
             setCurrentItem( Integer.MAX_VALUE >> 1 );
-            setBackgroundColor( Color.GRAY );
             addOnPageChangeListener( new PagerChangeHeightScrollListener( this ) );
       }
 
@@ -115,7 +124,7 @@ public class MonthLayout extends ViewPager implements ViewComponent {
             int currentItem = getCurrentItem();
             for( int i = 0; i < childCount; i++ ) {
                   MonthPage view = (MonthPage) getChildAt( i );
-                  if( currentItem == view.mPosition ) {
+                  if( currentItem == view.getPosition() ) {
                         /* 将当前页面的高度设置为pager高度 */
                         setMeasuredDimension( widthSize, view.getMeasuredHeight() );
                         break;
@@ -177,7 +186,7 @@ public class MonthLayout extends ViewPager implements ViewComponent {
                   }
 
                   Date date = getDate( position );
-                  page.setInfo( mCalendarView.isFirstDayMonday(), date, position );
+                  page.setInfo( mCalendarView.isFirstDayMonday(), date, position, mSelectedDayOfMonth );
 
                   container.addView( page );
                   return page;
@@ -231,11 +240,11 @@ public class MonthLayout extends ViewPager implements ViewComponent {
                         int childCount = getChildCount();
                         for( int i = 0; i < childCount; i++ ) {
                               MonthPage child = (MonthPage) getChildAt( i );
-                              if( child.mPosition == current ) {
+                              if( child.getPosition() == current ) {
                                     currentHeight = child.getMeasuredHeight();
                                     continue;
                               }
-                              if( child.mPosition == current + 1 ) {
+                              if( child.getPosition() == current + 1 ) {
                                     nextHeight = child.getMeasuredHeight();
                               }
                         }
@@ -250,17 +259,33 @@ public class MonthLayout extends ViewPager implements ViewComponent {
                         int childCount = getChildCount();
                         for( int i = 0; i < childCount; i++ ) {
                               MonthPage child = (MonthPage) getChildAt( i );
-                              if( child.mPosition == current ) {
+                              if( child.getPosition() == current ) {
                                     currentHeight = child.getMeasuredHeight();
                                     continue;
                               }
-                              if( child.mPosition == current - 1 ) {
+                              if( child.getPosition() == current - 1 ) {
                                     nextHeight = child.getMeasuredHeight();
                               }
                         }
 
                         changeHeight( currentHeight, nextHeight, offset );
                   }
+            }
+      }
+
+      private class VerticalExpendFoldHelper {
+
+            private int mTop;
+            private int mBottom;
+            private int mTargetTop;
+            private int mTargetBottom;
+
+            private void set ( int top, int bottom, int targetTop, int targetBottom ) {
+
+                  mTop = top;
+                  mBottom = bottom;
+                  mTargetTop = targetTop;
+                  mTargetBottom = targetBottom;
             }
       }
 }

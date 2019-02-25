@@ -69,17 +69,22 @@ public class CalendarUtils {
             return sCalendar.getTime();
       }
 
+      public static Date updateDayOfMonth ( Date date, int dayOfMonth ) {
+
+            sCalendar.setTime( date );
+            int count = monthDayCount( date );
+            if( dayOfMonth <= count ) {
+                  sCalendar.set( Calendar.DAY_OF_MONTH, dayOfMonth );
+            } else {
+                  sCalendar.set( Calendar.DAY_OF_MONTH, count );
+            }
+
+            return sCalendar.getTime();
+      }
+
       public static void main ( String[] args ) {
 
-            Calendar calendar = Calendar.getInstance();
-
-            calendar.setTime( new Date() );
-
-            for( int i = 0; i < 12; i++ ) {
-                  Date time = calendar.getTime();
-                  System.out.println( monthDayCount( time ) );
-                  System.out.println( sFormat.format( time ) );
-                  calendar.add( Calendar.MONTH, 1 );
-            }
+            Date date = updateDayOfMonth( new Date(), 31 );
+            System.out.println( getDateFormat( date ) );
       }
 }

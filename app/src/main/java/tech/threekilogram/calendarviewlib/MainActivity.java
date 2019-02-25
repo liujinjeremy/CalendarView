@@ -1,14 +1,9 @@
 package tech.threekilogram.calendarviewlib;
 
 import android.os.Bundle;
-import android.util.Log;
-import android.view.View;
-import android.view.View.OnClickListener;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
-import java.util.Date;
-import tech.threekilogram.calendarview.CalendarUtils;
 import tech.threekilogram.calendarview.CalendarView;
 import tech.threekilogram.calendarview.month.MonthPage;
 
@@ -26,20 +21,22 @@ public class MainActivity extends AppCompatActivity {
 
             super.onCreate( savedInstanceState );
             setContentView( R.layout.activity_main );
-            //initView();
+      }
 
-            mMonth = (MonthPage) findViewById( R.id.month );
-            mMonth.setInfo( true, new Date(), 0 );
-            mMonth.setOnClickListener( new OnClickListener() {
+      private void testMonth ( ) {
 
-                  @Override
-                  public void onClick ( View v ) {
-
-                        Date monthByStep = CalendarUtils.getMonthByStep( mMonth.getDate(), 1 );
-                        mMonth.setInfo( true, monthByStep, 0 );
-                        Log.i( TAG, "onClick: " + CalendarUtils.getDateFormat( monthByStep ) );
-                  }
-            } );
+//            mMonth = (MonthPage) findViewById( R.id.month );
+//            mMonth.setInfo( true, new Date(), 0 );
+//            mMonth.setOnClickListener( new OnClickListener() {
+//
+//                  @Override
+//                  public void onClick ( View v ) {
+//
+//                        Date monthByStep = CalendarUtils.getMonthByStep( mMonth.getDate(), 1 );
+//                        mMonth.setInfo( true, monthByStep, 0 );
+//                        Log.i( TAG, "onClick: " + CalendarUtils.getDateFormat( monthByStep ) );
+//                  }
+//            } );
       }
 
       private void initView ( ) {
