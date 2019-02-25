@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
+import java.util.Date;
 import tech.threekilogram.calendarview.month.PagerMonthLayout;
 import tech.threekilogram.calendarview.week.LinearWeekBar;
 
@@ -29,7 +30,12 @@ public class CalendarView extends ViewGroup {
       /**
        * 每周的起始是不是周一
        */
-      private boolean isFirstDayMonday = true;
+      private boolean               isFirstDayMonday = true;
+
+      /**
+       * 起始日期
+       */
+      private Date mDate = new Date();
 
       public CalendarView ( Context context ) {
 
@@ -54,6 +60,16 @@ public class CalendarView extends ViewGroup {
             setWeekBar( weekBar );
             PagerMonthLayout monthLayout = new PagerMonthLayout( context );
             setMonthLayout( monthLayout );
+      }
+
+      public void setDate ( Date date ) {
+
+            mDate = date;
+      }
+
+      public Date getDate ( ) {
+
+            return mDate;
       }
 
       public void setWeekBar ( ViewComponent weekBar ) {

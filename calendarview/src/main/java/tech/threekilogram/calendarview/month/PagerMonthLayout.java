@@ -20,34 +20,39 @@ public class PagerMonthLayout extends ViewPager implements ViewComponent {
 
       private static final String TAG = PagerMonthLayout.class.getSimpleName();
 
+      /**
+       * parent
+       */
       private CalendarView mCalendarView;
-
-      private int mBaseYear;
-      private int mBaseMonth;
-
-      private boolean isScroll;
-
-      private int mCellWidth  = -1;
-      private int mCellHeight = -1;
+      /**
+       * 基准日期
+       */
+      private Date         mBaseDate;
+      /**
+       * 页面是否是滚动
+       */
+      private boolean      isScroll;
+      /**
+       * 天的布局宽度
+       */
+      private int          mCellWidth  = -1;
+      /**
+       * 天的布局高度
+       */
+      private int          mCellHeight = -1;
 
       public PagerMonthLayout ( @NonNull Context context ) {
 
             super( context );
-            init();
       }
 
-      private void init ( ) {
-
-            setAdapter( new PagerMonthAdapter() );
-            setCurrentItem( Integer.MAX_VALUE >> 1 );
-            setBackgroundColor( Color.GRAY );
-            addOnPageChangeListener( new PagerChangeHeightScrollListener( this ) );
-      }
-
-      private Date getDate ( int position ) {
+      /**
+       * 获取该位置的日期
+       */
+      public Date getDate ( int position ) {
 
             int step = position - Integer.MAX_VALUE / 2;
-            return CalendarUtils.getMonthByStep( mBaseYear, mBaseMonth, step );
+            return CalendarUtils.getMonthByStep( mBaseDate, step );
       }
 
       @Override
@@ -60,25 +65,33 @@ public class PagerMonthLayout extends ViewPager implements ViewComponent {
       public void bindParent ( CalendarView calendarView ) {
 
             mCalendarView = calendarView;
+            mBaseDate = calendarView.getDate();
+
+            setAdapter( new PagerMonthAdapter() );
+            setCurrentItem( Integer.MAX_VALUE >> 1 );
+            setBackgroundColor( Color.GRAY );
+            addOnPageChangeListener( new PagerChangeHeightScrollListener( this ) );
       }
 
       @Override
       public void notifyFirstDayIsMondayChanged ( boolean isFirstDayMonday ) {
 
+            getAdapter().notifyDataSetChanged();
       }
 
       @Override
       protected void onMeasure ( int widthMeasureSpec, int heightMeasureSpec ) {
 
+            /* 滚动时,重设页面高度,不必重新测量,已经设置好,直接使用 */
             if( isScroll ) {
                   int widthSize = MeasureSpec.getSize( widthMeasureSpec );
                   setMeasuredDimension( widthSize, getLayoutParams().height );
                   return;
             }
 
+            /* 计算基本尺寸,每个月最多7*6个子view */
             int widthSize = MeasureSpec.getSize( widthMeasureSpec );
             int heightSize = MeasureSpec.getSize( heightMeasureSpec );
-
             if( mCellWidth == -1 ) {
                   mCellWidth = widthSize / 7;
             }
@@ -87,17 +100,19 @@ public class PagerMonthLayout extends ViewPager implements ViewComponent {
             }
 
             int childCount = getChildCount();
-
             for( int i = 0; i < childCount; i++ ) {
                   MonthPage view = (MonthPage) getChildAt( i );
+                  /* 为每天的布局设置基本尺寸 */
                   view.setCellSize( mCellWidth, mCellHeight );
             }
+
             super.onMeasure( widthMeasureSpec, heightMeasureSpec );
 
             int currentItem = getCurrentItem();
             for( int i = 0; i < childCount; i++ ) {
                   MonthPage view = (MonthPage) getChildAt( i );
                   if( currentItem == view.mPosition ) {
+                        /* 将当前页面的高度设置为pager高度 */
                         setMeasuredDimension( widthSize, view.getMeasuredHeight() );
                         break;
                   }
@@ -113,12 +128,16 @@ public class PagerMonthLayout extends ViewPager implements ViewComponent {
             super.onLayout( changed, l, t, r, b );
       }
 
-      public Date getCurrentMonth ( ) {
+      private void changeHeight ( int height, int nextHeight, float offset ) {
 
-            int item = getCurrentItem();
-            return getDate( item );
+            ViewGroup.LayoutParams layoutParams = getLayoutParams();
+            layoutParams.height = (int) ( height + ( nextHeight - height ) * offset );
+            requestLayout();
       }
 
+      /**
+       * adapter 设置页面
+       */
       private class PagerMonthAdapter extends PagerAdapter {
 
             private LinkedList<View> mReUsed = new LinkedList<>();
@@ -141,7 +160,7 @@ public class PagerMonthLayout extends ViewPager implements ViewComponent {
                   }
 
                   Date date = getDate( position );
-                  page.setInfo( CalendarUtils.getYear( date ), CalendarUtils.getMonth( date ), position );
+                  page.setInfo( mCalendarView.isFirstDayMonday(), date, position );
 
                   container.addView( page );
                   return page;
@@ -160,13 +179,12 @@ public class PagerMonthLayout extends ViewPager implements ViewComponent {
                   container.removeView( view );
                   mReUsed.add( view );
             }
-      }
 
-      private void changeHeight ( int height, int nextHeight, float offset ) {
+            @Override
+            public int getItemPosition ( @NonNull Object object ) {
 
-            ViewGroup.LayoutParams layoutParams = getLayoutParams();
-            layoutParams.height = (int) ( height + ( nextHeight - height ) * offset );
-            requestLayout();
+                  return POSITION_NONE;
+            }
       }
 
       /**

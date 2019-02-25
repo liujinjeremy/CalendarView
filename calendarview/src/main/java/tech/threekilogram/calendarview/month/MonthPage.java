@@ -6,6 +6,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import java.util.Date;
 import java.util.LinkedList;
 import tech.threekilogram.calendarview.CalendarUtils;
 
@@ -16,8 +17,7 @@ public class MonthPage extends ViewGroup {
 
       private static final String TAG = MonthPage.class.getSimpleName();
 
-      private int mYear;
-      private int mMonth;
+      private Date mDate;
       int mPosition;
 
       private int mMonthDayCount;
@@ -31,37 +31,36 @@ public class MonthPage extends ViewGroup {
       public MonthPage ( Context context ) {
 
             super( context );
-            init( context );
       }
 
       public MonthPage ( Context context, AttributeSet attrs ) {
 
             super( context, attrs );
-            init( context );
       }
 
       public MonthPage ( Context context, AttributeSet attrs, int defStyleAttr ) {
 
             super( context, attrs, defStyleAttr );
-            init( context );
       }
 
-      private void init ( Context context ) {
+      public void setInfo ( boolean isFirstDayMonday, Date date, int position ) {
 
-      }
-
-      public void setInfo ( int year, int month, int position ) {
-
-            mYear = year;
-            mMonth = month;
             mPosition = position;
+            mDate = date;
 
-            mMonthDayCount = CalendarUtils.monthDayCount( year, month );
-            int dayOfWeek = CalendarUtils.dayOfWeek( year, month, 1 );
-            if( dayOfWeek == 1 ) {
-                  mFirstDayOffset = 6;
+            mMonthDayCount = CalendarUtils.monthDayCount( date );
+            int dayOfWeek = CalendarUtils.weekOfMonthFirstDay( date );
+
+            if( isFirstDayMonday ) {
+
+                  if( dayOfWeek == 1 ) {
+                        mFirstDayOffset = 6;
+                  } else {
+                        mFirstDayOffset = dayOfWeek - 2;
+                  }
             } else {
-                  mFirstDayOffset = dayOfWeek - 2;
+
+                  mFirstDayOffset = dayOfWeek - 1;
             }
 
             int childCount = getChildCount();
@@ -105,7 +104,13 @@ public class MonthPage extends ViewGroup {
 
             int count = mMonthDayCount + mFirstDayOffset;
             int lines = count % 7 == 0 ? count / 7 : count / 7 + 1;
-            int resultHeight = lines == 5 ? lines * mCellHeight : heightSize;
+
+            int resultHeight;
+            if( lines == 6 ) {
+                  resultHeight = heightSize;
+            } else {
+                  resultHeight = lines * mCellHeight;
+            }
 
             setMeasuredDimension( widthSize, resultHeight );
       }
