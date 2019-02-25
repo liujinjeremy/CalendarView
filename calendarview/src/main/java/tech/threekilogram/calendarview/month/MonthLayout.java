@@ -2,6 +2,7 @@ package tech.threekilogram.calendarview.month;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import androidx.annotation.NonNull;
@@ -16,9 +17,9 @@ import tech.threekilogram.calendarview.CalendarView.ViewComponent;
 /**
  * @author Liujin 2019/2/21:13:00:25
  */
-public class PagerMonthLayout extends ViewPager implements ViewComponent {
+public class MonthLayout extends ViewPager implements ViewComponent {
 
-      private static final String TAG = PagerMonthLayout.class.getSimpleName();
+      private static final String TAG = MonthLayout.class.getSimpleName();
 
       /**
        * parent
@@ -41,7 +42,10 @@ public class PagerMonthLayout extends ViewPager implements ViewComponent {
        */
       private int          mCellHeight = -1;
 
-      public PagerMonthLayout ( @NonNull Context context ) {
+      private int mLastX;
+      private int mLastY;
+
+      public MonthLayout ( @NonNull Context context ) {
 
             super( context );
       }
@@ -128,6 +132,19 @@ public class PagerMonthLayout extends ViewPager implements ViewComponent {
             super.onLayout( changed, l, t, r, b );
       }
 
+      @Override
+      public boolean onTouchEvent ( MotionEvent ev ) {
+
+            return super.onTouchEvent( ev );
+      }
+
+      /**
+       * 页面滑动时改变页面高度
+       *
+       * @param height 当前页面高度
+       * @param nextHeight 下一个页面高度
+       * @param offset 滑动进度
+       */
       private void changeHeight ( int height, int nextHeight, float offset ) {
 
             ViewGroup.LayoutParams layoutParams = getLayoutParams();

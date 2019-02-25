@@ -3,13 +3,15 @@ package tech.threekilogram.calendarview;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 
 /**
  * @author Liujin 2019/2/22:15:57:27
  */
 public class CalendarUtils {
 
-      private static Calendar sCalendar = Calendar.getInstance();
+      private static final Calendar         sCalendar = Calendar.getInstance();
+      private static final SimpleDateFormat sFormat   = new SimpleDateFormat( "yyyy年MM月dd日 HH:mm:ss" );
 
       public static int monthDayCount ( Date date ) {
 
@@ -27,12 +29,37 @@ public class CalendarUtils {
             return sCalendar.get( Calendar.DAY_OF_WEEK );
       }
 
+      public static Date firstDayOfMonth ( Date date ) {
+
+            sCalendar.setTime( date );
+            sCalendar.set( Calendar.DAY_OF_MONTH, 1 );
+            return sCalendar.getTime();
+      }
+
+      public static Date getDayByStep ( Date date, int offset ) {
+
+            sCalendar.setTime( date );
+            sCalendar.add( Calendar.DAY_OF_MONTH, offset );
+            return sCalendar.getTime();
+      }
+
+      public static int getDayOfMonth ( Date date ) {
+
+            sCalendar.setTime( date );
+            return sCalendar.get( Calendar.DAY_OF_MONTH );
+      }
+
       public static String getYearMonthFormat ( Date date ) {
 
             sCalendar.setTime( date );
             int year = sCalendar.get( Calendar.YEAR );
             int month = sCalendar.get( Calendar.MONTH );
-            return String.format( "%d/%d", year, month + 1 );
+            return String.format( Locale.CHINA, "%d/%d", year, month + 1 );
+      }
+
+      public static String getDateFormat ( Date date ) {
+
+            return sFormat.format( date );
       }
 
       public static Date getMonthByStep ( Date date, int offset ) {
@@ -45,13 +72,13 @@ public class CalendarUtils {
       public static void main ( String[] args ) {
 
             Calendar calendar = Calendar.getInstance();
-            SimpleDateFormat format = new SimpleDateFormat( "yyyy年MM月dd日 HH:mm:ss" );
+
             calendar.setTime( new Date() );
 
             for( int i = 0; i < 12; i++ ) {
                   Date time = calendar.getTime();
                   System.out.println( monthDayCount( time ) );
-                  System.out.println( format.format( time ) );
+                  System.out.println( sFormat.format( time ) );
                   calendar.add( Calendar.MONTH, 1 );
             }
       }

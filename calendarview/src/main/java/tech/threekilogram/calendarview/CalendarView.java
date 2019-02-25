@@ -5,7 +5,7 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
 import java.util.Date;
-import tech.threekilogram.calendarview.month.PagerMonthLayout;
+import tech.threekilogram.calendarview.month.MonthLayout;
 import tech.threekilogram.calendarview.week.LinearWeekBar;
 
 /**
@@ -58,7 +58,7 @@ public class CalendarView extends ViewGroup {
             mLayoutStrategy = new VerticalLinearMeasureLayoutStrategy();
             LinearWeekBar weekBar = new LinearWeekBar( context );
             setWeekBar( weekBar );
-            PagerMonthLayout monthLayout = new PagerMonthLayout( context );
+            MonthLayout monthLayout = new MonthLayout( context );
             setMonthLayout( monthLayout );
       }
 
