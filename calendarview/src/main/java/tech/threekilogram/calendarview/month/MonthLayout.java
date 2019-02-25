@@ -71,6 +71,11 @@ public class MonthLayout extends ViewPager implements ViewComponent {
 
             if( mSelectedDayOfMonth != newSelected ) {
                   mSelectedDayOfMonth = newSelected;
+                  int childCount = getChildCount();
+                  for( int i = 0; i < childCount; i++ ) {
+                        MonthPage page = (MonthPage) getChildAt( i );
+                        page.updateSelectedDayOfMonth( newSelected );
+                  }
             }
       }
 

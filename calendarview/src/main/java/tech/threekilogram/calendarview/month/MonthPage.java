@@ -15,9 +15,9 @@ public class MonthPage extends ViewGroup implements OnClickListener {
 
       private static final String TAG = MonthPage.class.getSimpleName();
 
-      private Date             mDate;
-      private MonthDayItemView mCurrentSelected;
-      private int              mPosition;
+      private Date mDate;
+      private int  mCurrentSelectedPosition;
+      private int  mPosition;
 
       private int mMonthDayCount;
       private int mFirstDayOffset;
@@ -101,7 +101,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
                         child.setVisibility( VISIBLE );
                         if( offset == selected - 1 ) {
                               child.setState( IMonthDayItem.IN_MONTH_SELECTED );
-                              mCurrentSelected = child;
+                              mCurrentSelectedPosition = i;
                         } else {
                               child.setState( IMonthDayItem.IN_MONTH_UNSELECTED );
                         }
@@ -179,7 +179,6 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             if( !date.equals( mDate ) ) {
                   mDate = date;
                   int dayOfMonth = CalendarUtils.getDayOfMonth( date );
-                  setChildrenState( dayOfMonth );
                   ( (MonthLayout) getParent() ).updateSelectedDayOfMonth( dayOfMonth );
             }
       }
@@ -187,5 +186,20 @@ public class MonthPage extends ViewGroup implements OnClickListener {
       public int getPosition ( ) {
 
             return mPosition;
+      }
+
+      public void updateSelectedDayOfMonth ( int selectedDayOfMonth ) {
+
+            int position = selectedDayOfMonth + mFirstDayOffset - 1;
+            int max = mMonthDayCount + mFirstDayOffset - 1;
+            if( position > max ) {
+                  position = max;
+            }
+
+            if( position != mCurrentSelectedPosition ) {
+                  ( (MonthDayItemView) getChildAt( position ) ).setState( IMonthDayItem.IN_MONTH_SELECTED );
+                  ( (MonthDayItemView) getChildAt( mCurrentSelectedPosition ) ).setState( IMonthDayItem.IN_MONTH_UNSELECTED );
+                  mCurrentSelectedPosition = position;
+            }
       }
 }
