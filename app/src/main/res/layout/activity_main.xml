@@ -8,9 +8,21 @@
     android:orientation="vertical"
     tools:context=".MainActivity">
 
-      <tech.threekilogram.calendarview.CalendarView
+      <TextView
+          android:id="@+id/title"
           android:layout_width="match_parent"
-          android:layout_height="match_parent">
+          android:layout_height="50dp"
+          android:background="@color/colorPrimary"
+          android:gravity="center"
+          android:text="2019/08/26"
+          android:textColor="@android:color/white"
+          android:textSize="24sp"/>
+
+      <tech.threekilogram.calendarview.CalendarView
+          android:id="@+id/calendarView"
+          android:layout_width="match_parent"
+          android:layout_height="match_parent"
+          android:layout_marginTop="50dp">
       </tech.threekilogram.calendarview.CalendarView>
 
 </FrameLayout>

@@ -46,7 +46,9 @@ public class MonthPage extends ViewGroup {
             init( context );
       }
 
-      private void init ( Context context ) { }
+      private void init ( Context context ) {
+
+      }
 
       public void setInfo ( int year, int month, int position ) {
 

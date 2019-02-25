@@ -14,10 +14,21 @@ public class CalendarView extends ViewGroup {
 
       private static final String TAG = CalendarView.class.getSimpleName();
 
+      /**
+       * 头部星期条
+       */
       private ViewComponent         mWeekBar;
+      /**
+       * 月视图
+       */
       private ViewComponent         mMonthLayout;
+      /**
+       * 布局策略
+       */
       private MeasureLayoutStrategy mLayoutStrategy;
-
+      /**
+       * 每周的起始是不是周一
+       */
       private boolean isFirstDayMonday = true;
 
       public CalendarView ( Context context ) {
@@ -39,8 +50,10 @@ public class CalendarView extends ViewGroup {
       private void init ( Context context ) {
 
             mLayoutStrategy = new VerticalLinearMeasureLayoutStrategy();
-            setWeekBar( new LinearWeekBar( context ) );
-            setMonthLayout( new PagerMonthLayout( context, this ) );
+            LinearWeekBar weekBar = new LinearWeekBar( context );
+            setWeekBar( weekBar );
+            PagerMonthLayout monthLayout = new PagerMonthLayout( context );
+            setMonthLayout( monthLayout );
       }
 
       public void setWeekBar ( ViewComponent weekBar ) {
@@ -50,9 +63,15 @@ public class CalendarView extends ViewGroup {
                         removeView( mWeekBar.getView() );
                   }
                   mWeekBar = weekBar;
+                  weekBar.bindParent( this );
                   addView( weekBar.getView() );
                   requestLayout();
             }
+      }
+
+      public ViewComponent getWeekBar ( ) {
+
+            return mWeekBar;
       }
 
       public void setMonthLayout ( ViewComponent monthLayout ) {
@@ -62,8 +81,24 @@ public class CalendarView extends ViewGroup {
                         removeView( mMonthLayout.getView() );
                   }
                   mMonthLayout = monthLayout;
+                  monthLayout.bindParent( this );
                   addView( monthLayout.getView() );
                   requestLayout();
+            }
+      }
+
+      public ViewComponent getMonthLayout ( ) {
+
+            return mMonthLayout;
+      }
+
+      public void setFirstDayMonday ( boolean firstDayMonday ) {
+
+            if( isFirstDayMonday != firstDayMonday ) {
+
+                  isFirstDayMonday = firstDayMonday;
+                  mWeekBar.notifyFirstDayIsMondayChanged( firstDayMonday );
+                  mMonthLayout.notifyFirstDayIsMondayChanged( firstDayMonday );
             }
       }
 
@@ -146,6 +181,20 @@ public class CalendarView extends ViewGroup {
              * @return view组件
              */
             View getView ( );
+
+            /**
+             * 绑定父组件
+             *
+             * @param calendarView 父组件
+             */
+            void bindParent ( CalendarView calendarView );
+
+            /**
+             * 通知每周的第一天是否是周一改变了
+             *
+             * @param isFirstDayMonday 每周第一天是否是周一
+             */
+            void notifyFirstDayIsMondayChanged ( boolean isFirstDayMonday );
       }
 
       /**

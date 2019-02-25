@@ -1,12 +1,14 @@
 package tech.threekilogram.calendarview.week;
 
 import android.content.Context;
+import android.util.AttributeSet;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import tech.threekilogram.calendarview.CalendarView;
 import tech.threekilogram.calendarview.CalendarView.ViewComponent;
-import tech.threekilogram.calendarview.ColorUtil;
 
 /**
  * @author Liujin 2019/2/21:12:16:29
@@ -15,22 +17,38 @@ public class LinearWeekBar extends ViewGroup implements ViewComponent {
 
       private static final String TAG = LinearWeekBar.class.getSimpleName();
 
-      private boolean isFirstDayMonday = true;
+      /**
+       * 每周第一天是周一时,显示的text
+       */
+      private static String[] firstMonday = { "一", "二", "三", "四", "五", "六", "日" };
+      /**
+       * 每周第一天是周日时,显示的text
+       */
+      private static String[] firstSunday = { "日", "一", "二", "三", "四", "五", "六" };
+
+      /**
+       * parent 用于通信
+       */
+      private CalendarView mCalendarView;
 
       public LinearWeekBar ( Context context ) {
 
-            super( context );
-            init();
+            this( context, null, 0 );
       }
 
-      private void init ( ) {
+      public LinearWeekBar ( Context context, AttributeSet attrs ) {
 
-            if( getChildCount() != 0 ) {
-                  removeAllViews();
-            }
-            addChildren();
+            this( context, attrs, 0 );
       }
 
+      public LinearWeekBar ( Context context, AttributeSet attrs, int defStyleAttr ) {
+
+            super( context, attrs, defStyleAttr );
+      }
+
+      /**
+       * 宽度均分为7份,高度包裹自己
+       */
       @Override
       protected void onMeasure ( int widthMeasureSpec, int heightMeasureSpec ) {
 
@@ -46,6 +64,7 @@ public class LinearWeekBar extends ViewGroup implements ViewComponent {
             int heightResult = 0;
             for( int i = 0; i < childCount; i++ ) {
                   View child = getChildAt( i );
+
                   child.measure( widthCellSpec, heightCellSpec );
                   int measuredHeight = child.getMeasuredHeight();
                   if( measuredHeight > heightResult ) {
@@ -55,6 +74,9 @@ public class LinearWeekBar extends ViewGroup implements ViewComponent {
             setMeasuredDimension( widthSize, heightResult );
       }
 
+      /**
+       * 从左到右依次布局
+       */
       @Override
       protected void onLayout ( boolean changed, int l, int t, int r, int b ) {
 
@@ -68,17 +90,17 @@ public class LinearWeekBar extends ViewGroup implements ViewComponent {
             }
       }
 
-      public void setFirstDayMonday ( boolean firstDayMonday ) {
+      /**
+       * 生成每个条目
+       */
+      private TextView generateItemView ( String text ) {
 
-            isFirstDayMonday = firstDayMonday;
-
-            try {
-                  for( int i = 0; i < 7; i++ ) {
-                        bind( getChildAt( i ), i );
-                  }
-            } catch(Exception e) {
-                  /* nothing */
-            }
+            TextView textView = new TextView( getContext() );
+            textView.setText( text );
+            textView.setGravity( Gravity.CENTER );
+            textView.setTextSize( TypedValue.COMPLEX_UNIT_DIP, 20 );
+            textView.setPadding( 0, 10, 0, 10 );
+            return textView;
       }
 
       @Override
@@ -87,39 +109,35 @@ public class LinearWeekBar extends ViewGroup implements ViewComponent {
             return this;
       }
 
-      private void addChildren ( ) {
+      @Override
+      public void bindParent ( CalendarView calendarView ) {
 
+            mCalendarView = calendarView;
+
+            boolean firstDayMonday = calendarView.isFirstDayMonday();
+            String[] texts;
+            if( firstDayMonday ) {
+                  texts = firstMonday;
+            } else {
+                  texts = firstSunday;
+            }
             for( int i = 0; i < 7; i++ ) {
-                  View view = generateItemView();
-                  addView( view );
-                  bind( view, i );
+                  addView( generateItemView( texts[ i ] ) );
             }
       }
 
-      protected View generateItemView ( ) {
+      @Override
+      public void notifyFirstDayIsMondayChanged ( boolean isFirstDayMonday ) {
 
-            TextView textView = new TextView( getContext() );
-            textView.setGravity( Gravity.CENTER );
-
-            return textView;
-      }
-
-      protected void bind ( View textView, int index ) {
-
-            ( (TextView) textView ).setText( getWeekDayString( index ) );
-            int color = ColorUtil.getColor( index );
-            textView.setBackgroundColor( color );
-      }
-
-      private String getWeekDayString ( int index ) {
-
+            String[] texts;
             if( isFirstDayMonday ) {
-
-                  String[] temp = { "一", "二", "三", "四", "五", "六", "日" };
-                  return temp[ index ];
+                  texts = firstMonday;
             } else {
-                  String[] temp = { "日", "一", "二", "三", "四", "五", "六" };
-                  return temp[ index ];
+                  texts = firstSunday;
+            }
+            for( int i = 0; i < 7; i++ ) {
+                  View view = getChildAt( i );
+                  ( (TextView) view ).setText( texts[ i ] );
             }
       }
 }

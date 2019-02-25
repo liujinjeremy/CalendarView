@@ -20,7 +20,7 @@ public class PagerMonthLayout extends ViewPager implements ViewComponent {
 
       private static final String TAG = PagerMonthLayout.class.getSimpleName();
 
-      private CalendarView mParent;
+      private CalendarView mCalendarView;
 
       private int mBaseYear;
       private int mBaseMonth;
@@ -30,10 +30,9 @@ public class PagerMonthLayout extends ViewPager implements ViewComponent {
       private int mCellWidth  = -1;
       private int mCellHeight = -1;
 
-      public PagerMonthLayout ( @NonNull Context context, CalendarView parent ) {
+      public PagerMonthLayout ( @NonNull Context context ) {
 
             super( context );
-            mParent = parent;
             init();
       }
 
@@ -41,23 +40,8 @@ public class PagerMonthLayout extends ViewPager implements ViewComponent {
 
             setAdapter( new PagerMonthAdapter() );
             setCurrentItem( Integer.MAX_VALUE >> 1 );
-
-            Date date = new Date();
-            mBaseYear = CalendarUtils.getYear( date );
-            mBaseMonth = CalendarUtils.getMonth( date );
-
             setBackgroundColor( Color.GRAY );
-
             addOnPageChangeListener( new PagerChangeHeightScrollListener( this ) );
-      }
-
-      public void setBaseDate ( int year, int month ) {
-
-            mBaseYear = year;
-            mBaseMonth = month;
-
-            setAdapter( new PagerMonthAdapter() );
-            setCurrentItem( Integer.MAX_VALUE / 2 );
       }
 
       private Date getDate ( int position ) {
@@ -70,6 +54,17 @@ public class PagerMonthLayout extends ViewPager implements ViewComponent {
       public View getView ( ) {
 
             return this;
+      }
+
+      @Override
+      public void bindParent ( CalendarView calendarView ) {
+
+            mCalendarView = calendarView;
+      }
+
+      @Override
+      public void notifyFirstDayIsMondayChanged ( boolean isFirstDayMonday ) {
+
       }
 
       @Override
@@ -116,6 +111,12 @@ public class PagerMonthLayout extends ViewPager implements ViewComponent {
                   return;
             }
             super.onLayout( changed, l, t, r, b );
+      }
+
+      public Date getCurrentMonth ( ) {
+
+            int item = getCurrentItem();
+            return getDate( item );
       }
 
       private class PagerMonthAdapter extends PagerAdapter {
@@ -178,7 +179,7 @@ public class PagerMonthLayout extends ViewPager implements ViewComponent {
              *
              * @param pager pager
              */
-            public PagerChangeHeightScrollListener ( ViewPager pager ) {
+            private PagerChangeHeightScrollListener ( ViewPager pager ) {
 
                   super( pager );
             }
@@ -186,11 +187,7 @@ public class PagerMonthLayout extends ViewPager implements ViewComponent {
             @Override
             protected void onScrolled ( int state, int current, float offset, int offsetPixels ) {
 
-                  if( offset == 1 || offset == -1 ) {
-                        isScroll = false;
-                  } else {
-                        isScroll = true;
-                  }
+                  isScroll = ( offset != 1 ) && ( offset != -1 );
 
                   if( offset < 0 ) {
 
