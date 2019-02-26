@@ -2,6 +2,7 @@ package tech.threekilogram.calendarview.month;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,21 +30,10 @@ public class MonthLayout extends ViewPager implements ViewComponent {
        * 基准日期
        */
       private Date         mBaseDate;
-      private int          mSelectedDayOfMonth;
       /**
        * 页面是否是滚动
        */
       private boolean      isScroll;
-      /**
-       * 天的布局宽度
-       */
-      private int          mCellWidth  = -1;
-      /**
-       * 天的布局高度
-       */
-      private int          mCellHeight = -1;
-
-      private VerticalMoveHelper mHelper = new VerticalMoveHelper();
 
       public MonthLayout ( @NonNull Context context ) {
 
@@ -66,24 +56,11 @@ public class MonthLayout extends ViewPager implements ViewComponent {
             return this;
       }
 
-      public void updateSelectedDayOfMonth ( int newSelected ) {
-
-            if( mSelectedDayOfMonth != newSelected ) {
-                  mSelectedDayOfMonth = newSelected;
-                  int childCount = getChildCount();
-                  for( int i = 0; i < childCount; i++ ) {
-                        MonthPage page = (MonthPage) getChildAt( i );
-                        page.updateSelectedDayOfMonth( newSelected );
-                  }
-            }
-      }
-
       @Override
       public void bindParent ( CalendarView calendarView ) {
 
             mCalendarView = calendarView;
             mBaseDate = calendarView.getDate();
-            mSelectedDayOfMonth = CalendarUtils.getDayOfMonth( mBaseDate );
 
             setAdapter( new PagerMonthAdapter() );
             setCurrentItem( Integer.MAX_VALUE >> 1 );
@@ -100,31 +77,16 @@ public class MonthLayout extends ViewPager implements ViewComponent {
       protected void onMeasure ( int widthMeasureSpec, int heightMeasureSpec ) {
 
             /* 滚动时,重设页面高度,不必重新测量,已经设置好,直接使用 */
-            if( isScroll || mHelper.isHandleMove ) {
+            if( isScroll ) {
                   int widthSize = MeasureSpec.getSize( widthMeasureSpec );
                   setMeasuredDimension( widthSize, getLayoutParams().height );
                   return;
             }
 
-            /* 计算基本尺寸,每个月最多7*6个子view */
-            int widthSize = MeasureSpec.getSize( widthMeasureSpec );
-            int heightSize = MeasureSpec.getSize( heightMeasureSpec );
-            if( mCellWidth == -1 ) {
-                  mCellWidth = widthSize / 7;
-            }
-            if( mCellHeight == -1 ) {
-                  mCellHeight = heightSize / 6;
-            }
-
-            int childCount = getChildCount();
-            for( int i = 0; i < childCount; i++ ) {
-                  MonthPage view = (MonthPage) getChildAt( i );
-                  /* 为每天的布局设置基本尺寸 */
-                  view.setCellSize( mCellWidth, mCellHeight );
-            }
-
             super.onMeasure( widthMeasureSpec, heightMeasureSpec );
 
+            int widthSize = MeasureSpec.getSize( widthMeasureSpec );
+            int childCount = getChildCount();
             int currentItem = getCurrentItem();
             for( int i = 0; i < childCount; i++ ) {
                   MonthPage view = (MonthPage) getChildAt( i );
@@ -143,43 +105,7 @@ public class MonthLayout extends ViewPager implements ViewComponent {
                   return;
             }
 
-            if( mHelper.isHandleMove ) {
-                  mHelper.reLayout();
-                  return;
-            }
             super.onLayout( changed, l, t, r, b );
-      }
-
-      @Override
-      public boolean dispatchTouchEvent ( MotionEvent ev ) {
-
-            if( mHelper.handleMotionEvent( ev ) ) {
-                  return true;
-            }
-            return super.dispatchTouchEvent( ev );
-      }
-
-      @Override
-      public boolean onTouchEvent ( MotionEvent ev ) {
-
-            if( mHelper.isHandleMove ) {
-                  return true;
-            }
-            return super.onTouchEvent( ev );
-      }
-
-      /**
-       * 页面滑动时改变页面高度
-       *
-       * @param height 当前页面高度
-       * @param nextHeight 下一个页面高度
-       * @param offset 滑动进度
-       */
-      private void changeHeight ( int height, int nextHeight, float offset ) {
-
-            ViewGroup.LayoutParams layoutParams = getLayoutParams();
-            layoutParams.height = (int) ( height + ( nextHeight - height ) * offset );
-            requestLayout();
       }
 
       /**
@@ -207,7 +133,7 @@ public class MonthLayout extends ViewPager implements ViewComponent {
                   }
 
                   Date date = getDate( position );
-                  page.setInfo( mCalendarView.isFirstDayMonday(), date, position, mSelectedDayOfMonth );
+                  page.setInfo( mCalendarView.isFirstDayMonday(), date, position );
 
                   container.addView( page );
                   return page;
@@ -292,16 +218,36 @@ public class MonthLayout extends ViewPager implements ViewComponent {
                         changeHeight( currentHeight, nextHeight, offset );
                   }
             }
+
+            /**
+             * 页面滑动时改变页面高度
+             *
+             * @param height 当前页面高度
+             * @param nextHeight 下一个页面高度
+             * @param offset 滑动进度
+             */
+            private void changeHeight ( int height, int nextHeight, float offset ) {
+
+                  ViewGroup.LayoutParams layoutParams = getLayoutParams();
+                  layoutParams.height = (int) ( height + ( nextHeight - height ) * offset );
+                  requestLayout();
+            }
       }
 
+      /**
+       * 用于竖直滑动时展开折叠布局
+       */
       private class VerticalMoveHelper {
 
-            private float   mDownX;
-            private float   mDownY;
-            private float   mLastX;
-            private float   mLastY;
-            private boolean isHandleMove;
-            private boolean isRelease;
+            final int state_scroll  = 10;
+            final int state_release = 11;
+
+            private float mDownX;
+            private float mDownY;
+            private float mLastX;
+            private float mLastY;
+
+            private int mState;
 
             private int mTopDy;
             private int mBottomDy;
@@ -327,21 +273,22 @@ public class MonthLayout extends ViewPager implements ViewComponent {
                               mLastY = y;
 
                               if( verticalMove( dx, dy ) ) {
-                                    isHandleMove = true;
+                                    mState = state_scroll;
                                     calculateDy( dy );
                                     return true;
                               }
 
                               break;
                         default:
-                              if( isHandleMove ) {
+                              if( mState == state_scroll ) {
+                                    Log.i( TAG, "handleMotionEvent: 手势释放" );
+                                    mState = state_release;
                                     if( y > mDownY ) {
-                                          mReleaseDy = 10;
+                                          mReleaseDy = 50;
                                     } else {
-                                          mReleaseDy = -10;
+                                          mReleaseDy = -50;
                                     }
-                                    isRelease = true;
-                                    calculateDy( mReleaseDy );
+                                    requestLayout();
                                     return true;
                               }
                               break;
@@ -375,7 +322,7 @@ public class MonthLayout extends ViewPager implements ViewComponent {
                   int bottom = page.getBottom();
                   int pageMeasuredHeight = page.getMeasuredHeight();
 
-                  View child = page.getSelectedChild();
+                  View child = null;//page.getSelectedChild();
                   int childTop = child.getTop();
                   int childBottom = child.getBottom();
                   int childMeasuredHeight = child.getMeasuredHeight();
@@ -431,6 +378,38 @@ public class MonthLayout extends ViewPager implements ViewComponent {
                               );
                         }
                   }
+            }
+
+            private boolean isLayoutToFinal ( ) {
+
+                  int childCount = getChildCount();
+                  int currentItem = getCurrentItem();
+                  for( int i = 0; i < childCount; i++ ) {
+                        MonthPage page = (MonthPage) getChildAt( i );
+                        if( page.getPosition() == currentItem ) {
+                              int top = page.getTop();
+                              View selectedChild = null;//page.getSelectedChild();
+                              int childTop = selectedChild.getTop();
+                              int bottom = page.getBottom();
+                              int height = selectedChild.getMeasuredHeight();
+                              return top == -childTop && bottom == height;
+                        }
+                  }
+                  return false;
+            }
+
+            private void reset ( ) {
+
+                  mDownX = 0;
+                  mDownY = 0;
+                  mLastX = 0;
+                  mLastY = 0;
+                  mState = 0;
+
+                  mTopDy = 0;
+                  mBottomDy = 0;
+
+                  mReleaseDy = 0;
             }
       }
 }

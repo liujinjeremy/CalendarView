@@ -1,9 +1,14 @@
 package tech.threekilogram.calendarviewlib;
 
 import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.view.View.OnClickListener;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
+import java.util.Date;
+import tech.threekilogram.calendarview.CalendarUtils;
 import tech.threekilogram.calendarview.CalendarView;
 import tech.threekilogram.calendarview.month.MonthPage;
 
@@ -16,27 +21,48 @@ public class MainActivity extends AppCompatActivity {
       private FrameLayout  mRoot;
       private MonthPage    mMonth;
 
+      private int mCount = 1;
+
       @Override
       protected void onCreate ( Bundle savedInstanceState ) {
 
             super.onCreate( savedInstanceState );
             setContentView( R.layout.activity_main );
+
+            testMonth();
       }
 
       private void testMonth ( ) {
 
-//            mMonth = (MonthPage) findViewById( R.id.month );
-//            mMonth.setInfo( true, new Date(), 0 );
-//            mMonth.setOnClickListener( new OnClickListener() {
-//
-//                  @Override
-//                  public void onClick ( View v ) {
-//
-//                        Date monthByStep = CalendarUtils.getMonthByStep( mMonth.getDate(), 1 );
-//                        mMonth.setInfo( true, monthByStep, 0 );
-//                        Log.i( TAG, "onClick: " + CalendarUtils.getDateFormat( monthByStep ) );
-//                  }
-//            } );
+            mMonth = findViewById( R.id.month );
+            mTitle = findViewById( R.id.title );
+            Date date = CalendarUtils.updateDayOfMonth( new Date(), 13 );
+            mMonth.setInfo( true, date, 0 );
+            mMonth.post( new Runnable() {
+
+                  @Override
+                  public void run ( ) {
+
+                        mMonth.folded();
+                  }
+            } );
+
+            mTitle.setOnClickListener( new OnClickListener() {
+
+                  @Override
+                  public void onClick ( View v ) {
+
+                        Log.i( TAG, "onClick: " );
+                        mMonth.moving( 100 * mCount );
+
+//                        if( mCount % 2 == 0 ) {
+//                              mMonth.expanded();
+//                        } else {
+//                              mMonth.folded();
+//                        }
+                        mCount++;
+                  }
+            } );
       }
 
       private void initView ( ) {

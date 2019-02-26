@@ -82,9 +82,21 @@ public class CalendarUtils {
             return sCalendar.getTime();
       }
 
+      public static int getDayOfWeek ( Date date ) {
+
+            sCalendar.setTime( date );
+            return sCalendar.get( Calendar.DAY_OF_WEEK );
+      }
+
       public static void main ( String[] args ) {
 
-            Date date = updateDayOfMonth( new Date(), 31 );
-            System.out.println( getDateFormat( date ) );
+            Date date = new Date();
+            sCalendar.setTime( date );
+
+            for( int i = 0; i < 7; i++ ) {
+
+                  System.out.println( "星期" + getDayOfWeek( sCalendar.getTime() ) );
+                  sCalendar.add( Calendar.DAY_OF_WEEK, 1 );
+            }
       }
 }
