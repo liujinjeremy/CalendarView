@@ -56,10 +56,12 @@ public class CalendarView extends ViewGroup {
       private void init ( Context context ) {
 
             mLayoutStrategy = new VerticalLinearMeasureLayoutStrategy();
-            LinearWeekBar weekBar = new LinearWeekBar( context );
-            setWeekBar( weekBar );
+
             MonthLayout monthLayout = new MonthLayout( context );
             setMonthLayout( monthLayout );
+
+            LinearWeekBar weekBar = new LinearWeekBar( context );
+            setWeekBar( weekBar );
       }
 
       public void setDate ( Date date ) {

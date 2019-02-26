@@ -1,6 +1,7 @@
 package tech.threekilogram.calendarview.month;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -42,14 +43,12 @@ public class MonthLayout extends ViewPager implements ViewComponent {
        */
       private int          mCellHeight = -1;
 
-      private int mLastX;
-      private int mLastY;
-
-      private VerticalExpendFoldHelper mHelper = new VerticalExpendFoldHelper();
+      private VerticalMoveHelper mHelper = new VerticalMoveHelper();
 
       public MonthLayout ( @NonNull Context context ) {
 
             super( context );
+            setBackgroundColor( Color.LTGRAY );
       }
 
       /**
@@ -101,7 +100,7 @@ public class MonthLayout extends ViewPager implements ViewComponent {
       protected void onMeasure ( int widthMeasureSpec, int heightMeasureSpec ) {
 
             /* 滚动时,重设页面高度,不必重新测量,已经设置好,直接使用 */
-            if( isScroll ) {
+            if( isScroll || mHelper.isHandleMove ) {
                   int widthSize = MeasureSpec.getSize( widthMeasureSpec );
                   setMeasuredDimension( widthSize, getLayoutParams().height );
                   return;
@@ -143,12 +142,29 @@ public class MonthLayout extends ViewPager implements ViewComponent {
             if( isScroll ) {
                   return;
             }
+
+            if( mHelper.isHandleMove ) {
+                  mHelper.reLayout();
+                  return;
+            }
             super.onLayout( changed, l, t, r, b );
+      }
+
+      @Override
+      public boolean dispatchTouchEvent ( MotionEvent ev ) {
+
+            if( mHelper.handleMotionEvent( ev ) ) {
+                  return true;
+            }
+            return super.dispatchTouchEvent( ev );
       }
 
       @Override
       public boolean onTouchEvent ( MotionEvent ev ) {
 
+            if( mHelper.isHandleMove ) {
+                  return true;
+            }
             return super.onTouchEvent( ev );
       }
 
@@ -278,19 +294,143 @@ public class MonthLayout extends ViewPager implements ViewComponent {
             }
       }
 
-      private class VerticalExpendFoldHelper {
+      private class VerticalMoveHelper {
 
-            private int mTop;
-            private int mBottom;
-            private int mTargetTop;
-            private int mTargetBottom;
+            private float   mDownX;
+            private float   mDownY;
+            private float   mLastX;
+            private float   mLastY;
+            private boolean isHandleMove;
+            private boolean isRelease;
 
-            private void set ( int top, int bottom, int targetTop, int targetBottom ) {
+            private int mTopDy;
+            private int mBottomDy;
 
-                  mTop = top;
-                  mBottom = bottom;
-                  mTargetTop = targetTop;
-                  mTargetBottom = targetBottom;
+            private int mReleaseDy;
+
+            private boolean handleMotionEvent ( MotionEvent ev ) {
+
+                  float x = ev.getX();
+                  float y = ev.getY();
+                  switch( ev.getAction() ) {
+                        case MotionEvent.ACTION_DOWN:
+                              mDownX = x;
+                              mDownY = y;
+                              mLastX = x;
+                              mLastY = y;
+                              break;
+                        case MotionEvent.ACTION_MOVE:
+
+                              float dx = x - mLastX;
+                              float dy = y - mLastY;
+                              mLastX = x;
+                              mLastY = y;
+
+                              if( verticalMove( dx, dy ) ) {
+                                    isHandleMove = true;
+                                    calculateDy( dy );
+                                    return true;
+                              }
+
+                              break;
+                        default:
+                              if( isHandleMove ) {
+                                    if( y > mDownY ) {
+                                          mReleaseDy = 10;
+                                    } else {
+                                          mReleaseDy = -10;
+                                    }
+                                    isRelease = true;
+                                    calculateDy( mReleaseDy );
+                                    return true;
+                              }
+                              break;
+                  }
+                  return false;
+            }
+
+            private MonthPage findCurrentItem ( ) {
+
+                  int childCount = getChildCount();
+                  int currentItem = getCurrentItem();
+                  for( int i = 0; i < childCount; i++ ) {
+                        MonthPage page = (MonthPage) getChildAt( i );
+                        if( page.getPosition() == currentItem ) {
+                              return page;
+                        }
+                  }
+                  return null;
+            }
+
+            private boolean verticalMove ( float dx, float dy ) {
+
+                  return Math.abs( dy ) > Math.abs( dx ) * 2;
+            }
+
+            private void calculateDy ( float dy ) {
+
+                  MonthPage page = findCurrentItem();
+
+                  int top = page.getTop();
+                  int bottom = page.getBottom();
+                  int pageMeasuredHeight = page.getMeasuredHeight();
+
+                  View child = page.getSelectedChild();
+                  int childTop = child.getTop();
+                  int childBottom = child.getBottom();
+                  int childMeasuredHeight = child.getMeasuredHeight();
+
+                  int topDis = childTop;
+                  int bottomDis = pageMeasuredHeight - childBottom;
+
+                  float rate = topDis * 1f / ( bottomDis + topDis );
+                  mTopDy = (int) ( dy * rate );
+                  mBottomDy = (int) ( dy * ( 1 - rate ) );
+
+                  int finalTop = top + mTopDy;
+                  if( finalTop > 0 ) {
+                        mTopDy = -top;
+                  }
+                  if( finalTop < -childTop ) {
+                        mTopDy = -childTop - top;
+                  }
+
+                  int finalBottom = bottom + mBottomDy;
+                  if( finalBottom < childMeasuredHeight ) {
+                        mBottomDy = childMeasuredHeight - bottom;
+                  }
+                  if( finalBottom > pageMeasuredHeight ) {
+                        mBottomDy = pageMeasuredHeight - bottom;
+                  }
+
+                  getLayoutParams().height = bottom + mTopDy + mBottomDy;
+                  requestLayout();
+            }
+
+            private void reLayout ( ) {
+
+                  int childCount = getChildCount();
+                  int currentItem = getCurrentItem();
+                  for( int i = 0; i < childCount; i++ ) {
+                        MonthPage page = (MonthPage) getChildAt( i );
+                        if( page.getPosition() == currentItem ) {
+                              int top = page.getTop() + mTopDy;
+                              int bottom = page.getBottom() + mTopDy + mBottomDy;
+                              page.layout(
+                                  page.getLeft(),
+                                  top,
+                                  page.getRight(),
+                                  bottom
+                              );
+                        } else {
+                              page.layout(
+                                  page.getLeft(),
+                                  page.getTop(),
+                                  page.getRight(),
+                                  page.getBottom()
+                              );
+                        }
+                  }
             }
       }
 }

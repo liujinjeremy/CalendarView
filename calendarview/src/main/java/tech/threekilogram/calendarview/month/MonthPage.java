@@ -48,6 +48,8 @@ public class MonthPage extends ViewGroup implements OnClickListener {
                   addView( child );
                   child.setOnClickListener( this );
             }
+
+            //setBackgroundColor( Color.LTGRAY );
       }
 
       public Date getDate ( ) {
@@ -201,5 +203,10 @@ public class MonthPage extends ViewGroup implements OnClickListener {
                   ( (MonthDayItemView) getChildAt( mCurrentSelectedPosition ) ).setState( IMonthDayItem.IN_MONTH_UNSELECTED );
                   mCurrentSelectedPosition = position;
             }
+      }
+
+      public View getSelectedChild ( ) {
+
+            return getChildAt( mCurrentSelectedPosition );
       }
 }
