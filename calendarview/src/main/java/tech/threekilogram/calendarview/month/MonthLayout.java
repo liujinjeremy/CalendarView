@@ -11,6 +11,7 @@ import java.util.Date;
 import java.util.LinkedList;
 import tech.threekilogram.calendarview.CalendarUtils;
 import tech.threekilogram.calendarview.CalendarView;
+import tech.threekilogram.calendarview.CalendarView.OnDateChangeListener;
 import tech.threekilogram.calendarview.CalendarView.ViewComponent;
 
 /**
@@ -36,6 +37,10 @@ public class MonthLayout extends ViewPager implements ViewComponent {
        * 展开折叠页面
        */
       private ExpandFoldPage       mExpandFoldPage;
+      /**
+       * 监听日期变化
+       */
+      private OnDateChangeListener mOnDateChangeListener;
 
       public MonthLayout ( @NonNull Context context ) {
 
@@ -48,9 +53,36 @@ public class MonthLayout extends ViewPager implements ViewComponent {
             return this;
       }
 
-      public Date getDate ( ) {
+      public void setDate ( Date date ) {
+
+            onDateChanged( date, mSource.mBasePosition, mSource.isMonthMode );
+      }
+
+      public Date getCurrentPageDate ( ) {
 
             return getCurrentPage().getDate();
+      }
+
+      public boolean isMonthMode ( ) {
+
+            return mSource.isMonthMode;
+      }
+
+      public void setMonthMode ( boolean isMonthMode ) {
+
+            onDateChanged( mSource.mBaseDate, mSource.mBasePosition, isMonthMode );
+      }
+
+      public void expandToMonthMode ( ) {
+
+            //noinspection ConstantConditions
+            getCurrentPage().moveToExpand();
+      }
+
+      public void foldToWeekMode ( ) {
+
+            //noinspection ConstantConditions
+            getCurrentPage().moveToFold();
       }
 
       @Override
@@ -59,7 +91,7 @@ public class MonthLayout extends ViewPager implements ViewComponent {
             mCalendarView = calendarView;
 
             int position = Integer.MAX_VALUE >> 1;
-            mSource = new DateSource( calendarView.getDate(), position );
+            mSource = new DateSource( new Date(), position );
 
             PagerMonthAdapter adapter = new PagerMonthAdapter();
             setAdapter( adapter );
@@ -75,6 +107,16 @@ public class MonthLayout extends ViewPager implements ViewComponent {
       public void notifyFirstDayIsMondayChanged ( boolean isFirstDayMonday ) {
 
             onDateChanged( mSource.mBaseDate, mSource.mBasePosition, mSource.isMonthMode );
+      }
+
+      public void setOnDateChangeListener ( OnDateChangeListener onDateChangeListener ) {
+
+            mOnDateChangeListener = onDateChangeListener;
+      }
+
+      public OnDateChangeListener getOnDateChangeListener ( ) {
+
+            return mOnDateChangeListener;
       }
 
       @Override
@@ -290,6 +332,15 @@ public class MonthLayout extends ViewPager implements ViewComponent {
             private ChangeHeightScroller ( ViewPager pager ) {
 
                   super( pager );
+            }
+
+            @Override
+            public void onPageSelected ( int position ) {
+
+                  super.onPageSelected( position );
+                  if( mOnDateChangeListener != null ) {
+                        mOnDateChangeListener.onNewPageSelected( mSource.getDate( position ) );
+                  }
             }
 
             @Override

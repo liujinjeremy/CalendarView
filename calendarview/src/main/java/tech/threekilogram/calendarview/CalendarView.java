@@ -35,11 +35,6 @@ public class CalendarView extends ViewGroup {
        */
       private boolean isFirstDayMonday = true;
 
-      /**
-       * 起始日期
-       */
-      private Date mDate = new Date();
-
       public CalendarView ( Context context ) {
 
             this( context, null, 0 );
@@ -108,15 +103,35 @@ public class CalendarView extends ViewGroup {
        */
       public void setDate ( Date date ) {
 
-            mDate = date;
+            mMonthLayout.setDate( date );
       }
 
       /**
-       * 获取设置的当前日期
+       * 获取当前页面日期
        */
-      public Date getDate ( ) {
+      public Date getCurrentPageDate ( ) {
 
-            return mDate;
+            return mMonthLayout.getCurrentPageDate();
+      }
+
+      public boolean isMonthMode ( ) {
+
+            return mMonthLayout.isMonthMode();
+      }
+
+      public void setMonthMode ( boolean isMonthMode ) {
+
+            mMonthLayout.setMonthMode( isMonthMode );
+      }
+
+      public void expandToMonthMode ( ) {
+
+            mMonthLayout.expandToMonthMode();
+      }
+
+      public void foldToWeekMode ( ) {
+
+            mMonthLayout.foldToWeekMode();
       }
 
       /**
@@ -324,5 +339,32 @@ public class CalendarView extends ViewGroup {
                       offset + layoutView.getMeasuredHeight()
                   );
             }
+      }
+
+      public interface OnDateChangeListener {
+
+            /**
+             * 当页面选中后页面日期
+             *
+             * @param date 页面日期
+             */
+            void onNewPageSelected ( Date date );
+
+            /**
+             * 当新的日期选择后
+             *
+             * @param newDate 新的选中的日期
+             */
+            void onNewDateSelected ( Date newDate );
+      }
+
+      public void setOnDateChangeListener ( OnDateChangeListener onDateChangeListener ) {
+
+            mMonthLayout.setOnDateChangeListener( onDateChangeListener );
+      }
+
+      public OnDateChangeListener getOnDateChangeListener ( ) {
+
+            return mMonthLayout.getOnDateChangeListener();
       }
 }
