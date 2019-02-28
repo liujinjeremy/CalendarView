@@ -2,7 +2,6 @@ package tech.threekilogram.calendarview.month;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,6 +34,7 @@ public class MonthLayout extends ViewPager implements ViewComponent {
        * 展开折叠页面
        */
       private ExpandFoldPage       mExpandFoldPage;
+      private PagerMonthAdapter    mAdapter;
 
       public MonthLayout ( @NonNull Context context ) {
 
@@ -48,6 +48,11 @@ public class MonthLayout extends ViewPager implements ViewComponent {
             return this;
       }
 
+      public Date getDate ( ) {
+
+            return getCurrentPage().getDate();
+      }
+
       @Override
       public void bindParent ( CalendarView calendarView ) {
 
@@ -56,16 +61,12 @@ public class MonthLayout extends ViewPager implements ViewComponent {
             int position = Integer.MAX_VALUE >> 1;
             mSource = new DateSource( calendarView.getDate(), position );
 
-            setAdapter( new PagerMonthAdapter() );
+            mAdapter = new PagerMonthAdapter();
+            setAdapter( mAdapter );
             setCurrentItem( position );
             mListener = new ChangeHeightScroller( this );
             addOnPageChangeListener( mListener );
             mExpandFoldPage = new ExpandFoldPage();
-      }
-
-      public boolean isFirstDayMonday ( ) {
-
-            return mCalendarView.isFirstDayMonday();
       }
 
       @Override
@@ -137,14 +138,18 @@ public class MonthLayout extends ViewPager implements ViewComponent {
             return null;
       }
 
-      public void onSelectedDateChanged ( Date date, int position ) {
+      public void onDateChanged ( Date date, int position, boolean monthMode ) {
 
             mSource.resetDate( date, position );
+            mSource.isMonthMode = monthMode;
             int childCount = getChildCount();
+            boolean firstDayMonday = mCalendarView.isFirstDayMonday();
             for( int i = 0; i < childCount; i++ ) {
-                  MonthPage page = (MonthPage) getChildAt( i );
-                  page.changeSelectedChild( mSource.getDate( page.getPosition() ) );
+                  MonthPage child = (MonthPage) getChildAt( i );
+                  int childPosition = child.getPosition();
+                  child.setInfo( firstDayMonday, monthMode, mSource.getDate( childPosition ), childPosition );
             }
+            requestLayout();
       }
 
       private class DateSource {
@@ -175,9 +180,9 @@ public class MonthLayout extends ViewPager implements ViewComponent {
 
                   if( isMonthMode ) {
                         return getMonthDate( position );
+                  } else {
+                        return getWeekDate( position );
                   }
-
-                  return null;
             }
 
             /**
@@ -186,7 +191,16 @@ public class MonthLayout extends ViewPager implements ViewComponent {
             private Date getMonthDate ( int position ) {
 
                   int step = position - mBasePosition;
-                  return CalendarUtils.getMonthByAddMonth( mBaseDate, step );
+                  return CalendarUtils.getDateByAddMonth( mBaseDate, step );
+            }
+
+            /**
+             * 获取该位置的日期
+             */
+            private Date getWeekDate ( int position ) {
+
+                  int step = position - mBasePosition;
+                  return CalendarUtils.getDateByAddWeek( mBaseDate, step );
             }
       }
 
@@ -215,7 +229,7 @@ public class MonthLayout extends ViewPager implements ViewComponent {
                   }
 
                   Date date = mSource.getDate( position );
-                  page.setInfo( mCalendarView.isFirstDayMonday(), date, position );
+                  page.setInfo( mCalendarView.isFirstDayMonday(), mSource.isMonthMode, date, position );
 
                   container.addView( page );
                   return page;
@@ -238,7 +252,7 @@ public class MonthLayout extends ViewPager implements ViewComponent {
             @Override
             public int getItemPosition ( @NonNull Object object ) {
 
-                  return POSITION_NONE;
+                  return POSITION_UNCHANGED;
             }
       }
 
@@ -370,7 +384,7 @@ public class MonthLayout extends ViewPager implements ViewComponent {
                               }
 
                               break;
-                        case MotionEvent.ACTION_UP:
+                        default:
                               if( isVerticalMoving ) {
                                     isVerticalMoving = isHorizontalMoving = false;
                                     if( y > mDownY ) {
@@ -382,10 +396,7 @@ public class MonthLayout extends ViewPager implements ViewComponent {
                                     }
                                     return true;
                               }
-                              break;
-                        default:
-                              Log.i( TAG, "handleMotionEvent: " + mDownX + " " + mDownY + " " + x + " " + y );
-                              isVerticalMoving = isHorizontalMoving = false;
+                              isHorizontalMoving = false;
                               break;
                   }
                   return false;

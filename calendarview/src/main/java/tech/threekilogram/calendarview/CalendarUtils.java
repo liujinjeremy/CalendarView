@@ -42,7 +42,14 @@ public class CalendarUtils {
             return sCalendar.getTime();
       }
 
-      public static Date getMonthByAddMonth ( Date date, int offset ) {
+      public static Date getDateByAddWeek ( Date date, int offset ) {
+
+            sCalendar.setTime( date );
+            sCalendar.add( Calendar.WEEK_OF_YEAR, offset );
+            return sCalendar.getTime();
+      }
+
+      public static Date getDateByAddMonth ( Date date, int offset ) {
 
             sCalendar.setTime( date );
             sCalendar.add( Calendar.MONTH, offset );
@@ -91,5 +98,9 @@ public class CalendarUtils {
       public static void main ( String[] args ) {
 
             Date date = new Date();
+            for( int i = 0; i < 5; i++ ) {
+                  Date week = getDateByAddWeek( date, i );
+                  System.out.println( getDateFormat( week ) );
+            }
       }
 }
