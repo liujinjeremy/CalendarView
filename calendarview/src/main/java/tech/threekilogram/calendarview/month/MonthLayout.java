@@ -1,7 +1,6 @@
 package tech.threekilogram.calendarview.month;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,9 +21,12 @@ public class MonthLayout extends ViewPager implements ViewComponent {
       private static final String TAG = MonthLayout.class.getSimpleName();
 
       /**
-       * parent
+       * 父布局
        */
       private CalendarView         mCalendarView;
+      /**
+       * 提供数据
+       */
       private DateSource           mSource;
       /**
        * 页面滚动时改变高度
@@ -34,12 +36,10 @@ public class MonthLayout extends ViewPager implements ViewComponent {
        * 展开折叠页面
        */
       private ExpandFoldPage       mExpandFoldPage;
-      private PagerMonthAdapter    mAdapter;
 
       public MonthLayout ( @NonNull Context context ) {
 
             super( context );
-            setBackgroundColor( Color.LTGRAY );
       }
 
       @Override
@@ -61,18 +61,20 @@ public class MonthLayout extends ViewPager implements ViewComponent {
             int position = Integer.MAX_VALUE >> 1;
             mSource = new DateSource( calendarView.getDate(), position );
 
-            mAdapter = new PagerMonthAdapter();
-            setAdapter( mAdapter );
+            PagerMonthAdapter adapter = new PagerMonthAdapter();
+            setAdapter( adapter );
             setCurrentItem( position );
+
             mListener = new ChangeHeightScroller( this );
             addOnPageChangeListener( mListener );
+
             mExpandFoldPage = new ExpandFoldPage();
       }
 
       @Override
       public void notifyFirstDayIsMondayChanged ( boolean isFirstDayMonday ) {
 
-            getAdapter().notifyDataSetChanged();
+            onDateChanged( mSource.mBaseDate, mSource.mBasePosition, mSource.isMonthMode );
       }
 
       @Override
@@ -82,7 +84,7 @@ public class MonthLayout extends ViewPager implements ViewComponent {
 
             /* 滚动时,重设页面高度,不必重新测量,已经设置好,直接使用 */
             if( mListener.isScrolling ) {
-                  setMeasuredDimension( widthSize, getLayoutParams().height );
+                  mListener.setMeasuredDimension( widthSize );
                   return;
             }
 
@@ -113,10 +115,12 @@ public class MonthLayout extends ViewPager implements ViewComponent {
       @Override
       public boolean dispatchTouchEvent ( MotionEvent ev ) {
 
+            /* 已经处于正在展开/折叠状态中,屏蔽掉所有触摸事件 */
             if( mExpandFoldPage.handleMotionEvent( ev ) ) {
                   return true;
             }
 
+            /* 当前页面正在自动展开/折叠,屏蔽掉所有触摸事件 */
             //noinspection ConstantConditions
             if( getCurrentPage().isMovingToFinalState() ) {
                   return true;
@@ -125,7 +129,12 @@ public class MonthLayout extends ViewPager implements ViewComponent {
             return super.dispatchTouchEvent( ev );
       }
 
-      public MonthPage getCurrentPage ( ) {
+      /**
+       * 工具方法,获取当前页面
+       *
+       * @return 当前页面
+       */
+      private MonthPage getCurrentPage ( ) {
 
             int currentItem = getCurrentItem();
             int count = getChildCount();
@@ -138,7 +147,14 @@ public class MonthLayout extends ViewPager implements ViewComponent {
             return null;
       }
 
-      public void onDateChanged ( Date date, int position, boolean monthMode ) {
+      /**
+       * 重新设置基础日期
+       *
+       * @param date 新的基础日期
+       * @param position 基准日期对应的基准位置
+       * @param monthMode 是否是月显示模式
+       */
+      void onDateChanged ( Date date, int position, boolean monthMode ) {
 
             mSource.resetDate( date, position );
             mSource.isMonthMode = monthMode;
@@ -152,6 +168,9 @@ public class MonthLayout extends ViewPager implements ViewComponent {
             requestLayout();
       }
 
+      /**
+       * 用于根据页面之间的位置信息,显示模式计算日期
+       */
       private class DateSource {
 
             /**
@@ -186,7 +205,7 @@ public class MonthLayout extends ViewPager implements ViewComponent {
             }
 
             /**
-             * 获取该位置的日期
+             * 获取该位置的日期,每次增加或者减少一个月
              */
             private Date getMonthDate ( int position ) {
 
@@ -195,7 +214,7 @@ public class MonthLayout extends ViewPager implements ViewComponent {
             }
 
             /**
-             * 获取该位置的日期
+             * 获取该位置的日期,每次增加或者减少一周
              */
             private Date getWeekDate ( int position ) {
 
@@ -209,11 +228,14 @@ public class MonthLayout extends ViewPager implements ViewComponent {
        */
       private class PagerMonthAdapter extends PagerAdapter {
 
+            /**
+             * 回收页面
+             */
             private LinkedList<View> mReUsed = new LinkedList<>();
 
             @Override
             public int getCount ( ) {
-
+                  /* 日期的个数是无限的 */
                   return Integer.MAX_VALUE;
             }
 
@@ -248,16 +270,10 @@ public class MonthLayout extends ViewPager implements ViewComponent {
                   container.removeView( view );
                   mReUsed.add( view );
             }
-
-            @Override
-            public int getItemPosition ( @NonNull Object object ) {
-
-                  return POSITION_UNCHANGED;
-            }
       }
 
       /**
-       * 改变页面高度
+       * 滚动时改变页面高度
        */
       private class ChangeHeightScroller extends ViewPagerScrollListener {
 
@@ -333,18 +349,44 @@ public class MonthLayout extends ViewPager implements ViewComponent {
                   layoutParams.height = (int) ( height + ( nextHeight - height ) * offset );
                   requestLayout();
             }
+
+            /**
+             * 当处于滚动状态时,用来设置布局尺寸
+             *
+             * @param widthSize 布局宽度
+             */
+            private void setMeasuredDimension ( int widthSize ) {
+
+                  MonthLayout.this.setMeasuredDimension( widthSize, getLayoutParams().height );
+            }
       }
 
       /**
-       * 用于竖直滑动时展开折叠布局
+       * 用于竖直滑动时展开折叠当前页面
        */
       private class ExpandFoldPage {
 
+            /**
+             * 按下时位置信息
+             */
             private float   mDownX;
             private float   mDownY;
+            /**
+             * true:正在竖直滑动,当前只能处于水平或者垂直滑动,一旦判断将不会更改
+             */
             private boolean isVerticalMoving;
+            /**
+             * true:正在水平滑动
+             */
             private boolean isHorizontalMoving;
 
+            /**
+             * 拦截垂直滑动事件,并且通知给当前页面,竖直滑动距离
+             *
+             * @param ev 滑动事件
+             *
+             * @return 是否已经消费事件, true:已经消费
+             */
             private boolean handleMotionEvent ( MotionEvent ev ) {
 
                   float x = ev.getX();
@@ -377,7 +419,9 @@ public class MonthLayout extends ViewPager implements ViewComponent {
                               if( isHorizontalMoving ) {
                                     return false;
                               }
+
                               if( isVerticalMoving ) {
+                                    /* 通知滑动距离 */
                                     //noinspection ConstantConditions
                                     getCurrentPage().moving( dy );
                                     return true;
@@ -385,6 +429,7 @@ public class MonthLayout extends ViewPager implements ViewComponent {
 
                               break;
                         default:
+                              /* 如果是竖直滑动,那么通知展开/折叠 */
                               if( isVerticalMoving ) {
                                     isVerticalMoving = isHorizontalMoving = false;
                                     if( y > mDownY ) {

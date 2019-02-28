@@ -17,12 +17,26 @@ import tech.threekilogram.calendarview.CalendarUtils;
  */
 public class MonthDayItemView extends View {
 
-      public static final int IN_MONTH_UNSELECTED = 11;
-      public static final int IN_MONTH_SELECTED   = 12;
-
-      private Date  mDate;
-      private Paint mPaint;
-      private int   mState;
+      /**
+       * 未选中状态,
+       */
+      public static final int   UNSELECTED = 11;
+      /**
+       * 选中状态
+       */
+      public static final int   SELECTED   = 12;
+      /**
+       * 显示的日期
+       */
+      private             Date  mDate;
+      /**
+       * 绘制笔
+       */
+      private             Paint mPaint;
+      /**
+       * 当前状态 {@link #UNSELECTED}{@link #SELECTED}
+       */
+      private             int   mState;
 
       public MonthDayItemView ( Context context ) {
 
@@ -53,7 +67,12 @@ public class MonthDayItemView extends View {
             setMeasuredDimension( widthSize, heightSize );
       }
 
-      public void setState ( int state ) {
+      /**
+       * 更改显示状态
+       *
+       * @param state 新的状态
+       */
+      void setState ( int state ) {
 
             if( mState != state ) {
                   mState = state;
@@ -64,7 +83,7 @@ public class MonthDayItemView extends View {
       @Override
       protected void onDraw ( Canvas canvas ) {
 
-            if( mState == IN_MONTH_UNSELECTED ) {
+            if( mState == UNSELECTED ) {
                   drawUnSelected( canvas );
                   return;
             }
@@ -72,7 +91,12 @@ public class MonthDayItemView extends View {
             drawSelected( canvas );
       }
 
-      public void bind ( Date date ) {
+      /**
+       * 设置数据
+       *
+       * @param date 数据
+       */
+      void bind ( Date date ) {
 
             if( date != mDate ) {
 
@@ -81,9 +105,11 @@ public class MonthDayItemView extends View {
             }
       }
 
-      /**
-       * drawable nothing
-       */
+      Date getDate ( ) {
+
+            return mDate;
+      }
+
       protected void drawUnSelected ( Canvas canvas ) {
 
             int height = canvas.getHeight();
@@ -122,10 +148,5 @@ public class MonthDayItemView extends View {
             canvas.drawText( String.valueOf( day ), widthCenter, height * 0.5f + BaseLineUtils.getBaselineOffset( mPaint ),
                              mPaint
             );
-      }
-
-      public Date getDate ( ) {
-
-            return mDate;
       }
 }

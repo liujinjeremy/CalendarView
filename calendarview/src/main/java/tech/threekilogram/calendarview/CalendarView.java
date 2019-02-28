@@ -9,6 +9,8 @@ import tech.threekilogram.calendarview.month.MonthLayout;
 import tech.threekilogram.calendarview.week.LinearWeekBar;
 
 /**
+ * 显示日期
+ *
  * @author Liujin 2019/2/21:12:04:54
  */
 public class CalendarView extends ViewGroup {
@@ -18,19 +20,20 @@ public class CalendarView extends ViewGroup {
       /**
        * 头部星期条
        */
-      private ViewComponent         mWeekBar;
+      private LinearWeekBar         mWeekBar;
       /**
        * 月视图
        */
-      private ViewComponent         mMonthLayout;
+      private MonthLayout           mMonthLayout;
       /**
        * 布局策略
        */
       private MeasureLayoutStrategy mLayoutStrategy;
+
       /**
        * 每周的起始是不是周一
        */
-      private boolean               isFirstDayMonday = true;
+      private boolean isFirstDayMonday = true;
 
       /**
        * 起始日期
@@ -64,17 +67,7 @@ public class CalendarView extends ViewGroup {
             setWeekBar( weekBar );
       }
 
-      public void setDate ( Date date ) {
-
-            mDate = date;
-      }
-
-      public Date getDate ( ) {
-
-            return mDate;
-      }
-
-      public void setWeekBar ( ViewComponent weekBar ) {
+      void setWeekBar ( LinearWeekBar weekBar ) {
 
             if( mWeekBar != weekBar ) {
                   if( mWeekBar != null ) {
@@ -87,12 +80,12 @@ public class CalendarView extends ViewGroup {
             }
       }
 
-      public ViewComponent getWeekBar ( ) {
+      public LinearWeekBar getWeekBar ( ) {
 
             return mWeekBar;
       }
 
-      public void setMonthLayout ( ViewComponent monthLayout ) {
+      void setMonthLayout ( MonthLayout monthLayout ) {
 
             if( mMonthLayout != monthLayout ) {
                   if( mMonthLayout != null ) {
@@ -105,11 +98,30 @@ public class CalendarView extends ViewGroup {
             }
       }
 
-      public ViewComponent getMonthLayout ( ) {
+      public MonthLayout getMonthLayout ( ) {
 
             return mMonthLayout;
       }
 
+      /**
+       * 设置当前日期
+       */
+      public void setDate ( Date date ) {
+
+            mDate = date;
+      }
+
+      /**
+       * 获取设置的当前日期
+       */
+      public Date getDate ( ) {
+
+            return mDate;
+      }
+
+      /**
+       * 设置每周的第一天是否是周一,true:周一
+       */
       public void setFirstDayMonday ( boolean firstDayMonday ) {
 
             if( isFirstDayMonday != firstDayMonday ) {

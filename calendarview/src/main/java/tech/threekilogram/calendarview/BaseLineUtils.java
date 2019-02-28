@@ -4,6 +4,8 @@ import android.graphics.Paint;
 import android.graphics.Paint.FontMetrics;
 
 /**
+ * 用于计算文字基准线与中线的距离
+ *
  * @author: Liujin
  * @version: V1.0
  * @date: 2018-07-18
