@@ -210,6 +210,20 @@ public class MonthLayout extends ViewPager implements ViewComponent {
             requestLayout();
       }
 
+      private void onNewPageSelected ( int position ) {
+
+            if( mOnDateChangeListener != null ) {
+                  mOnDateChangeListener.onNewPageSelected( mSource.getDate( position ) );
+            }
+      }
+
+      void onNewDateSelected ( Date date ) {
+
+            if( mOnDateChangeListener != null ) {
+                  mOnDateChangeListener.onNewPageSelected( date );
+            }
+      }
+
       /**
        * 用于根据页面之间的位置信息,显示模式计算日期
        */
@@ -338,9 +352,7 @@ public class MonthLayout extends ViewPager implements ViewComponent {
             public void onPageSelected ( int position ) {
 
                   super.onPageSelected( position );
-                  if( mOnDateChangeListener != null ) {
-                        mOnDateChangeListener.onNewPageSelected( mSource.getDate( position ) );
-                  }
+                  onNewPageSelected( position );
             }
 
             @Override

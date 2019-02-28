@@ -1,13 +1,15 @@
 package tech.threekilogram.calendarviewlib;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.viewpager.widget.ViewPager.OnPageChangeListener;
+import java.util.Calendar;
+import java.util.Date;
 import tech.threekilogram.calendarview.CalendarUtils;
 import tech.threekilogram.calendarview.CalendarView;
-import tech.threekilogram.calendarview.month.MonthLayout;
+import tech.threekilogram.calendarview.CalendarView.OnDateChangeListener;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -33,48 +35,27 @@ public class MainActivity extends AppCompatActivity {
             mCalendar = findViewById( R.id.calendar );
             mRoot = findViewById( R.id.root );
 
-//            mTitle.setOnClickListener( new OnClickListener() {
-//
-//                  @Override
-//                  public void onClick ( View v ) {
-//
-//                        MonthLayout child = (MonthLayout) mCalendar.getChildAt( 0 );
-//                        MonthPage currentPage = child.getCurrentPage();
-//                        if( currentPage.getState() == 0 ) {
-//                              currentPage.moving( Integer.MIN_VALUE );
-//                        }
-//                        if( currentPage.getState() == 2 ) {
-//                              currentPage.moving( Integer.MAX_VALUE );
-//                        }
-//                  }
-//            } );
-
-            final MonthLayout child = (MonthLayout) mCalendar.getChildAt( 0 );
-            child.addOnPageChangeListener( new OnPageChangeListener() {
+            mCalendar.getMonthLayout().setBackgroundColor( Color.LTGRAY );
+            mCalendar.setOnDateChangeListener( new OnDateChangeListener() {
 
                   @Override
-                  public void onPageScrolled ( int position, float positionOffset, int positionOffsetPixels ) {
+                  public void onNewPageSelected ( Date date ) {
 
+                        mTitle.setText( CalendarUtils.getDateFormat( date ) );
                   }
 
                   @Override
-                  public void onPageSelected ( int position ) {
+                  public void onNewDateSelected ( Date newDate ) {
 
-                        mTitle.setText( CalendarUtils.getDateFormat( child.getDate() ) );
-                  }
-
-                  @Override
-                  public void onPageScrollStateChanged ( int state ) {
-
+                        mTitle.setText( CalendarUtils.getDateFormat( newDate ) );
                   }
             } );
-            child.post( new Runnable() {
+            mCalendar.setFirstDayMonday( false );
+            Calendar calendar = Calendar.getInstance();
+            calendar.set( 1990, 7, 26 );
+            mCalendar.setDate( calendar.getTime() );
+            mCalendar.setMonthMode( false );
 
-                  @Override
-                  public void run ( ) {
-
-                        mTitle.setText( CalendarUtils.getDateFormat( child.getDate() ) );
-                  }
-            } );
+            mTitle.setText( CalendarUtils.getDateFormat( calendar.getTime() ) );
       }
 }

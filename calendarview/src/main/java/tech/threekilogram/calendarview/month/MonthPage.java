@@ -269,12 +269,14 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             Date date = itemView.getDate();
             /* 日期变化了 */
             if( !date.equals( mDate ) ) {
+                  MonthLayout parent = (MonthLayout) getParent();
                   if( mState == STATE_EXPAND ) {
-                        ( (MonthLayout) getParent() ).onDateChanged( date, mPosition, true );
+                        parent.onDateChanged( date, mPosition, true );
                   }
                   if( mState == STATE_FOLDED ) {
-                        ( (MonthLayout) getParent() ).onDateChanged( date, mPosition, false );
+                        parent.onDateChanged( date, mPosition, false );
                   }
+                  parent.onNewDateSelected( date );
             }
       }
 
