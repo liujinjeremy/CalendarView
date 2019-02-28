@@ -17,10 +17,8 @@ import tech.threekilogram.calendarview.CalendarUtils;
  */
 public class MonthDayItemView extends View {
 
-      public static final int OUT_MONTH           = 10;
       public static final int IN_MONTH_UNSELECTED = 11;
       public static final int IN_MONTH_SELECTED   = 12;
-      public static final int TODAY               = 13;
 
       private Date  mDate;
       private Paint mPaint;
@@ -55,15 +53,23 @@ public class MonthDayItemView extends View {
             setMeasuredDimension( widthSize, heightSize );
       }
 
+      public void setState ( int state ) {
+
+            if( mState != state ) {
+                  mState = state;
+                  invalidate();
+            }
+      }
+
       @Override
       protected void onDraw ( Canvas canvas ) {
 
-            onDrawState( mState, canvas );
-      }
+            if( mState == IN_MONTH_UNSELECTED ) {
+                  drawUnSelected( canvas );
+                  return;
+            }
 
-      public View getView ( ) {
-
-            return this;
+            drawSelected( canvas );
       }
 
       public void bind ( Date date ) {
@@ -75,38 +81,10 @@ public class MonthDayItemView extends View {
             }
       }
 
-      public void setState ( int state ) {
-
-            if( state != mState ) {
-                  mState = state;
-                  invalidate();
-            }
-      }
-
-      public void onDrawState ( int state, Canvas canvas ) {
-
-            if( state == OUT_MONTH ) {
-                  drawOutMonth( canvas );
-                  return;
-            }
-
-            if( state == IN_MONTH_UNSELECTED ) {
-                  drawInMonthUnSelected( canvas );
-                  return;
-            }
-
-            drawSelected( canvas );
-      }
-
       /**
        * drawable nothing
        */
-      protected void drawOutMonth ( Canvas canvas ) { }
-
-      /**
-       * drawable nothing
-       */
-      protected void drawInMonthUnSelected ( Canvas canvas ) {
+      protected void drawUnSelected ( Canvas canvas ) {
 
             int height = canvas.getHeight();
             int width = canvas.getWidth();

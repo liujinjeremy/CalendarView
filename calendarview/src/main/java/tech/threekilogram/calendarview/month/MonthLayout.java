@@ -89,12 +89,6 @@ public class MonthLayout extends ViewPager implements ViewComponent {
                   return;
             }
 
-            /* 当前页面展开折叠时改变高度 */
-            if( mExpandFoldPage.isVerticalMoving ) {
-                  setMeasuredDimension( widthSize, getLayoutParams().height );
-                  return;
-            }
-
             super.onMeasure( widthMeasureSpec, heightMeasureSpec );
 
             /* 将当前页面的高度设置为pager高度 */
@@ -316,6 +310,8 @@ public class MonthLayout extends ViewPager implements ViewComponent {
                                     return false;
                               }
                               if( isVerticalMoving ) {
+                                    //noinspection ConstantConditions
+                                    getCurrentPage().moving( dy );
                                     return true;
                               }
 
@@ -323,8 +319,15 @@ public class MonthLayout extends ViewPager implements ViewComponent {
                         default:
                               if( isVerticalMoving ) {
                                     isVerticalMoving = isHorizontalMoving = false;
+                                    if( y > mDownY ) {
+                                          getCurrentPage().moveToState( MonthPage.STATE_EXPAND );
+                                    } else {
+                                          getCurrentPage().moveToState( MonthPage.STATE_FOLDED );
+                                    }
                                     return true;
                               }
+
+                              isHorizontalMoving = false;
                               break;
                   }
                   return false;

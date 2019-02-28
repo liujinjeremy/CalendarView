@@ -29,7 +29,8 @@ public class MainActivity extends AppCompatActivity {
             super.onCreate( savedInstanceState );
             setContentView( R.layout.activity_main );
 
-            //initView();
+//            initView();
+//            testMonth00();
       }
 
       private void testMonth00 ( ) {
@@ -41,7 +42,7 @@ public class MainActivity extends AppCompatActivity {
                   @Override
                   public void run ( ) {
 
-                        mMonth.folded();
+                        //mMonth.folded();
                   }
             } );
 
@@ -51,14 +52,10 @@ public class MainActivity extends AppCompatActivity {
                   public void onClick ( View v ) {
 
                         Log.i( TAG, "onClick: " );
-                        mMonth.moving( 100 * mCount );
+//                        mMonth.moving( mCount * 100 );
+//                        mCount++;
 
-//                        if( mCount % 2 == 0 ) {
-//                              mMonth.expanded();
-//                        } else {
-//                              mMonth.folded();
-//                        }
-                        mCount++;
+                        mMonth.moveToState( MonthPage.STATE_FOLDED );
                   }
             } );
       }
