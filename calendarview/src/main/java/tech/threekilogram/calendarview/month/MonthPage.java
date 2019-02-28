@@ -19,9 +19,10 @@ public class MonthPage extends ViewGroup implements OnClickListener {
 
       private static final String TAG = MonthPage.class.getSimpleName();
 
-      private static final int STATE_EXPAND = 0;
-      private static final int STATE_MOVING = 1;
-      private static final int STATE_FOLDED = 2;
+      private static final int STATE_EXPAND        = 0;
+      private static final int STATE_EXPAND_MOVING = 1;
+      private static final int STATE_FOLDED        = 2;
+      private static final int STATE_FOLDED_MOVING = 3;
 
       private Date mDate;
       private int  mPosition;
@@ -62,8 +63,6 @@ public class MonthPage extends ViewGroup implements OnClickListener {
                   addView( child );
                   child.setOnClickListener( this );
             }
-
-            //setBackgroundColor( Color.LTGRAY );
       }
 
       public Date getDate ( ) {
@@ -186,13 +185,12 @@ public class MonthPage extends ViewGroup implements OnClickListener {
 
             if( mTopMoved == 0 && mBottomMoved == 0 ) {
                   mState = STATE_EXPAND;
+                  Log.i( TAG, "onLayout: expand" );
                   setChildrenExpandState();
             } else if( mTopMoved == -topDis && mBottomMoved == -bottomDis ) {
                   mState = STATE_FOLDED;
+                  Log.i( TAG, "onLayout: fold" );
                   setChildrenFoldState();
-            } else {
-                  mState = STATE_MOVING;
-                  setChildrenExpandState();
             }
       }
 
@@ -277,50 +275,70 @@ public class MonthPage extends ViewGroup implements OnClickListener {
 
       public void moving ( float dy ) {
 
-            if( dy == 0 ) {
-                  return;
+            if( mState == STATE_FOLDED ) {
+                  mState = STATE_FOLDED_MOVING;
+                  Log.i( TAG, "moving: 从折叠开始" );
+                  setChildrenExpandState();
+            } else if( mState == STATE_EXPAND ) {
+                  mState = STATE_EXPAND_MOVING;
+                  Log.i( TAG, "moving: 从展开开始" );
             }
 
-            int topDis = mCurrentSelectedPosition / 7 * mCellHeight;
-            int bottomDis = mPageHeight - ( topDis + mCellHeight );
-            float radio = topDis * 1f / ( topDis + bottomDis );
+            if( mState == STATE_EXPAND_MOVING ) {
 
-            if( dy < 0 ) {
+                  int topDis = mCurrentSelectedPosition / 7 * mCellHeight;
+                  int bottomDis = mPageHeight - ( topDis + mCellHeight );
+                  float radio = topDis * 1f / ( topDis + bottomDis );
 
-                  if( mState == STATE_FOLDED ) {
-                        return;
+                  int topMoved = (int) ( dy * radio );
+                  if( topMoved < -topDis ) {
+                        topMoved = -topDis;
+                  }
+                  if( topMoved > 0 ) {
+                        topMoved = 0;
                   }
 
-                  mTopMoved = (int) ( dy * radio );
+                  int bottomMoved = (int) ( dy - topMoved );
+                  if( bottomMoved < -bottomDis ) {
+                        bottomMoved = -bottomDis;
+                  }
+                  if( bottomMoved > 0 ) {
+                        bottomMoved = 0;
+                  }
 
+                  mTopMoved = topMoved;
+                  mBottomMoved = bottomMoved;
+
+                  Log.i( TAG, "moving: " + (int) dy + " " + mTopMoved + " " + mBottomMoved );
+                  requestLayout();
+            } else if( mState == STATE_FOLDED_MOVING ) {
+
+                  int topDis = mCurrentSelectedPosition / 7 * mCellHeight;
+                  int bottomDis = mPageHeight - ( topDis + mCellHeight );
+                  float radio = topDis * 1f / ( topDis + bottomDis );
+
+                  int topMoved = (int) ( dy * radio );
+                  int bottomMoved = (int) ( dy - topMoved );
+
+                  mTopMoved = -topDis + topMoved;
+                  if( mTopMoved > 0 ) {
+                        mTopMoved = 0;
+                  }
                   if( mTopMoved < -topDis ) {
                         mTopMoved = -topDis;
                   }
 
-                  mBottomMoved = (int) ( dy - mTopMoved );
-                  if( bottomDis + mBottomMoved < 0 ) {
+                  mBottomMoved = -bottomDis + bottomMoved;
+                  if( mBottomMoved > 0 ) {
+                        mBottomMoved = 0;
+                  }
+                  if( mBottomMoved < -bottomDis ) {
                         mBottomMoved = -bottomDis;
                   }
-            } else {
 
-                  if( mState == STATE_EXPAND ) {
-                        return;
-                  }
-
-                  int topMoved = (int) ( dy * radio );
-                  if( -topDis + topMoved > 0 ) {
-                        topMoved = topDis;
-                  }
-                  mTopMoved = -topDis + topMoved;
-
-                  int bottomMoved = (int) ( dy - topMoved );
-                  if( bottomMoved > bottomDis ) {
-                        bottomMoved = bottomDis;
-                  }
-                  mBottomMoved = -bottomDis + bottomMoved;
+                  Log.i( TAG, "moving: " + (int) dy + " " + mTopMoved + " " + mBottomMoved + " " + topMoved + " " + bottomMoved );
+                  requestLayout();
             }
-
-            requestLayout();
       }
 
       @Override
@@ -331,9 +349,9 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             if( mState == mTargetState ) {
 
                   if( mTargetState == STATE_FOLDED ) {
-                        Log.i( TAG, "computeScroll: 已经折叠" );
+                        Log.i( TAG, "computeScroll: 已经折叠" + " " + mTopMoved + " " + mBottomMoved );
                   } else if( mTargetState == STATE_EXPAND ) {
-                        Log.i( TAG, "computeScroll: 已经展开" );
+                        Log.i( TAG, "computeScroll: 已经展开" + " " + mTopMoved + " " + mBottomMoved );
                   }
 
                   mTargetState = -1;

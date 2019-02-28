@@ -2,6 +2,7 @@ package tech.threekilogram.calendarview.month;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -369,7 +370,7 @@ public class MonthLayout extends ViewPager implements ViewComponent {
                               }
 
                               break;
-                        default:
+                        case MotionEvent.ACTION_UP:
                               if( isVerticalMoving ) {
                                     isVerticalMoving = isHorizontalMoving = false;
                                     if( y > mDownY ) {
@@ -381,8 +382,10 @@ public class MonthLayout extends ViewPager implements ViewComponent {
                                     }
                                     return true;
                               }
-
-                              isHorizontalMoving = false;
+                              break;
+                        default:
+                              Log.i( TAG, "handleMotionEvent: " + mDownX + " " + mDownY + " " + x + " " + y );
+                              isVerticalMoving = isHorizontalMoving = false;
                               break;
                   }
                   return false;
