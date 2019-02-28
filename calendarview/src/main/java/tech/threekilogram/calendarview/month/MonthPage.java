@@ -3,7 +3,7 @@ package tech.threekilogram.calendarview.month;
 import android.content.Context;
 import android.graphics.Color;
 import android.util.AttributeSet;
-import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -35,6 +35,10 @@ public class MonthPage extends ViewGroup implements OnClickListener {
       private int mPageHeight;
       private int mTopMoved;
       private int mBottomMoved;
+
+      private float   mDownX;
+      private float   mDownY;
+      private boolean isMoved;
 
       public MonthPage ( Context context ) {
 
@@ -163,7 +167,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             int measuredHeight = resultHeight + mTopMoved + mBottomMoved;
             setMeasuredDimension( widthSize, measuredHeight );
 
-            Log.i( TAG, "onMeasure: " + mTopMoved + " " + mBottomMoved + " " + measuredHeight );
+            //Log.i( TAG, "onMeasure: " + mTopMoved + " " + mBottomMoved + " " + measuredHeight );
       }
 
       @Override
@@ -182,17 +186,20 @@ public class MonthPage extends ViewGroup implements OnClickListener {
                       left, top + mTopMoved, left + view.getMeasuredWidth(), top + view.getMeasuredHeight() + mTopMoved );
             }
 
-            if( mTopMoved == 0 ) {
+            int topDis = mCurrentSelectedPosition / 7 * mCellHeight;
+            int bottomDis = mPageHeight - ( topDis + mCellHeight );
+
+            if( mTopMoved == 0 && mBottomMoved == 0 ) {
                   mState = STATE_EXPAND;
                   setChildrenExpandState();
-            } else if( mTopMoved == -mCurrentSelectedPosition / 7 * mCellHeight ) {
+            } else if( mTopMoved == -topDis && mBottomMoved == -bottomDis ) {
                   mState = STATE_FOLDED;
                   setChildrenFoldState();
             } else {
                   mState = STATE_MOVING;
             }
 
-            Log.i( TAG, "onLayout: " + mState + " " + mTopMoved + " " + mBottomMoved );
+            //Log.i( TAG, "onLayout: " + mState + " " + mTopMoved + " " + mBottomMoved );
       }
 
       private void setChildrenExpandState ( ) {
@@ -233,14 +240,65 @@ public class MonthPage extends ViewGroup implements OnClickListener {
       }
 
       @Override
+      public boolean dispatchTouchEvent ( MotionEvent ev ) {
+
+            float x = ev.getX();
+            float y = ev.getY();
+            switch( ev.getAction() ) {
+                  case MotionEvent.ACTION_DOWN:
+                        mDownX = x;
+                        mDownY = y;
+                        break;
+                  case MotionEvent.ACTION_MOVE:
+
+                        float dx = x - mDownX;
+                        float dy = y - mDownY;
+
+                        if( verticalMove( dx, dy ) ) {
+                              isMoved = true;
+                              moving( dy );
+                              return true;
+                        }
+
+                        break;
+                  default:
+                        if( isMoved ) {
+                              return true;
+                        }
+                        break;
+            }
+
+            return super.dispatchTouchEvent( ev );
+      }
+
+      private boolean verticalMove ( float dx, float dy ) {
+
+            return Math.abs( dy ) > Math.abs( dx ) * 2;
+      }
+
+      @Override
       public void onClick ( View v ) {
 
             MonthDayItemView itemView = (MonthDayItemView) v;
             Date date = itemView.getDate();
             if( !date.equals( mDate ) ) {
-                  mDate = date;
-                  setInfo( isFirstDayMonday, date, mPosition );
+                  changeSelectedChild( v, date );
             }
+      }
+
+      private void changeSelectedChild ( View v, Date date ) {
+
+            IMonthDayItem item = (IMonthDayItem) getChildAt( mCurrentSelectedPosition );
+            item.setState( IMonthDayItem.IN_MONTH_UNSELECTED );
+            ( (MonthDayItemView) v ).setState( IMonthDayItem.IN_MONTH_SELECTED );
+            int childCount = getChildCount();
+            for( int i = 0; i < childCount; i++ ) {
+                  View child = getChildAt( i );
+                  if( child == v ) {
+                        mCurrentSelectedPosition = i;
+                  }
+            }
+            mDate = date;
       }
 
       public int getPosition ( ) {
@@ -248,10 +306,10 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             return mPosition;
       }
 
-      public void moving ( float dy ) {
+      public int moving ( float dy ) {
 
             if( dy == 0 ) {
-                  return;
+                  return 0;
             }
 
             int topDis = mCurrentSelectedPosition / 7 * mCellHeight;
@@ -261,7 +319,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             if( dy < 0 ) {
 
                   if( mState == STATE_FOLDED ) {
-                        return;
+                        return 0;
                   }
 
                   mTopMoved = (int) ( dy * radio );
@@ -277,23 +335,29 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             } else {
 
                   if( mState == STATE_EXPAND ) {
-                        return;
+                        return 0;
                   }
 
                   int topMoved = (int) ( dy * radio );
-                  if( mTopMoved + topMoved > 0 ) {
-                        topMoved = -mTopMoved;
+                  if( -topDis + topMoved > 0 ) {
+                        topMoved = topDis;
                   }
-                  mTopMoved += topMoved;
+                  mTopMoved = -topDis + topMoved;
 
                   int bottomMoved = (int) ( dy - topMoved );
-                  if( mBottomMoved + bottomMoved > 0 ) {
-                        bottomMoved = -mBottomMoved;
+                  if( bottomMoved > bottomDis ) {
+                        bottomMoved = bottomDis;
                   }
-                  mBottomMoved += bottomMoved;
+                  mBottomMoved = -bottomDis + bottomMoved;
             }
 
             requestLayout();
+
+            int result = mBottomMoved + mTopMoved;
+            if( result != 0 ) {
+                  return result;
+            }
+            return 0;
       }
 
       public void expanded ( ) {
@@ -307,7 +371,6 @@ public class MonthPage extends ViewGroup implements OnClickListener {
 
             mTopMoved = -mCurrentSelectedPosition / 7 * mCellHeight;
             mBottomMoved = ( -mTopMoved + mCellHeight ) - mPageHeight;
-
             requestLayout();
       }
 }

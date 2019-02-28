@@ -29,13 +29,12 @@ public class MainActivity extends AppCompatActivity {
             super.onCreate( savedInstanceState );
             setContentView( R.layout.activity_main );
 
-            testMonth();
+            initView();
+            testMonth00();
       }
 
-      private void testMonth ( ) {
+      private void testMonth00 ( ) {
 
-            mMonth = findViewById( R.id.month );
-            mTitle = findViewById( R.id.title );
             Date date = CalendarUtils.updateDayOfMonth( new Date(), 13 );
             mMonth.setInfo( true, date, 0 );
             mMonth.post( new Runnable() {
@@ -97,5 +96,7 @@ public class MainActivity extends AppCompatActivity {
 //                  }
 //            } );
 
+            mTitle = (TextView) findViewById( R.id.title );
+            mMonth = (MonthPage) findViewById( R.id.month );
       }
 }
