@@ -15,11 +15,16 @@ import tech.threekilogram.calendarview.CalendarUtils;
 /**
  * @author Liujin 2019/2/25:18:09:25
  */
-public class MonthDayItemView extends View implements IMonthDayItem {
+public class MonthDayItemView extends View {
 
-      private Date mDate;
+      public static final int OUT_MONTH           = 10;
+      public static final int IN_MONTH_UNSELECTED = 11;
+      public static final int IN_MONTH_SELECTED   = 12;
+      public static final int TODAY               = 13;
+
+      private Date  mDate;
       private Paint mPaint;
-      private int mState;
+      private int   mState;
 
       public MonthDayItemView ( Context context ) {
 
@@ -56,13 +61,11 @@ public class MonthDayItemView extends View implements IMonthDayItem {
             onDrawState( mState, canvas );
       }
 
-      @Override
       public View getView ( ) {
 
             return this;
       }
 
-      @Override
       public void bind ( Date date ) {
 
             if( date != mDate ) {
@@ -72,7 +75,6 @@ public class MonthDayItemView extends View implements IMonthDayItem {
             }
       }
 
-      @Override
       public void setState ( int state ) {
 
             if( state != mState ) {
@@ -81,7 +83,6 @@ public class MonthDayItemView extends View implements IMonthDayItem {
             }
       }
 
-      @Override
       public void onDrawState ( int state, Canvas canvas ) {
 
             if( state == OUT_MONTH ) {

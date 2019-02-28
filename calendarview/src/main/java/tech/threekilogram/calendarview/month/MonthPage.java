@@ -1,5 +1,9 @@
 package tech.threekilogram.calendarview.month;
 
+import static tech.threekilogram.calendarview.month.MonthDayItemView.IN_MONTH_SELECTED;
+import static tech.threekilogram.calendarview.month.MonthDayItemView.IN_MONTH_UNSELECTED;
+import static tech.threekilogram.calendarview.month.MonthDayItemView.OUT_MONTH;
+
 import android.content.Context;
 import android.graphics.Color;
 import android.util.AttributeSet;
@@ -114,20 +118,20 @@ public class MonthPage extends ViewGroup implements OnClickListener {
                   if( offset < 0 || offset > mMonthDayCount - 1 ) {
 
                         if( mState == STATE_FOLDED ) {
-                              child.setState( IMonthDayItem.IN_MONTH_UNSELECTED );
+                              child.setState( IN_MONTH_UNSELECTED );
                               child.setVisibility( VISIBLE );
                         } else {
-                              child.setState( IMonthDayItem.OUT_MONTH );
+                              child.setState( OUT_MONTH );
                               child.setVisibility( INVISIBLE );
                         }
                   } else {
 
                         child.setVisibility( VISIBLE );
                         if( mDate.equals( day ) ) {
-                              child.setState( IMonthDayItem.IN_MONTH_SELECTED );
+                              child.setState( IN_MONTH_SELECTED );
                               mCurrentSelectedPosition = i;
                         } else {
-                              child.setState( IMonthDayItem.IN_MONTH_UNSELECTED );
+                              child.setState( IN_MONTH_UNSELECTED );
                         }
                   }
                   offset++;
@@ -211,7 +215,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
 
                   if( offset < 0 || offset > mMonthDayCount - 1 ) {
                         MonthDayItemView child = (MonthDayItemView) getChildAt( i );
-                        child.setState( IMonthDayItem.OUT_MONTH );
+                        child.setState( OUT_MONTH );
                         child.setVisibility( INVISIBLE );
                   }
                   offset++;
@@ -227,7 +231,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
 
                   if( offset < 0 || offset > mMonthDayCount - 1 ) {
                         MonthDayItemView child = (MonthDayItemView) getChildAt( i );
-                        child.setState( IMonthDayItem.IN_MONTH_UNSELECTED );
+                        child.setState( IN_MONTH_UNSELECTED );
                         child.setVisibility( VISIBLE );
                   }
                   offset++;
@@ -288,9 +292,9 @@ public class MonthPage extends ViewGroup implements OnClickListener {
 
       private void changeSelectedChild ( View v, Date date ) {
 
-            IMonthDayItem item = (IMonthDayItem) getChildAt( mCurrentSelectedPosition );
-            item.setState( IMonthDayItem.IN_MONTH_UNSELECTED );
-            ( (MonthDayItemView) v ).setState( IMonthDayItem.IN_MONTH_SELECTED );
+            MonthDayItemView item = (MonthDayItemView) getChildAt( mCurrentSelectedPosition );
+            item.setState( IN_MONTH_UNSELECTED );
+            ( (MonthDayItemView) v ).setState( IN_MONTH_SELECTED );
             int childCount = getChildCount();
             for( int i = 0; i < childCount; i++ ) {
                   View child = getChildAt( i );
