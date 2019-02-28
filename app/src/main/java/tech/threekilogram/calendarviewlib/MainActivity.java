@@ -1,27 +1,23 @@
 package tech.threekilogram.calendarviewlib;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
-import java.util.Date;
-import tech.threekilogram.calendarview.CalendarUtils;
 import tech.threekilogram.calendarview.CalendarView;
+import tech.threekilogram.calendarview.month.MonthLayout;
 import tech.threekilogram.calendarview.month.MonthPage;
 
 public class MainActivity extends AppCompatActivity {
 
       private static final String TAG = MainActivity.class.getSimpleName();
 
+      private int          mCount = 1;
       private TextView     mTitle;
-      private CalendarView mCalendarView;
+      private CalendarView mCalendar;
       private FrameLayout  mRoot;
-      private MonthPage    mMonth;
-
-      private int mCount = 1;
 
       @Override
       protected void onCreate ( Bundle savedInstanceState ) {
@@ -29,70 +25,29 @@ public class MainActivity extends AppCompatActivity {
             super.onCreate( savedInstanceState );
             setContentView( R.layout.activity_main );
 
-//            initView();
-//            testMonth00();
+            initView();
       }
 
-      private void testMonth00 ( ) {
+      private void initView ( ) {
 
-            Date date = CalendarUtils.updateDayOfMonth( new Date(), 13 );
-            mMonth.setInfo( true, date, 0 );
-            mMonth.post( new Runnable() {
-
-                  @Override
-                  public void run ( ) {
-
-                        //mMonth.folded();
-                  }
-            } );
+            mTitle = findViewById( R.id.title );
+            mCalendar = findViewById( R.id.calendar );
+            mRoot = findViewById( R.id.root );
 
             mTitle.setOnClickListener( new OnClickListener() {
 
                   @Override
                   public void onClick ( View v ) {
 
-                        Log.i( TAG, "onClick: " );
-//                        mMonth.moving( mCount * 100 );
-//                        mCount++;
-
-                        mMonth.moveToState( MonthPage.STATE_FOLDED );
+                        MonthLayout child = (MonthLayout) mCalendar.getChildAt( 0 );
+                        MonthPage currentPage = child.getCurrentPage();
+                        if( currentPage.getState() == 0 ) {
+                              currentPage.moving( Integer.MIN_VALUE );
+                        }
+                        if( currentPage.getState() == 2 ) {
+                              currentPage.moving( Integer.MAX_VALUE );
+                        }
                   }
             } );
-      }
-
-      private void initView ( ) {
-
-//            mRoot = findViewById( R.id.root );
-//            mTitle = findViewById( R.id.title );
-//            mCalendarView = findViewById( R.id.calendarView );
-//            mCalendarView.setFirstDayMonday( true );
-//
-//            final PagerMonthLayout monthLayout = (PagerMonthLayout) mCalendarView.getMonthLayout();
-//            monthLayout.post( new Runnable() {
-//
-//                  @Override
-//                  public void run ( ) {
-//
-//                        int currentItem = monthLayout.getCurrentItem();
-//                        Date date = monthLayout.getDate( currentItem );
-//                        String yearMonthFormat = CalendarUtils.getYearMonthFormat( date );
-//                        mTitle.setText( yearMonthFormat );
-//                  }
-//            } );
-//
-//            monthLayout.addOnPageChangeListener( new SimpleOnPageChangeListener() {
-//
-//                  @Override
-//                  public void onPageSelected ( int position ) {
-//
-//                        super.onPageSelected( position );
-//                        Date date = monthLayout.getDate( position );
-//                        String format = CalendarUtils.getYearMonthFormat( date );
-//                        mTitle.setText( format );
-//                  }
-//            } );
-
-            mTitle = (TextView) findViewById( R.id.title );
-            mMonth = (MonthPage) findViewById( R.id.month );
       }
 }

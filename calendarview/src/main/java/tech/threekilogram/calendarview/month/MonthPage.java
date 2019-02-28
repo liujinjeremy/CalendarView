@@ -5,6 +5,7 @@ import static tech.threekilogram.calendarview.month.MonthDayItemView.IN_MONTH_UN
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -18,9 +19,9 @@ public class MonthPage extends ViewGroup implements OnClickListener {
 
       private static final String TAG = MonthPage.class.getSimpleName();
 
-      public static final int STATE_EXPAND = 0;
-      public static final int STATE_MOVING = 1;
-      public static final int STATE_FOLDED = 2;
+      private static final int STATE_EXPAND = 0;
+      private static final int STATE_MOVING = 1;
+      private static final int STATE_FOLDED = 2;
 
       private Date mDate;
       private int  mPosition;
@@ -37,7 +38,6 @@ public class MonthPage extends ViewGroup implements OnClickListener {
       private int mBottomMoved;
 
       private int mTargetState = -1;
-      private int mMoved;
 
       public MonthPage ( Context context ) {
 
@@ -82,8 +82,8 @@ public class MonthPage extends ViewGroup implements OnClickListener {
 
       private void calculateMonthInfo ( boolean isFirstDayMonday, Date date ) {
 
-            mMonthDayCount = CalendarUtils.monthDayCount( date );
-            int dayOfWeek = CalendarUtils.weekOfMonthFirstDay( date );
+            mMonthDayCount = CalendarUtils.getDayCountOfMonth( date );
+            int dayOfWeek = CalendarUtils.getDayOfWeekAtMonthFirstDay( date );
             if( isFirstDayMonday ) {
                   if( dayOfWeek == 1 ) {
                         mFirstDayOffset = 6;
@@ -100,13 +100,13 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             int childCount = getChildCount();
             int offset = -mFirstDayOffset;
 
-            Date firstDayOfMonth = CalendarUtils.firstDayOfMonth( mDate );
+            Date firstDayOfMonth = CalendarUtils.getFirstDayOfMonth( mDate );
 
             int beforeSelected = mCurrentSelectedPosition;
 
             for( int i = 0; i < childCount; i++ ) {
                   MonthDayItemView child = (MonthDayItemView) getChildAt( i );
-                  Date day = CalendarUtils.getDayByStep( firstDayOfMonth, offset );
+                  Date day = CalendarUtils.getDateByAddDay( firstDayOfMonth, offset );
                   child.bind( day );
 
                   if( offset < 0 || offset > mMonthDayCount - 1 ) {
@@ -249,20 +249,22 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             MonthDayItemView itemView = (MonthDayItemView) v;
             Date date = itemView.getDate();
             if( !date.equals( mDate ) ) {
-                  changeSelectedChild( v, date );
+                  ( (MonthLayout) getParent() ).onSelectedDateChanged( date, mPosition );
             }
       }
 
-      private void changeSelectedChild ( View v, Date date ) {
+      public void changeSelectedChild ( Date date ) {
 
             MonthDayItemView item = (MonthDayItemView) getChildAt( mCurrentSelectedPosition );
             item.setState( IN_MONTH_UNSELECTED );
-            ( (MonthDayItemView) v ).setState( IN_MONTH_SELECTED );
+
             int childCount = getChildCount();
             for( int i = 0; i < childCount; i++ ) {
-                  View child = getChildAt( i );
-                  if( child == v ) {
+                  MonthDayItemView child = (MonthDayItemView) getChildAt( i );
+                  if( child.getDate().equals( date ) ) {
                         mCurrentSelectedPosition = i;
+                        child.setState( IN_MONTH_SELECTED );
+                        break;
                   }
             }
             mDate = date;
@@ -321,26 +323,19 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             requestLayout();
       }
 
-      public void expanded ( ) {
-
-            mTopMoved = 0;
-            mBottomMoved = 0;
-            requestLayout();
-      }
-
-      public void folded ( ) {
-
-            mTopMoved = -mCurrentSelectedPosition / 7 * mCellHeight;
-            mBottomMoved = ( -mTopMoved + mCellHeight ) - mPageHeight;
-            requestLayout();
-      }
-
       @Override
       public void computeScroll ( ) {
 
             super.computeScroll();
 
             if( mState == mTargetState ) {
+
+                  if( mTargetState == STATE_FOLDED ) {
+                        Log.i( TAG, "computeScroll: 已经折叠" );
+                  } else if( mTargetState == STATE_EXPAND ) {
+                        Log.i( TAG, "computeScroll: 已经展开" );
+                  }
+
                   mTargetState = -1;
                   return;
             }
@@ -359,11 +354,32 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             }
       }
 
-      public void moveToState ( int state ) {
+      public void moveToExpand ( ) {
 
-            if( mTargetState == -1 ) {
+            moveToState( STATE_EXPAND );
+      }
+
+      public void moveToFold ( ) {
+
+            moveToState( STATE_FOLDED );
+      }
+
+      private void moveToState ( int state ) {
+
+            if( mTargetState == -1 && mState != state ) {
+
                   mTargetState = state;
                   computeScroll();
             }
+      }
+
+      public boolean isMovingToFinalState ( ) {
+
+            return mTargetState != -1;
+      }
+
+      public int getState ( ) {
+
+            return mState;
       }
 }

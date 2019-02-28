@@ -25,10 +25,7 @@ public class MonthLayout extends ViewPager implements ViewComponent {
        * parent
        */
       private CalendarView         mCalendarView;
-      /**
-       * 基准日期
-       */
-      private Date                 mBaseDate;
+      private DateSource           mSource;
       /**
        * 页面滚动时改变高度
        */
@@ -44,15 +41,6 @@ public class MonthLayout extends ViewPager implements ViewComponent {
             setBackgroundColor( Color.LTGRAY );
       }
 
-      /**
-       * 获取该位置的日期
-       */
-      public Date getDate ( int position ) {
-
-            int step = position - Integer.MAX_VALUE / 2;
-            return CalendarUtils.getMonthByStep( mBaseDate, step );
-      }
-
       @Override
       public View getView ( ) {
 
@@ -63,13 +51,20 @@ public class MonthLayout extends ViewPager implements ViewComponent {
       public void bindParent ( CalendarView calendarView ) {
 
             mCalendarView = calendarView;
-            mBaseDate = calendarView.getDate();
+
+            int position = Integer.MAX_VALUE >> 1;
+            mSource = new DateSource( calendarView.getDate(), position );
 
             setAdapter( new PagerMonthAdapter() );
-            setCurrentItem( Integer.MAX_VALUE >> 1 );
+            setCurrentItem( position );
             mListener = new ChangeHeightScroller( this );
             addOnPageChangeListener( mListener );
             mExpandFoldPage = new ExpandFoldPage();
+      }
+
+      public boolean isFirstDayMonday ( ) {
+
+            return mCalendarView.isFirstDayMonday();
       }
 
       @Override
@@ -120,10 +115,15 @@ public class MonthLayout extends ViewPager implements ViewComponent {
                   return true;
             }
 
+            //noinspection ConstantConditions
+            if( getCurrentPage().isMovingToFinalState() ) {
+                  return true;
+            }
+
             return super.dispatchTouchEvent( ev );
       }
 
-      private MonthPage getCurrentPage ( ) {
+      public MonthPage getCurrentPage ( ) {
 
             int currentItem = getCurrentItem();
             int count = getChildCount();
@@ -134,6 +134,59 @@ public class MonthLayout extends ViewPager implements ViewComponent {
                   }
             }
             return null;
+      }
+
+      public void onSelectedDateChanged ( Date date, int position ) {
+
+            mSource.resetDate( date, position );
+            int childCount = getChildCount();
+            for( int i = 0; i < childCount; i++ ) {
+                  MonthPage page = (MonthPage) getChildAt( i );
+                  page.changeSelectedChild( mSource.getDate( page.getPosition() ) );
+            }
+      }
+
+      private class DateSource {
+
+            /**
+             * 基准日期
+             */
+            private Date    mBaseDate;
+            private int     mBasePosition;
+            /**
+             * 是否是月模式
+             */
+            private boolean isMonthMode = true;
+
+            private DateSource ( Date baseDate, int basePosition ) {
+
+                  mBaseDate = baseDate;
+                  mBasePosition = basePosition;
+            }
+
+            private void resetDate ( Date date, int position ) {
+
+                  mBaseDate = date;
+                  mBasePosition = position;
+            }
+
+            private Date getDate ( int position ) {
+
+                  if( isMonthMode ) {
+                        return getMonthDate( position );
+                  }
+
+                  return null;
+            }
+
+            /**
+             * 获取该位置的日期
+             */
+            private Date getMonthDate ( int position ) {
+
+                  int step = position - mBasePosition;
+                  return CalendarUtils.getMonthByAddMonth( mBaseDate, step );
+            }
       }
 
       /**
@@ -160,7 +213,7 @@ public class MonthLayout extends ViewPager implements ViewComponent {
                         page = (MonthPage) mReUsed.pollFirst();
                   }
 
-                  Date date = getDate( position );
+                  Date date = mSource.getDate( position );
                   page.setInfo( mCalendarView.isFirstDayMonday(), date, position );
 
                   container.addView( page );
@@ -320,9 +373,11 @@ public class MonthLayout extends ViewPager implements ViewComponent {
                               if( isVerticalMoving ) {
                                     isVerticalMoving = isHorizontalMoving = false;
                                     if( y > mDownY ) {
-                                          getCurrentPage().moveToState( MonthPage.STATE_EXPAND );
+                                          //noinspection ConstantConditions
+                                          getCurrentPage().moveToExpand();
                                     } else {
-                                          getCurrentPage().moveToState( MonthPage.STATE_FOLDED );
+                                          //noinspection ConstantConditions
+                                          getCurrentPage().moveToFold();
                                     }
                                     return true;
                               }

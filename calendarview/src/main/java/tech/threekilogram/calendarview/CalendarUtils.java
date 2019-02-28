@@ -13,7 +13,7 @@ public class CalendarUtils {
       private static final Calendar         sCalendar = Calendar.getInstance();
       private static final SimpleDateFormat sFormat   = new SimpleDateFormat( "yyyy年MM月dd日 HH:mm:ss" );
 
-      public static int monthDayCount ( Date date ) {
+      public static int getDayCountOfMonth ( Date date ) {
 
             sCalendar.setTime( date );
             sCalendar.add( Calendar.MONTH, 1 );
@@ -22,24 +22,30 @@ public class CalendarUtils {
             return sCalendar.get( Calendar.DAY_OF_MONTH );
       }
 
-      public static int weekOfMonthFirstDay ( Date date ) {
+      public static int getDayOfWeekAtMonthFirstDay ( Date date ) {
 
-            sCalendar.setTime( date );
-            sCalendar.set( Calendar.DAY_OF_MONTH, 1 );
+            sCalendar.setTime( getFirstDayOfMonth( date ) );
             return sCalendar.get( Calendar.DAY_OF_WEEK );
       }
 
-      public static Date firstDayOfMonth ( Date date ) {
+      public static Date getFirstDayOfMonth ( Date date ) {
 
             sCalendar.setTime( date );
             sCalendar.set( Calendar.DAY_OF_MONTH, 1 );
             return sCalendar.getTime();
       }
 
-      public static Date getDayByStep ( Date date, int offset ) {
+      public static Date getDateByAddDay ( Date date, int offset ) {
 
             sCalendar.setTime( date );
             sCalendar.add( Calendar.DAY_OF_MONTH, offset );
+            return sCalendar.getTime();
+      }
+
+      public static Date getMonthByAddMonth ( Date date, int offset ) {
+
+            sCalendar.setTime( date );
+            sCalendar.add( Calendar.MONTH, offset );
             return sCalendar.getTime();
       }
 
@@ -47,6 +53,26 @@ public class CalendarUtils {
 
             sCalendar.setTime( date );
             return sCalendar.get( Calendar.DAY_OF_MONTH );
+      }
+
+      public static Date setDayOfMonth ( Date date, int dayOfMonth ) {
+
+            if( dayOfMonth < 1 ) {
+                  dayOfMonth = 1;
+            }
+            int countOfMonth = getDayCountOfMonth( date );
+            if( dayOfMonth > countOfMonth ) {
+                  dayOfMonth = countOfMonth;
+            }
+            sCalendar.setTime( date );
+            sCalendar.set( Calendar.DAY_OF_MONTH, dayOfMonth );
+            return sCalendar.getTime();
+      }
+
+      public static int getDayOfWeek ( Date date ) {
+
+            sCalendar.setTime( date );
+            return sCalendar.get( Calendar.DAY_OF_WEEK );
       }
 
       public static String getYearMonthFormat ( Date date ) {
@@ -62,41 +88,8 @@ public class CalendarUtils {
             return sFormat.format( date );
       }
 
-      public static Date getMonthByStep ( Date date, int offset ) {
-
-            sCalendar.setTime( date );
-            sCalendar.add( Calendar.MONTH, offset );
-            return sCalendar.getTime();
-      }
-
-      public static Date updateDayOfMonth ( Date date, int dayOfMonth ) {
-
-            sCalendar.setTime( date );
-            int count = monthDayCount( date );
-            if( dayOfMonth <= count ) {
-                  sCalendar.set( Calendar.DAY_OF_MONTH, dayOfMonth );
-            } else {
-                  sCalendar.set( Calendar.DAY_OF_MONTH, count );
-            }
-
-            return sCalendar.getTime();
-      }
-
-      public static int getDayOfWeek ( Date date ) {
-
-            sCalendar.setTime( date );
-            return sCalendar.get( Calendar.DAY_OF_WEEK );
-      }
-
       public static void main ( String[] args ) {
 
             Date date = new Date();
-            sCalendar.setTime( date );
-
-            for( int i = 0; i < 7; i++ ) {
-
-                  System.out.println( "星期" + getDayOfWeek( sCalendar.getTime() ) );
-                  sCalendar.add( Calendar.DAY_OF_WEEK, 1 );
-            }
       }
 }
