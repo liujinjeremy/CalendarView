@@ -5,9 +5,7 @@ import static tech.threekilogram.calendarview.month.MonthDayItemView.IN_MONTH_UN
 import static tech.threekilogram.calendarview.month.MonthDayItemView.OUT_MONTH;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.util.AttributeSet;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -25,13 +23,12 @@ public class MonthPage extends ViewGroup implements OnClickListener {
       private static final int STATE_MOVING = 1;
       private static final int STATE_FOLDED = 2;
 
-      private Date    mDate;
-      private int     mPosition;
-      private int     mCurrentSelectedPosition;
-      private int     mMonthDayCount;
-      private int     mFirstDayOffset;
-      private boolean isFirstDayMonday = true;
-      private int     mState;
+      private Date mDate;
+      private int  mPosition;
+      private int  mCurrentSelectedPosition;
+      private int  mMonthDayCount;
+      private int  mFirstDayOffset;
+      private int  mState;
 
       private int mCellWidth  = -1;
       private int mCellHeight = -1;
@@ -39,10 +36,6 @@ public class MonthPage extends ViewGroup implements OnClickListener {
       private int mPageHeight;
       private int mTopMoved;
       private int mBottomMoved;
-
-      private float   mDownX;
-      private float   mDownY;
-      private boolean isMoved;
 
       public MonthPage ( Context context ) {
 
@@ -68,7 +61,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
                   child.setOnClickListener( this );
             }
 
-            setBackgroundColor( Color.LTGRAY );
+            //setBackgroundColor( Color.LTGRAY );
       }
 
       public Date getDate ( ) {
@@ -78,7 +71,6 @@ public class MonthPage extends ViewGroup implements OnClickListener {
 
       public void setInfo ( boolean isFirstDayMonday, Date date, int position ) {
 
-            this.isFirstDayMonday = isFirstDayMonday;
             mDate = date;
             mPosition = position;
 
@@ -241,43 +233,6 @@ public class MonthPage extends ViewGroup implements OnClickListener {
       protected View generateItemView ( ) {
 
             return new MonthDayItemView( getContext() );
-      }
-
-      @Override
-      public boolean dispatchTouchEvent ( MotionEvent ev ) {
-
-            float x = ev.getX();
-            float y = ev.getY();
-            switch( ev.getAction() ) {
-                  case MotionEvent.ACTION_DOWN:
-                        mDownX = x;
-                        mDownY = y;
-                        break;
-                  case MotionEvent.ACTION_MOVE:
-
-                        float dx = x - mDownX;
-                        float dy = y - mDownY;
-
-                        if( verticalMove( dx, dy ) ) {
-                              isMoved = true;
-                              moving( dy );
-                              return true;
-                        }
-
-                        break;
-                  default:
-                        if( isMoved ) {
-                              return true;
-                        }
-                        break;
-            }
-
-            return super.dispatchTouchEvent( ev );
-      }
-
-      private boolean verticalMove ( float dx, float dy ) {
-
-            return Math.abs( dy ) > Math.abs( dx ) * 2;
       }
 
       @Override

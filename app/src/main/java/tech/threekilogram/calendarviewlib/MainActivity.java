@@ -29,8 +29,7 @@ public class MainActivity extends AppCompatActivity {
             super.onCreate( savedInstanceState );
             setContentView( R.layout.activity_main );
 
-            initView();
-            testMonth00();
+            //initView();
       }
 
       private void testMonth00 ( ) {
