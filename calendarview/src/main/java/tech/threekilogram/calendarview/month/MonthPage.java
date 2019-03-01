@@ -4,6 +4,7 @@ import static tech.threekilogram.calendarview.month.MonthDayItemView.SELECTED;
 import static tech.threekilogram.calendarview.month.MonthDayItemView.UNSELECTED;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -387,6 +388,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
              */
             private void moveToState ( int state ) {
 
+                  Log.i( TAG, "moveToState: " + mTargetState + " " + mState + " " + state );
                   if( mTargetState == -1 && mState != state ) {
 
                         mTargetState = state;
@@ -472,26 +474,29 @@ public class MonthPage extends ViewGroup implements OnClickListener {
                         mState = STATE_EXPAND;
                         setChildrenExpandState();
                         ( (MonthLayout) getParent() ).onDateChanged( mDate, mPosition, true );
-                        mTargetState = -1;
+                        if( mTargetState == STATE_EXPAND ) {
+                              mTargetState = -1;
+                        }
                   } else if( mTopMoved == -topDis && mBottomMoved == -bottomDis ) {
 
                         /* 已经折叠 */
                         mState = STATE_FOLDED;
                         setChildrenFoldState();
                         ( (MonthLayout) getParent() ).onDateChanged( mDate, mPosition, false );
-                        mTargetState = -1;
-                  } else {
-
-                        /* 正在展开折叠,每次增加/减少mCellHeight / 5距离 */
-                        int total = topDis + bottomDis;
-                        if( mTargetState == STATE_EXPAND ) {
-                              int i = total + mTopMoved + mBottomMoved + mCellHeight / 5;
-                              moving( i );
-                        }
                         if( mTargetState == STATE_FOLDED ) {
-                              int i = mTopMoved + mBottomMoved - mCellHeight / 5;
-                              moving( i );
+                              mTargetState = -1;
                         }
+                  }
+
+                  /* 正在展开折叠,每次增加/减少mCellHeight / 5距离 */
+                  int total = topDis + bottomDis;
+                  if( mTargetState == STATE_EXPAND ) {
+                        int i = total + mTopMoved + mBottomMoved + mCellHeight / 5;
+                        moving( i );
+                  }
+                  if( mTargetState == STATE_FOLDED ) {
+                        int i = mTopMoved + mBottomMoved - mCellHeight / 5;
+                        moving( i );
                   }
             }
 

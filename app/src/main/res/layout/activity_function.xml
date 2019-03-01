@@ -22,9 +22,70 @@
           android:layout_height="wrap_content"
           android:layout_marginBottom="8dp"
           android:layout_marginStart="8dp"
-          android:text="周起始"
           android:onClick="changeWeekStart"
+          android:text="周起始"
           app:layout_constraintBottom_toBottomOf="parent"
           app:layout_constraintStart_toStartOf="parent"/>
+
+      <TextView
+          android:id="@+id/textView"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_marginTop="8dp"
+          android:layout_marginStart="8dp"
+          android:text="TextView"
+          android:textSize="18sp"
+          app:layout_constraintStart_toStartOf="parent"
+          app:layout_constraintTop_toBottomOf="@+id/calendar"/>
+      <Button
+          android:id="@+id/button3"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_marginBottom="8dp"
+          android:layout_marginStart="8dp"
+          android:text="页面日期设为1999/08/26"
+          android:onClick="resetPageDate"
+          app:layout_constraintBottom_toBottomOf="parent"
+          app:layout_constraintStart_toEndOf="@+id/button2"/>
+      <Button
+          android:id="@+id/button4"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_marginBottom="8dp"
+          android:layout_marginStart="8dp"
+          android:text="周/月模式切换"
+          android:onClick="changeMode"
+          app:layout_constraintBottom_toTopOf="@+id/button2"
+          app:layout_constraintStart_toStartOf="parent"/>
+      <Button
+          android:id="@+id/button5"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_marginBottom="8dp"
+          android:layout_marginStart="8dp"
+          android:text="当前页面日期"
+          android:onClick="getPageDate"
+          app:layout_constraintBottom_toTopOf="@+id/button3"
+          app:layout_constraintStart_toEndOf="@+id/button4"/>
+      <Button
+          android:id="@+id/button6"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_marginBottom="8dp"
+          android:layout_marginStart="8dp"
+          android:text="展开"
+          android:onClick="open"
+          app:layout_constraintBottom_toTopOf="@+id/button4"
+          app:layout_constraintStart_toStartOf="parent"/>
+      <Button
+          android:id="@+id/button7"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_marginBottom="8dp"
+          android:layout_marginStart="8dp"
+          android:text="折叠"
+          android:onClick="close"
+          app:layout_constraintBottom_toTopOf="@+id/button5"
+          app:layout_constraintStart_toEndOf="@+id/button6"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

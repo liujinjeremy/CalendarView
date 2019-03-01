@@ -99,11 +99,19 @@ public class CalendarView extends ViewGroup {
       }
 
       /**
-       * 设置当前日期
+       * 设置当前页面日期
        */
       public void setDate ( Date date ) {
 
             mMonthLayout.setDate( date );
+      }
+
+      /**
+       * 获取基准日期,即:默认日期
+       */
+      public Date getBaseDate ( ) {
+
+            return mMonthLayout.getDate();
       }
 
       /**
@@ -327,7 +335,12 @@ public class CalendarView extends ViewGroup {
              *
              * @param newDate 新的选中的日期
              */
-            void onNewDateSelected ( Date newDate );
+            void onNewDateClick ( Date newDate );
+
+            /**
+             * 重设日期后的回调
+             */
+            void onNewDateSet ( Date date );
       }
 
       public void setOnDateChangeListener ( OnDateChangeListener onDateChangeListener ) {

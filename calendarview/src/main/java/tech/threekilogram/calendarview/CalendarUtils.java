@@ -88,6 +88,12 @@ public class CalendarUtils {
             return sFormat.format( date );
       }
 
+      public static Date get ( int year, int month, int dayOfMonth ) {
+
+            sCalendar.set( year, month, dayOfMonth );
+            return sCalendar.getTime();
+      }
+
       public static void main ( String[] args ) {
 
             Date date = new Date();

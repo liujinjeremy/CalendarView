@@ -69,6 +69,14 @@ public class MonthLayout extends ViewPager implements ViewComponent {
       public void setDate ( Date date ) {
 
             onDateChanged( date, mSource.mBasePosition, mSource.isMonthMode );
+            if( mOnDateChangeListener != null ) {
+                  mOnDateChangeListener.onNewDateClick( getCurrentPage().getDate() );
+            }
+      }
+
+      public Date getDate ( ) {
+
+            return mSource.mBaseDate;
       }
 
       public Date getCurrentPageDate ( ) {
