@@ -42,6 +42,19 @@ public class MonthLayout extends ViewPager implements ViewComponent {
        */
       private OnDateChangeListener mOnDateChangeListener;
 
+      /**
+       * 显示天的view的宽度
+       */
+      private int     mCellWidth       = -1;
+      /**
+       * 显示天的view的高度
+       */
+      private int     mCellHeight      = -1;
+      /**
+       * cellWidth 和 cellHeight 是否已经确定,当子view布局过了,就确定了
+       */
+      private boolean isCellSizeDecide = false;
+
       public MonthLayout ( @NonNull Context context ) {
 
             super( context );
@@ -119,6 +132,16 @@ public class MonthLayout extends ViewPager implements ViewComponent {
             return mOnDateChangeListener;
       }
 
+      int getCellWidth ( ) {
+
+            return mCellWidth;
+      }
+
+      int getCellHeight ( ) {
+
+            return mCellHeight;
+      }
+
       @Override
       protected void onMeasure ( int widthMeasureSpec, int heightMeasureSpec ) {
 
@@ -130,6 +153,12 @@ public class MonthLayout extends ViewPager implements ViewComponent {
                   return;
             }
 
+            if( !isCellSizeDecide ) {
+                  int heightSize = MeasureSpec.getSize( heightMeasureSpec );
+                  mCellWidth = widthSize / 7;
+                  mCellHeight = heightSize / 6;
+            }
+
             super.onMeasure( widthMeasureSpec, heightMeasureSpec );
 
             /* 将当前页面的高度设置为pager高度 */
@@ -139,7 +168,8 @@ public class MonthLayout extends ViewPager implements ViewComponent {
                   MonthPage view = (MonthPage) getChildAt( i );
                   if( currentItem == view.getPosition() ) {
                         /* 将当前页面的高度设置为pager高度 */
-                        setMeasuredDimension( widthSize, view.getMeasuredHeight() );
+                        int measuredHeight = view.getMeasuredHeight();
+                        setMeasuredDimension( widthSize, measuredHeight );
                         break;
                   }
             }
@@ -147,6 +177,8 @@ public class MonthLayout extends ViewPager implements ViewComponent {
 
       @Override
       protected void onLayout ( boolean changed, int l, int t, int r, int b ) {
+
+            isCellSizeDecide = true;
 
             if( mListener.isScrolling ) {
                   return;

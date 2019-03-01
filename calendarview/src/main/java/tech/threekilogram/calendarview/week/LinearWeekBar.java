@@ -20,11 +20,7 @@ public class LinearWeekBar extends ViewGroup implements ViewComponent {
       /**
        * 每周第一天是周一时,显示的text
        */
-      private static String[] firstMonday = { "一", "二", "三", "四", "五", "六", "日" };
-      /**
-       * 每周第一天是周日时,显示的text
-       */
-      private static String[] firstSunday = { "日", "一", "二", "三", "四", "五", "六" };
+      private static String[] sTexts = { "周日", "周一", "周二", "周三", "周四", "周五", "周六" };
 
       /**
        * parent 用于通信
@@ -98,7 +94,7 @@ public class LinearWeekBar extends ViewGroup implements ViewComponent {
             TextView textView = new TextView( getContext() );
             textView.setText( text );
             textView.setGravity( Gravity.CENTER );
-            textView.setTextSize( TypedValue.COMPLEX_UNIT_DIP, 20 );
+            textView.setTextSize( TypedValue.COMPLEX_UNIT_DIP, 12 );
             textView.setPadding( 0, 10, 0, 10 );
             return textView;
       }
@@ -115,29 +111,28 @@ public class LinearWeekBar extends ViewGroup implements ViewComponent {
             mCalendarView = calendarView;
 
             boolean firstDayMonday = calendarView.isFirstDayMonday();
-            String[] texts;
-            if( firstDayMonday ) {
-                  texts = firstMonday;
-            } else {
-                  texts = firstSunday;
-            }
             for( int i = 0; i < 7; i++ ) {
-                  addView( generateItemView( texts[ i ] ) );
+                  String text;
+                  if( !firstDayMonday ) {
+                        text = sTexts[ i ];
+                  } else {
+                        text = sTexts[ ( i + 1 ) % 7 ];
+                  }
+                  addView( generateItemView( text ) );
             }
       }
 
       @Override
       public void notifyFirstDayIsMondayChanged ( boolean isFirstDayMonday ) {
 
-            String[] texts;
-            if( isFirstDayMonday ) {
-                  texts = firstMonday;
-            } else {
-                  texts = firstSunday;
-            }
             for( int i = 0; i < 7; i++ ) {
-                  View view = getChildAt( i );
-                  ( (TextView) view ).setText( texts[ i ] );
+                  String text;
+                  if( !isFirstDayMonday ) {
+                        text = sTexts[ i ];
+                  } else {
+                        text = sTexts[ ( i + 1 ) % 7 ];
+                  }
+                  ( (TextView) getChildAt( i ) ).setText( text );
             }
       }
 }

@@ -3,7 +3,6 @@ package tech.threekilogram.calendarview;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Locale;
 
 /**
  * 计算日期工具类
@@ -13,7 +12,7 @@ import java.util.Locale;
 public class CalendarUtils {
 
       private static final Calendar         sCalendar = Calendar.getInstance();
-      private static final SimpleDateFormat sFormat   = new SimpleDateFormat( "yyyy年MM月dd日 HH:mm:ss" );
+      private static final SimpleDateFormat sFormat   = new SimpleDateFormat( "yyyy年MM月dd日" );
 
       public static int getDayCountOfMonth ( Date date ) {
 
@@ -82,14 +81,6 @@ public class CalendarUtils {
 
             sCalendar.setTime( date );
             return sCalendar.get( Calendar.DAY_OF_WEEK );
-      }
-
-      public static String getYearMonthFormat ( Date date ) {
-
-            sCalendar.setTime( date );
-            int year = sCalendar.get( Calendar.YEAR );
-            int month = sCalendar.get( Calendar.MONTH );
-            return String.format( Locale.CHINA, "%d/%d", year, month + 1 );
       }
 
       public static String getDateFormat ( Date date ) {

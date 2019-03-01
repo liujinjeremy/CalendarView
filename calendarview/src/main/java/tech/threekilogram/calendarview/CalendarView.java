@@ -173,40 +173,20 @@ public class CalendarView extends ViewGroup {
                 .makeMeasureSpec( heightSize - paddingTop - paddingBottom, heightMode );
 
             // 使用策略测量组件
-            int[] result = mLayoutStrategy.measureComponent(
+            mLayoutStrategy.measureComponent(
                 this,
                 widthMeasureSpec, heightMeasureSpec,
                 mWeekBar, mMonthLayout
             );
 
             // 设置尺寸信息
-            int finalWidth = 0;
-            int finalHeight = 0;
+            int barHeight = mWeekBar.getView().getMeasuredHeight();
+            int monthHeight = mMonthLayout.getView().getMeasuredHeight();
+            int finalHeight = barHeight
+                + monthHeight
+                + paddingTop + paddingBottom;
 
-            if( widthMode == MeasureSpec.EXACTLY ) {
-
-                  finalWidth = widthSize;
-            } else if( widthMode == MeasureSpec.AT_MOST ) {
-
-                  finalWidth = Math.min( ( result[ 0 ] + paddingLeft + paddingRight ), widthSize );
-            } else {
-
-                  finalWidth = widthSize;
-            }
-
-            if( heightMode == MeasureSpec.EXACTLY ) {
-
-                  finalHeight = heightSize;
-            } else if( widthMode == MeasureSpec.AT_MOST ) {
-
-                  finalHeight = Math
-                      .min( ( result[ 1 ] + paddingTop + paddingBottom ), heightSize );
-            } else {
-
-                  finalHeight = result[ 1 ];
-            }
-
-            setMeasuredDimension( finalWidth, finalHeight );
+            setMeasuredDimension( widthSize, finalHeight );
       }
 
       @Override
@@ -257,7 +237,7 @@ public class CalendarView extends ViewGroup {
              *
              * @return 布局占用的尺寸, int[0]表示宽度, int[1]表示高度
              */
-            int[] measureComponent (
+            void measureComponent (
                 CalendarView parent,
                 int widthMeasureSpec,
                 int heightMeasureSpec,
@@ -274,10 +254,8 @@ public class CalendarView extends ViewGroup {
        */
       protected class VerticalLinearMeasureLayoutStrategy implements MeasureLayoutStrategy {
 
-            private int[] mResult = new int[ 2 ];
-
             @Override
-            public int[] measureComponent (
+            public void measureComponent (
                 CalendarView parent,
                 int widthMeasureSpec,
                 int heightMeasureSpec,
@@ -305,12 +283,6 @@ public class CalendarView extends ViewGroup {
                   );
                   View layoutView = monthLayout.getView();
                   layoutView.measure( widthExactSpec, monthHeightSpec );
-
-                  // 宽度是calendar宽度,高度是两个组件之和
-                  mResult[ 0 ] = widthSize;
-                  mResult[ 1 ] = weekBarMeasuredHeight + layoutView.getMeasuredHeight();
-
-                  return mResult;
             }
 
             @Override

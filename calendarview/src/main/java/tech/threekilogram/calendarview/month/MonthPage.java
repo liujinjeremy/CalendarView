@@ -4,7 +4,6 @@ import static tech.threekilogram.calendarview.month.MonthDayItemView.SELECTED;
 import static tech.threekilogram.calendarview.month.MonthDayItemView.UNSELECTED;
 
 import android.content.Context;
-import android.util.AttributeSet;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -63,11 +62,11 @@ public class MonthPage extends ViewGroup implements OnClickListener {
       private int  mState;
 
       /**
-       * 子view的宽度
+       * 显示天的view的宽度
        */
       private int mCellWidth  = -1;
       /**
-       * 子view的高度
+       * 显示天的view的高度
        */
       private int mCellHeight = -1;
       /**
@@ -82,17 +81,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
 
       public MonthPage ( Context context ) {
 
-            this( context, null, 0 );
-      }
-
-      public MonthPage ( Context context, AttributeSet attrs ) {
-
-            this( context, attrs, 0 );
-      }
-
-      public MonthPage ( Context context, AttributeSet attrs, int defStyleAttr ) {
-
-            super( context, attrs, defStyleAttr );
+            super( context );
             init();
       }
 
@@ -193,13 +182,13 @@ public class MonthPage extends ViewGroup implements OnClickListener {
       protected void onMeasure ( int widthMeasureSpec, int heightMeasureSpec ) {
 
             int widthSize = MeasureSpec.getSize( widthMeasureSpec );
-            int heightSize = MeasureSpec.getSize( heightMeasureSpec );
 
-            /* 初始化基础尺寸 */
-            if( mCellWidth == -1 || mCellHeight == -1 ) {
-                  mCellWidth = widthSize / 7;
-                  mCellHeight = heightSize / 6;
+            MonthLayout parent = (MonthLayout) getParent();
+            mCellWidth = parent.getCellWidth();
+            mCellHeight = parent.getCellHeight();
 
+            View view = getChildAt( 0 );
+            if( view.getMeasuredWidth() != mCellWidth || view.getMeasuredHeight() != mCellHeight ) {
                   int cellWidthSpec = MeasureSpec.makeMeasureSpec( mCellWidth, MeasureSpec.EXACTLY );
                   int cellHeightSpec = MeasureSpec.makeMeasureSpec( mCellHeight, MeasureSpec.EXACTLY );
 

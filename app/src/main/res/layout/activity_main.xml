@@ -1,28 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     tools:context=".MainActivity">
 
-      <TextView
-          android:id="@+id/title"
-          android:layout_width="match_parent"
-          android:layout_height="50dp"
-          android:background="@color/colorPrimary"
-          android:gravity="center"
-          android:text="2019/08/26"
-          android:textColor="@android:color/white"
-          android:textSize="24sp"/>
 
-      <tech.threekilogram.calendarview.CalendarView
-          android:id="@+id/calendar"
-          android:layout_width="match_parent"
-          android:layout_height="match_parent"
-          android:layout_marginTop="50dp">
-      </tech.threekilogram.calendarview.CalendarView>
-
-</FrameLayout>
+      <Button
+          android:id="@+id/button"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_marginTop="8dp"
+          android:layout_marginStart="8dp"
+          android:text="功能测试"
+          android:onClick="functionTest"
+          app:layout_constraintStart_toStartOf="parent"
+          app:layout_constraintTop_toTopOf="parent"/>
+</androidx.constraintlayout.widget.ConstraintLayout>
