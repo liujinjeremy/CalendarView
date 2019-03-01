@@ -1,7 +1,7 @@
 package tech.threekilogram.calendarview.month;
 
-import static tech.threekilogram.calendarview.month.MonthDayItemView.SELECTED;
-import static tech.threekilogram.calendarview.month.MonthDayItemView.UNSELECTED;
+import static tech.threekilogram.calendarview.month.MonthDayView.SELECTED;
+import static tech.threekilogram.calendarview.month.MonthDayView.UNSELECTED;
 
 import android.content.Context;
 import android.util.Log;
@@ -152,7 +152,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             Date firstDayOfMonth = CalendarUtils.getFirstDayOfMonth( mDate );
 
             for( int i = 0; i < childCount; i++ ) {
-                  MonthDayItemView child = (MonthDayItemView) getChildAt( i );
+                  MonthDayView child = (MonthDayView) getChildAt( i );
                   Date day = CalendarUtils.getDateByAddDay( firstDayOfMonth, offset );
                   child.bind( day );
 
@@ -246,7 +246,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
        */
       protected View generateItemView ( ) {
 
-            return new MonthDayItemView( getContext() );
+            return new MonthDayView( getContext() );
       }
 
       /**
@@ -255,7 +255,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
       @Override
       public void onClick ( View v ) {
 
-            MonthDayItemView itemView = (MonthDayItemView) v;
+            MonthDayView itemView = (MonthDayView) v;
             Date date = itemView.getDate();
             /* 日期变化了 */
             if( !date.equals( mDate ) ) {
@@ -293,7 +293,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             int childCount = getChildCount();
 
             for( int i = 0; i < mFirstDayOffset; i++ ) {
-                  MonthDayItemView child = (MonthDayItemView) getChildAt( i );
+                  MonthDayView child = (MonthDayView) getChildAt( i );
                   if( child.getVisibility() == INVISIBLE ) {
                         break;
                   }
@@ -301,7 +301,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             }
 
             for( int i = childCount - 1; i > mMonthDayCount - 1 + mFirstDayOffset; i-- ) {
-                  MonthDayItemView child = (MonthDayItemView) getChildAt( i );
+                  MonthDayView child = (MonthDayView) getChildAt( i );
                   if( child.getVisibility() == INVISIBLE ) {
                         break;
                   }
@@ -317,7 +317,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             int childCount = getChildCount();
 
             for( int i = 0; i < mFirstDayOffset; i++ ) {
-                  MonthDayItemView child = (MonthDayItemView) getChildAt( i );
+                  MonthDayView child = (MonthDayView) getChildAt( i );
                   if( child.getVisibility() == VISIBLE ) {
                         break;
                   }
@@ -325,7 +325,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             }
 
             for( int i = childCount - 1; i > mMonthDayCount - 1 + mFirstDayOffset; i-- ) {
-                  MonthDayItemView child = (MonthDayItemView) getChildAt( i );
+                  MonthDayView child = (MonthDayView) getChildAt( i );
                   if( child.getVisibility() == VISIBLE ) {
                         break;
                   }

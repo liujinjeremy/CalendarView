@@ -15,7 +15,7 @@ import tech.threekilogram.calendarview.CalendarUtils;
 /**
  * @author Liujin 2019/2/25:18:09:25
  */
-public class MonthDayItemView extends View {
+public class MonthDayView extends View {
 
       /**
        * 未选中状态,
@@ -38,17 +38,22 @@ public class MonthDayItemView extends View {
        */
       private             int   mState;
 
-      public MonthDayItemView ( Context context ) {
+      /**
+       * 选中时颜色
+       */
+      private int mSelectColor = Color.parseColor( "#C94B87B5" );
+
+      public MonthDayView ( Context context ) {
 
             this( context, null, 0 );
       }
 
-      public MonthDayItemView ( Context context, @Nullable AttributeSet attrs ) {
+      public MonthDayView ( Context context, @Nullable AttributeSet attrs ) {
 
             this( context, attrs, 0 );
       }
 
-      public MonthDayItemView ( Context context, @Nullable AttributeSet attrs, int defStyleAttr ) {
+      public MonthDayView ( Context context, @Nullable AttributeSet attrs, int defStyleAttr ) {
 
             super( context, attrs, defStyleAttr );
             init();
@@ -133,11 +138,10 @@ public class MonthDayItemView extends View {
             int width = canvas.getWidth();
 
             int widthCenter = width / 2;
-            float paddingV = height * 0.1f;
-            float paddingH = width * 0.1f;
 
-            mPaint.setColor( Color.argb( 32, 0, 0, 0 ) );
-            canvas.drawRect( paddingH, paddingV, width - paddingH, height - paddingV, mPaint );
+            mPaint.setColor( mSelectColor );
+            float radius = Math.min( height - 20, width - 20 ) >> 1;
+            canvas.drawCircle( width >> 1, height >> 1, radius, mPaint );
 
             float bigTextSize = Math.min( width, height ) * 0.4f;
 
