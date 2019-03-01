@@ -29,11 +29,10 @@ public class CalendarView extends ViewGroup {
        * 布局策略
        */
       private MeasureLayoutStrategy mLayoutStrategy;
-
       /**
        * 每周的起始是不是周一
        */
-      private boolean isFirstDayMonday = true;
+      private boolean               isFirstDayMonday = true;
 
       public CalendarView ( Context context ) {
 
