@@ -234,8 +234,8 @@ public class MonthLayout extends ViewPager implements ViewComponent {
                   MonthPage child = (MonthPage) getChildAt( i );
                   int childPosition = child.getPosition();
                   child.setInfo( mSource.getDate( childPosition ), childPosition, firstDayMonday, monthMode );
+                  child.requestLayout();
             }
-            requestLayout();
       }
 
       private void onNewPageSelected ( int position ) {
@@ -571,19 +571,10 @@ public class MonthLayout extends ViewPager implements ViewComponent {
              */
             private boolean handleMotionEvent ( MotionEvent ev ) {
 
-//                  MonthPage currentPage = getCurrentPage();
-//                  boolean expanded = currentPage.isExpanded();
-//                  boolean folded = currentPage.isFolded();
-//                  /* 页面是否没处于展开或者折叠 */
-//                  boolean pageMoved = !( expanded || folded );
-//
-//                  int scrollX = getScrollX();
-//                  int width = currentPage.getWidth();
-//                  /* 页面是否正在水平滚动 */
-//                  boolean scrolled = scrollX % width != 0;
-
                   float x;
                   float y;
+                  MonthPage monthPage = getCurrentPage();
+
                   switch( ev.getAction() ) {
                         case MotionEvent.ACTION_DOWN:
                               x = ev.getRawX();
@@ -591,7 +582,14 @@ public class MonthLayout extends ViewPager implements ViewComponent {
                               mLastX = mDownX = x;
                               mLastY = mDownY = y;
 
+                              if( monthPage != null ) {
+                                    if( monthPage.isMoving() ) {
+                                          monthPage.onDownTouchEvent();
+                                          isVerticalMove = true;
+                                    }
+                              }
                               return superDispatchTouchEvent( ev );
+
                         case MotionEvent.ACTION_MOVE:
 
                               x = ev.getRawX();
@@ -602,12 +600,44 @@ public class MonthLayout extends ViewPager implements ViewComponent {
                               mLastX = x;
                               mLastY = y;
 
+                              if( mScroller.isScrolling() ) {
+                                    isHorizontalMove = true;
+                                    isVerticalMove = false;
+                              }
+
+                              if( !isHorizontalMove && !isVerticalMove ) {
+                                    float absX = Math.abs( dx );
+                                    float absY = Math.abs( dy );
+
+                                    /* 此时刚触发滑动事件 */
+                                    if( absY > absX ) {
+                                          isVerticalMove = true;
+                                          isHorizontalMove = false;
+                                    }
+                              }
+
+                              if( isVerticalMove ) {
+                                    if( monthPage != null ) {
+                                          monthPage.onVerticalMoveBy( dy );
+                                          return true;
+                                    }
+                              }
+
                               return superDispatchTouchEvent( ev );
 
                         default:
-                              x = ev.getRawX();
+                              //x = ev.getRawX();
                               y = ev.getRawY();
 
+                              if( isVerticalMove ) {
+                                    if( monthPage != null ) {
+                                          monthPage.onUpTouchEvent( y - mDownY, mSource.isMonthMode );
+                                          isHorizontalMove = isVerticalMove = false;
+                                          return true;
+                                    }
+                              }
+
+                              isHorizontalMove = isVerticalMove = false;
                               return superDispatchTouchEvent( ev );
                   }
             }
