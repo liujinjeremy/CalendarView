@@ -219,11 +219,6 @@ public class MonthPage extends ViewGroup implements OnClickListener {
       @Override
       protected void onMeasure ( int widthMeasureSpec, int heightMeasureSpec ) {
 
-            if( !mMoveHelper.isNeedReLayout ) {
-                  setMeasuredDimension( getMeasuredWidth(), getMeasuredHeight() );
-                  return;
-            }
-
             int widthSize = MeasureSpec.getSize( widthMeasureSpec );
 
             MonthLayout parent = (MonthLayout) getParent();
@@ -266,16 +261,12 @@ public class MonthPage extends ViewGroup implements OnClickListener {
       @Override
       protected void onLayout ( boolean changed, int l, int t, int r, int b ) {
 
-            if( !mMoveHelper.isNeedReLayout ) {
-                  return;
-            }
-
             View child = getChildAt( 0 );
             int cellWidth = child.getMeasuredWidth();
             int cellHeight = child.getMeasuredHeight();
 
             int count = getChildCount();
-            int topMoved = mMoveHelper.mTopMoved;
+            int topMoved = (int) mMoveHelper.mTopMoved;
             for( int i = 0; i < count; i++ ) {
                   View view = getChildAt( i );
                   int left = ( i % 7 ) * cellWidth;
@@ -318,15 +309,6 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             }
       }
 
-      void onNewDateClicked ( Date date ) {
-
-            if( !mDate.equals( date ) ) {
-                  mDate = date;
-                  bindChildrenDate();
-                  setChildrenExpandFoldState();
-            }
-      }
-
       /**
        * 滑动一段距离,直至展开至月显示模式,或者折叠到周显示模式
        *
@@ -347,24 +329,51 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             mMoveHelper.setAnimateFold();
       }
 
+      void onDownTouchEvent ( ) {
+
+            mMoveHelper.forceStopAnimateIfRunning();
+      }
+
+      boolean isExpanded ( ) {
+
+            return mState == STATE_EXPAND;
+      }
+
+      boolean isFolded ( ) {
+
+            return mState == STATE_FOLDED;
+      }
+
+      void onUpTouchEvent ( float totalDy, boolean isMonthMode ) {
+
+            if( totalDy > 0 ) {
+                  moveToExpand();
+                  return;
+            }
+
+            if( totalDy < 0 ) {
+                  moveToFold();
+            }
+
+            if( totalDy == 0 ) {
+                  mMoveHelper.checkAnimateState( isMonthMode );
+            }
+      }
+
       private class MoveHelper {
 
             /**
              * 所有子view的top偏移
              */
-            private int     mTopMoved;
+            private float mTopMoved;
             /**
              * 当前页面bottom偏移
              */
-            private int     mBottomMoved;
+            private float mBottomMoved;
             /**
              * 手势释放后,需要收缩或者折叠时,用于计算方向
              */
-            private int     mDirection     = 0;
-            /**
-             * 触发手势动作后是否重新调用了{@link #requestLayout()},如果重新调用了,那么重新布局,否则不会变化,这是一个优化
-             */
-            private boolean isNeedReLayout = true;
+            private int   mDirection = 0;
 
             @Override
             public String toString ( ) {
@@ -388,16 +397,14 @@ public class MonthPage extends ViewGroup implements OnClickListener {
                   calculateMovedByDy( dy );
 
                   mState = STATE_MOVING;
-                  if( isNeedReLayout ) {
-                        requestLayout();
-                  }
+                  requestLayout();
             }
 
             private void calculateMovedByDy ( float dy ) {
 
                   /* 记录原始尺寸,用于后续决定是否需要重新布局 */
-                  int topMoved = mTopMoved;
-                  int bottomMoved = mBottomMoved;
+                  float topMoved = mTopMoved;
+                  float bottomMoved = mBottomMoved;
 
                   /* 可以移动的距离 */
                   int topDis = mCurrentSelectedPosition / 7 * mCellHeight;
@@ -427,7 +434,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
                   }
 
                   /* 判断是否需要重新布局 */
-                  isNeedReLayout = topMoved != mTopMoved || bottomMoved != mBottomMoved;
+                  boolean result = topMoved != mTopMoved || bottomMoved != mBottomMoved;
             }
 
             /**
@@ -459,7 +466,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
              */
             private int calculateMeasuredHeight ( int linesHeight ) {
 
-                  return linesHeight + mTopMoved + mBottomMoved;
+                  return (int) ( linesHeight + mTopMoved + mBottomMoved );
             }
 
             private boolean isCurrentAtFoldState ( ) {
@@ -490,7 +497,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             private void animateIfNeed ( ) {
 
                   if( needMockMove() ) {
-                        calculateMovedByDy( mDirection * mCellHeight / 20f );
+                        calculateMovedByDy( mDirection * mCellHeight / 5f );
                         requestLayout();
                   }
             }
@@ -524,6 +531,28 @@ public class MonthPage extends ViewGroup implements OnClickListener {
                   }
 
                   return false;
+            }
+
+            private void forceStopAnimateIfRunning ( ) {
+
+                  if( mState == STATE_ANIMATE ) {
+                        mState = STATE_MOVING;
+                  }
+            }
+
+            private void checkAnimateState ( boolean isMonthMode ) {
+
+                  if( mDirection != 0 ) {
+                        setAnimateState( mDirection );
+                        return;
+                  }
+
+                  if( isMonthMode ) {
+                        mDirection = 1;
+                  } else {
+                        mDirection = -1;
+                  }
+                  setAnimateState( mDirection );
             }
       }
 }

@@ -36,7 +36,7 @@ public class MonthLayout extends ViewPager implements ViewComponent {
       /**
        * 展开折叠页面
        */
-      //private ExpandFoldPage       mExpandFoldPage;
+      private ExpandFoldPage       mExpandFoldPage;
       /**
        * 监听日期变化
        */
@@ -115,6 +115,7 @@ public class MonthLayout extends ViewPager implements ViewComponent {
             mScroller = new ChangeHeightScroller( this );
             addOnPageChangeListener( mScroller );
 
+            mExpandFoldPage = new ExpandFoldPage();
             mCellSize = new CellSize();
       }
 
@@ -193,7 +194,7 @@ public class MonthLayout extends ViewPager implements ViewComponent {
       @Override
       public boolean dispatchTouchEvent ( MotionEvent ev ) {
 
-            return super.dispatchTouchEvent( ev );
+            return mExpandFoldPage.handleMotionEvent( ev );
       }
 
       /**
@@ -244,14 +245,7 @@ public class MonthLayout extends ViewPager implements ViewComponent {
 
       void onNewDateClicked ( Date date, int position ) {
 
-            mSource.mBaseDate = date;
-            mSource.mBasePosition = position;
-
-            int childCount = getChildCount();
-            for( int i = 0; i < childCount; i++ ) {
-                  MonthPage child = (MonthPage) getChildAt( i );
-                  child.onNewDateClicked( mSource.getDate( child.getPosition() ) );
-            }
+            onDateChanged( date, position, mSource.isMonthMode );
 
             if( mOnDateChangeListener != null ) {
                   mOnDateChangeListener.onNewDateClick( date );
@@ -529,16 +523,13 @@ public class MonthLayout extends ViewPager implements ViewComponent {
             /**
              * 按下时位置信息
              */
-            private float   mDownX;
-            private float   mDownY;
-            /**
-             * true:正在竖直滑动,当前只能处于水平或者垂直滑动,一旦判断将不会更改
-             */
-            private boolean isVerticalMoving;
-            /**
-             * true:正在水平滑动
-             */
-            private boolean isHorizontalMoving;
+            private float mDownX;
+            private float mDownY;
+            private float mLastX;
+            private float mLastY;
+
+            private boolean isHorizontalMove;
+            private boolean isVerticalMove;
 
             /**
              * 拦截垂直滑动事件,并且通知给当前页面,竖直滑动距离
@@ -549,62 +540,89 @@ public class MonthLayout extends ViewPager implements ViewComponent {
              */
             private boolean handleMotionEvent ( MotionEvent ev ) {
 
-                  float x = ev.getX();
-                  float y = ev.getY();
+                  float x;
+                  float y;
                   switch( ev.getAction() ) {
                         case MotionEvent.ACTION_DOWN:
-                              mDownX = x;
-                              mDownY = y;
+                              x = ev.getRawX();
+                              y = ev.getRawY();
+                              mLastX = mDownX = x;
+                              mLastY = mDownY = y;
+
+                              MonthPage currentPage = getCurrentPage();
+                              if( currentPage.isExpanded() || currentPage.isFolded() ) {
+                                    superDispatchTouchEvent( ev );
+                                    isHorizontalMove = isVerticalMove = false;
+                              } else {
+                                    currentPage.onDownTouchEvent();
+                                    isVerticalMove = true;
+                                    isHorizontalMove = false;
+                              }
                               break;
                         case MotionEvent.ACTION_MOVE:
 
-                              float dx = x - mDownX;
-                              float dy = y - mDownY;
+                              x = ev.getRawX();
+                              y = ev.getRawY();
 
-                              if( !isHorizontalMoving && !isVerticalMoving ) {
+                              float dx = x - mLastX;
+                              float dy = y - mLastY;
+                              mLastX = x;
+                              mLastY = y;
 
-                                    float aDy = Math.abs( dy );
-                                    float aDx = Math.abs( dx );
+                              if( !isHorizontalMove && !isVerticalMove ) {
+                                    float absX = Math.abs( x - mDownX );
+                                    float absY = Math.abs( y - mDownY );
 
-                                    if( aDx > 2 * aDy ) {
-                                          isHorizontalMoving = true;
-                                          isVerticalMoving = false;
+                                    if( absX > absY ) {
+                                          isHorizontalMove = true;
+                                          isVerticalMove = false;
                                     }
-                                    if( aDy > 2 * aDx ) {
-                                          isVerticalMoving = true;
-                                          isHorizontalMoving = false;
+
+                                    if( absX < absY ) {
+                                          isHorizontalMove = false;
+                                          isVerticalMove = true;
                                     }
                               }
 
-                              if( isHorizontalMoving ) {
-                                    return false;
+                              if( isHorizontalMove ) {
+                                    superDispatchTouchEvent( ev );
                               }
 
-                              if( isVerticalMoving ) {
-                                    /* 通知滑动距离 */
-                                    //noinspection ConstantConditions
+                              if( isVerticalMove ) {
                                     getCurrentPage().expandOrFoldBy( dy );
-                                    return true;
+                              }
+
+                              if( !isHorizontalMove && !isVerticalMove ) {
+                                    superDispatchTouchEvent( ev );
                               }
 
                               break;
                         default:
-                              /* 如果是竖直滑动,那么通知展开/折叠 */
-                              if( isVerticalMoving ) {
-                                    isVerticalMoving = isHorizontalMoving = false;
-                                    if( y > mDownY ) {
-                                          //noinspection ConstantConditions
-                                          getCurrentPage().moveToExpand();
-                                    } else {
-                                          //noinspection ConstantConditions
-                                          getCurrentPage().moveToFold();
-                                    }
-                                    return true;
+                              x = ev.getRawX();
+                              y = ev.getRawY();
+
+                              if( isHorizontalMove ) {
+                                    superDispatchTouchEvent( ev );
                               }
-                              isHorizontalMoving = false;
+
+                              if( isVerticalMove ) {
+                                    float totalDy = y - mDownY;
+                                    getCurrentPage().onUpTouchEvent( totalDy, mSource.isMonthMode );
+                              }
+
+                              if( !isHorizontalMove && !isVerticalMove ) {
+                                    superDispatchTouchEvent( ev );
+                              }
+
+                              isHorizontalMove = isVerticalMove = false;
                               break;
                   }
-                  return false;
+                  return true;
+            }
+
+            private boolean superDispatchTouchEvent ( MotionEvent ev ) {
+
+                  return MonthLayout.super.dispatchTouchEvent( ev );
             }
       }
 }
