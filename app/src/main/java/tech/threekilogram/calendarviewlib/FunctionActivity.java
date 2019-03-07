@@ -8,9 +8,9 @@ import android.view.View;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import java.util.Date;
-import tech.threekilogram.calendarview.CalendarUtils;
 import tech.threekilogram.calendarview.CalendarView;
 import tech.threekilogram.calendarview.CalendarView.OnDateChangeListener;
+import tech.threekilogram.calendarview.util.CalendarUtils;
 
 public class FunctionActivity extends AppCompatActivity {
 
@@ -100,11 +100,11 @@ public class FunctionActivity extends AppCompatActivity {
 
       public void fold100 ( View view ) {
 
-            mCalendar.getMonthLayout().getCurrentPage().onVerticalMoveBy( -100 );
+            // mCalendar.getMonthLayout().getCurrentPage().onVerticalMoveBy( -100 );
       }
 
       public void expand100 ( View view ) {
 
-            mCalendar.getMonthLayout().getCurrentPage().onVerticalMoveBy( 100 );
+            //mCalendar.getMonthLayout().getCurrentPage().onVerticalMoveBy( 100 );
       }
 }

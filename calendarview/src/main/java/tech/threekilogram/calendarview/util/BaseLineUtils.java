@@ -1,4 +1,4 @@
-package tech.threekilogram.calendarview;
+package tech.threekilogram.calendarview.util;
 
 import android.graphics.Paint;
 import android.graphics.Paint.FontMetrics;

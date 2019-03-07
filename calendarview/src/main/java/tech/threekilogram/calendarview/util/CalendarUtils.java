@@ -1,8 +1,9 @@
-package tech.threekilogram.calendarview;
+package tech.threekilogram.calendarview.util;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 
 /**
  * 计算日期工具类
@@ -12,7 +13,7 @@ import java.util.Date;
 public class CalendarUtils {
 
       private static final Calendar         sCalendar = Calendar.getInstance();
-      private static final SimpleDateFormat sFormat   = new SimpleDateFormat( "yyyy年MM月dd日" );
+      private static final SimpleDateFormat sFormat   = new SimpleDateFormat( "yyyy年MM月dd日", Locale.CHINA );
 
       public static int getDayCountOfMonth ( Date date ) {
 

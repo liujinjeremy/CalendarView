@@ -5,14 +5,14 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Paint.Align;
-import android.util.AttributeSet;
 import android.view.View;
-import androidx.annotation.Nullable;
 import java.util.Date;
-import tech.threekilogram.calendarview.BaseLineUtils;
-import tech.threekilogram.calendarview.CalendarUtils;
+import tech.threekilogram.calendarview.util.BaseLineUtils;
+import tech.threekilogram.calendarview.util.CalendarUtils;
 
 /**
+ * 用于在{@link MonthPage}中显示天的信息,可以根据不同的状态显示不同的内容
+ *
  * @author Liujin 2019/2/25:18:09:25
  */
 public class MonthDayView extends View {
@@ -20,23 +20,24 @@ public class MonthDayView extends View {
       /**
        * 未选中状态,
        */
-      public static final int   UNSELECTED = 11;
+      public static final int UNSELECTED = 11;
       /**
        * 选中状态
        */
-      public static final int   SELECTED   = 12;
+      public static final int SELECTED   = 12;
+
       /**
        * 显示的日期
        */
-      private             Date  mDate;
+      private Date  mDate;
       /**
        * 绘制笔
        */
-      private             Paint mPaint;
+      private Paint mPaint;
       /**
        * 当前状态 {@link #UNSELECTED}{@link #SELECTED}
        */
-      private             int   mState;
+      private int   mState;
 
       /**
        * 选中时颜色
@@ -45,17 +46,7 @@ public class MonthDayView extends View {
 
       public MonthDayView ( Context context ) {
 
-            this( context, null, 0 );
-      }
-
-      public MonthDayView ( Context context, @Nullable AttributeSet attrs ) {
-
-            this( context, attrs, 0 );
-      }
-
-      public MonthDayView ( Context context, @Nullable AttributeSet attrs, int defStyleAttr ) {
-
-            super( context, attrs, defStyleAttr );
+            super( context );
             init();
       }
 
@@ -101,7 +92,7 @@ public class MonthDayView extends View {
        *
        * @param date 数据
        */
-      void bind ( Date date ) {
+      protected void bind ( Date date ) {
 
             if( date != mDate ) {
 
@@ -110,11 +101,14 @@ public class MonthDayView extends View {
             }
       }
 
-      Date getDate ( ) {
+      protected Date getDate ( ) {
 
             return mDate;
       }
 
+      /**
+       * 绘制未选中状态
+       */
       protected void drawUnSelected ( Canvas canvas ) {
 
             int height = canvas.getHeight();
@@ -132,6 +126,9 @@ public class MonthDayView extends View {
             );
       }
 
+      /**
+       * 绘制选中状态
+       */
       protected void drawSelected ( Canvas canvas ) {
 
             int height = canvas.getHeight();
