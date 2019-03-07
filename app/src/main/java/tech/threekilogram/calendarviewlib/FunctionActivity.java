@@ -97,4 +97,14 @@ public class FunctionActivity extends AppCompatActivity {
 
             mCalendar.foldToWeekMode();
       }
+
+      public void fold100 ( View view ) {
+
+            mCalendar.getMonthLayout().getCurrentPage().expandOrFoldBy( -100 );
+      }
+
+      public void expand100 ( View view ) {
+
+            mCalendar.getMonthLayout().getCurrentPage().expandOrFoldBy( 100 );
+      }
 }

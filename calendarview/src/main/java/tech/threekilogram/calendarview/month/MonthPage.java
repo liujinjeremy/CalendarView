@@ -4,7 +4,6 @@ import static tech.threekilogram.calendarview.month.MonthDayView.SELECTED;
 import static tech.threekilogram.calendarview.month.MonthDayView.UNSELECTED;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -23,62 +22,65 @@ public class MonthPage extends ViewGroup implements OnClickListener {
       /**
        * 当前状态之一:已经展开
        */
-      private static final int STATE_EXPAND        = 0;
-      /**
-       * 当前状态之一:正在展开
-       */
-      private static final int STATE_EXPAND_MOVING = 1;
+      private static final int STATE_EXPAND  = 0;
       /**
        * 当前状态之一:已经折叠
        */
-      private static final int STATE_FOLDED        = 2;
+      private static final int STATE_FOLDED  = 1;
       /**
-       * 当前状态之一:正在折叠
+       * 当前状态之一:正在折叠/展开
        */
-      private static final int STATE_FOLDED_MOVING = 3;
+      private static final int STATE_MOVING  = 2;
+      /**
+       * 当前状态之一:使用动画在手指离开后,折叠或者展开
+       */
+      private static final int STATE_ANIMATE = 3;
 
       /**
-       * 当前页面日期
+       * 记录当前页面日期
        */
-      private Date mDate;
+      private Date    mDate;
       /**
-       * 当前页面位于pager中的位置
+       * 记录当前页面位于{@link MonthLayout#getAdapter()}中的位置
        */
-      private int  mPosition;
+      private int     mPosition;
       /**
-       * 当前页面中选中的日期
+       * 记录当前页面第一天是否是周一
        */
-      private int  mCurrentSelectedPosition;
+      private boolean isFirstDayMonday;
       /**
-       * 日期代表的月份的总天数
+       * {@link #mDate}代表的日期在当前布局中的位置索引
        */
-      private int  mMonthDayCount;
+      private int     mCurrentSelectedPosition;
       /**
-       * 日期的第一天是周几
+       * {@link #mDate}代表的月份的总天数
        */
-      private int  mFirstDayOffset;
+      private int     mMonthDayCount;
       /**
-       * 当前状态:{@link #STATE_EXPAND},{@link #STATE_EXPAND_MOVING},{@link #STATE_FOLDED},{@link #STATE_FOLDED_MOVING}
+       * {@link #mDate}位于的月份第一天在布局中的位置索引
        */
-      private int  mState;
+      private int     mFirstDayOffset;
+      /**
+       * 当前状态
+       */
+      private int     mState;
 
       /**
        * 显示天的view的宽度
        */
-      private int mCellWidth  = -1;
+      private int        mCellWidth  = -1;
       /**
        * 显示天的view的高度
        */
-      private int mCellHeight = -1;
+      private int        mCellHeight = -1;
       /**
        * 根据总天数计算的页面高度
        */
-      private int mPageHeight;
-
+      private int        mPageHeight;
       /**
        * 辅助类用于界面展开折叠
        */
-      private ExpandFold mExpandFold = new ExpandFold();
+      private MoveHelper mMoveHelper;
 
       public MonthPage ( Context context ) {
 
@@ -93,11 +95,28 @@ public class MonthPage extends ViewGroup implements OnClickListener {
                   addView( child );
                   child.setOnClickListener( this );
             }
+
+            mMoveHelper = new MoveHelper();
+      }
+
+      /**
+       * 创建子view
+       *
+       * @return 子view
+       */
+      protected View generateItemView ( ) {
+
+            return new MonthDayView( getContext() );
       }
 
       Date getDate ( ) {
 
             return mDate;
+      }
+
+      int getPosition ( ) {
+
+            return mPosition;
       }
 
       /**
@@ -108,10 +127,11 @@ public class MonthPage extends ViewGroup implements OnClickListener {
        * @param date 显示日期
        * @param position 位于pager的位置
        */
-      void setInfo ( boolean isFirstDayMonday, boolean monthMode, Date date, int position ) {
+      void setInfo ( Date date, int position, boolean isFirstDayMonday, boolean monthMode ) {
 
             mDate = date;
             mPosition = position;
+            this.isFirstDayMonday = isFirstDayMonday;
 
             if( monthMode ) {
                   mState = STATE_EXPAND;
@@ -120,7 +140,8 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             }
 
             calculateMonthInfo( isFirstDayMonday, date );
-            setChildrenState();
+            bindChildrenDate();
+            requestLayout();
       }
 
       /**
@@ -144,7 +165,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
       /**
        * 设置显示状态
        */
-      private void setChildrenState ( ) {
+      private void bindChildrenDate ( ) {
 
             int childCount = getChildCount();
             int offset = -mFirstDayOffset;
@@ -156,31 +177,52 @@ public class MonthPage extends ViewGroup implements OnClickListener {
                   Date day = CalendarUtils.getDateByAddDay( firstDayOfMonth, offset );
                   child.bind( day );
 
+                  if( mDate.equals( day ) ) {
+                        child.setState( SELECTED );
+                        mCurrentSelectedPosition = i;
+                  } else {
+                        child.setState( UNSELECTED );
+                  }
+
+                  offset++;
+            }
+      }
+
+      /**
+       * 展开时,如果日期不处于这个月,那么设为不可见
+       */
+      private void setChildrenExpandFoldState ( ) {
+
+            int childCount = getChildCount();
+            int offset = -mFirstDayOffset;
+
+            boolean visible = mMoveHelper.isCurrentAtFoldState();
+
+            for( int i = 0; i < childCount; i++ ) {
+                  MonthDayView child = (MonthDayView) getChildAt( i );
+
                   if( offset < 0 || offset > mMonthDayCount - 1 ) {
 
-                        if( mState == STATE_FOLDED ) {
+                        if( visible ) {
                               child.setVisibility( VISIBLE );
                         } else {
                               child.setVisibility( INVISIBLE );
                         }
-                        child.setState( UNSELECTED );
                   } else {
 
                         child.setVisibility( VISIBLE );
-                        if( mDate.equals( day ) ) {
-                              child.setState( SELECTED );
-                              mCurrentSelectedPosition = i;
-                        } else {
-                              child.setState( UNSELECTED );
-                        }
                   }
                   offset++;
             }
-            requestLayout();
       }
 
       @Override
       protected void onMeasure ( int widthMeasureSpec, int heightMeasureSpec ) {
+
+            if( !mMoveHelper.isNeedReLayout ) {
+                  setMeasuredDimension( getMeasuredWidth(), getMeasuredHeight() );
+                  return;
+            }
 
             int widthSize = MeasureSpec.getSize( widthMeasureSpec );
 
@@ -188,6 +230,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             mCellWidth = parent.getCellWidth();
             mCellHeight = parent.getCellHeight();
 
+            /* 如果需要测量,那么测量所有child */
             View view = getChildAt( 0 );
             if( view.getMeasuredWidth() != mCellWidth || view.getMeasuredHeight() != mCellHeight ) {
                   int cellWidthSpec = MeasureSpec.makeMeasureSpec( mCellWidth, MeasureSpec.EXACTLY );
@@ -200,6 +243,9 @@ public class MonthPage extends ViewGroup implements OnClickListener {
                   }
             }
 
+            /* 设置children可见性 */
+            setChildrenExpandFoldState();
+
             /* 设置高度信息 */
             int count = mMonthDayCount + mFirstDayOffset;
             int lines = count % 7 == 0 ? count / 7 : count / 7 + 1;
@@ -208,24 +254,28 @@ public class MonthPage extends ViewGroup implements OnClickListener {
 
             /* 当折叠或者展开时,计算偏移量 */
             if( mState == STATE_FOLDED ) {
-                  mExpandFold.calculateFoldMoved();
+                  mMoveHelper.calculateFoldMoved();
             } else if( mState == STATE_EXPAND ) {
-                  mExpandFold.calculateExpandMoved();
+                  mMoveHelper.calculateExpandMoved();
             }
 
-            int measuredHeight = mExpandFold.calculateMeasuredHeight( resultHeight );
+            int measuredHeight = mMoveHelper.calculateMeasuredHeight( resultHeight );
             setMeasuredDimension( widthSize, measuredHeight );
       }
 
       @Override
       protected void onLayout ( boolean changed, int l, int t, int r, int b ) {
 
+            if( !mMoveHelper.isNeedReLayout ) {
+                  return;
+            }
+
             View child = getChildAt( 0 );
             int cellWidth = child.getMeasuredWidth();
             int cellHeight = child.getMeasuredHeight();
 
             int count = getChildCount();
-            int topMoved = mExpandFold.getTopMoved();
+            int topMoved = mMoveHelper.mTopMoved;
             for( int i = 0; i < count; i++ ) {
                   View view = getChildAt( i );
                   int left = ( i % 7 ) * cellWidth;
@@ -240,13 +290,13 @@ public class MonthPage extends ViewGroup implements OnClickListener {
       }
 
       /**
-       * 创建子view
-       *
-       * @return 子view
+       * 用于手势释放时,展开或者折叠到最终状态
        */
-      protected View generateItemView ( ) {
+      @Override
+      public void computeScroll ( ) {
 
-            return new MonthDayView( getContext() );
+            super.computeScroll();
+            mMoveHelper.animateIfNeed();
       }
 
       /**
@@ -255,24 +305,26 @@ public class MonthPage extends ViewGroup implements OnClickListener {
       @Override
       public void onClick ( View v ) {
 
+            if( mState == STATE_MOVING || mState == STATE_ANIMATE ) {
+                  return;
+            }
+
             MonthDayView itemView = (MonthDayView) v;
             Date date = itemView.getDate();
             /* 日期变化了 */
             if( !date.equals( mDate ) ) {
                   MonthLayout parent = (MonthLayout) getParent();
-                  if( mState == STATE_EXPAND ) {
-                        parent.onDateChanged( date, mPosition, true );
-                  }
-                  if( mState == STATE_FOLDED ) {
-                        parent.onDateChanged( date, mPosition, false );
-                  }
-                  parent.onNewDateSelected( date );
+                  parent.onNewDateClicked( date, mPosition );
             }
       }
 
-      int getPosition ( ) {
+      void onNewDateClicked ( Date date ) {
 
-            return mPosition;
+            if( !mDate.equals( date ) ) {
+                  mDate = date;
+                  bindChildrenDate();
+                  setChildrenExpandFoldState();
+            }
       }
 
       /**
@@ -280,236 +332,107 @@ public class MonthPage extends ViewGroup implements OnClickListener {
        *
        * @param dy 距离
        */
-      void moving ( float dy ) {
+      public void expandOrFoldBy ( float dy ) {
 
-            mExpandFold.move( dy );
-      }
-
-      /**
-       * 展开时,如果日期不处于这个月,那么设为不可见
-       */
-      private void setChildrenExpandState ( ) {
-
-            int childCount = getChildCount();
-
-            for( int i = 0; i < mFirstDayOffset; i++ ) {
-                  MonthDayView child = (MonthDayView) getChildAt( i );
-                  if( child.getVisibility() == INVISIBLE ) {
-                        break;
-                  }
-                  child.setVisibility( INVISIBLE );
-            }
-
-            for( int i = childCount - 1; i > mMonthDayCount - 1 + mFirstDayOffset; i-- ) {
-                  MonthDayView child = (MonthDayView) getChildAt( i );
-                  if( child.getVisibility() == INVISIBLE ) {
-                        break;
-                  }
-                  child.setVisibility( INVISIBLE );
-            }
-      }
-
-      /**
-       * 折叠时,如果日期不处于这个月,那么设为可见
-       */
-      private void setChildrenFoldState ( ) {
-
-            int childCount = getChildCount();
-
-            for( int i = 0; i < mFirstDayOffset; i++ ) {
-                  MonthDayView child = (MonthDayView) getChildAt( i );
-                  if( child.getVisibility() == VISIBLE ) {
-                        break;
-                  }
-                  child.setVisibility( VISIBLE );
-            }
-
-            for( int i = childCount - 1; i > mMonthDayCount - 1 + mFirstDayOffset; i-- ) {
-                  MonthDayView child = (MonthDayView) getChildAt( i );
-                  if( child.getVisibility() == VISIBLE ) {
-                        break;
-                  }
-                  child.setVisibility( VISIBLE );
-            }
-      }
-
-      /**
-       * 用于手势释放时,展开或者折叠到最终状态
-       */
-      @Override
-      public void computeScroll ( ) {
-
-            super.computeScroll();
-
-            if( mExpandFold.isMovingToFinalState() ) {
-                  mExpandFold.computeScroll();
-            }
+            mMoveHelper.move( dy );
       }
 
       void moveToExpand ( ) {
 
-            mExpandFold.moveToState( STATE_EXPAND );
+            mMoveHelper.setAnimateExpand();
       }
 
       void moveToFold ( ) {
 
-            mExpandFold.moveToState( STATE_FOLDED );
+            mMoveHelper.setAnimateFold();
       }
 
-      /**
-       * 是否已经滑动到最终状态
-       *
-       * @return true:滑动到最终状态
-       */
-      boolean isMovingToFinalState ( ) {
-
-            return mExpandFold.isMovingToFinalState();
-      }
-
-      private class ExpandFold {
+      private class MoveHelper {
 
             /**
              * 所有子view的top偏移
              */
-            private int mTopMoved;
+            private int     mTopMoved;
             /**
              * 当前页面bottom偏移
              */
-            private int mBottomMoved;
+            private int     mBottomMoved;
             /**
-             * 手势释放后,折叠或者展开
+             * 手势释放后,需要收缩或者折叠时,用于计算方向
              */
-            private int mTargetState = -1;
+            private int     mDirection     = 0;
+            /**
+             * 触发手势动作后是否重新调用了{@link #requestLayout()},如果重新调用了,那么重新布局,否则不会变化,这是一个优化
+             */
+            private boolean isNeedReLayout = true;
+
+            @Override
+            public String toString ( ) {
+
+                  return "MoveHelper{" +
+                      "mTopMoved=" + mTopMoved +
+                      ", mBottomMoved=" + mBottomMoved +
+                      ", mDirection=" + mDirection +
+                      ", mState=" + mState +
+                      ", page=" + MonthPage.this +
+                      '}';
+            }
 
             /**
-             * 滑动到指定状态
+             * 将页面移动一段距离
              *
-             * @param state 最终状态
+             * @param dy 手势滑动的距离
              */
-            private void moveToState ( int state ) {
-
-                  Log.i( TAG, "moveToState: " + mTargetState + " " + mState + " " + state );
-                  if( mTargetState == -1 && mState != state ) {
-
-                        mTargetState = state;
-                        computeScroll();
-                  }
-            }
-
-            private boolean isMovingToFinalState ( ) {
-
-                  return mTargetState != -1;
-            }
-
             private void move ( float dy ) {
 
-                  if( mState == STATE_FOLDED ) {
-                        mState = STATE_FOLDED_MOVING;
-                        setChildrenExpandState();
-                  } else if( mState == STATE_EXPAND ) {
-                        mState = STATE_EXPAND_MOVING;
-                  }
+                  calculateMovedByDy( dy );
 
-                  if( mState == STATE_EXPAND_MOVING ) {
-
-                        int topDis = mCurrentSelectedPosition / 7 * mCellHeight;
-                        int bottomDis = mPageHeight - ( topDis + mCellHeight );
-                        float radio = topDis * 1f / ( topDis + bottomDis );
-
-                        int topMoved = (int) ( dy * radio );
-                        if( topMoved < -topDis ) {
-                              topMoved = -topDis;
-                        }
-                        if( topMoved > 0 ) {
-                              topMoved = 0;
-                        }
-
-                        int bottomMoved = (int) ( dy - topMoved );
-                        if( bottomMoved < -bottomDis ) {
-                              bottomMoved = -bottomDis;
-                        }
-                        if( bottomMoved > 0 ) {
-                              bottomMoved = 0;
-                        }
-
-                        mTopMoved = topMoved;
-                        mBottomMoved = bottomMoved;
-                        requestLayout();
-                  } else if( mState == STATE_FOLDED_MOVING ) {
-
-                        int topDis = mCurrentSelectedPosition / 7 * mCellHeight;
-                        int bottomDis = mPageHeight - ( topDis + mCellHeight );
-                        float radio = topDis * 1f / ( topDis + bottomDis );
-
-                        int topMoved = (int) ( dy * radio );
-                        int bottomMoved = (int) ( dy - topMoved );
-
-                        mTopMoved = -topDis + topMoved;
-                        if( mTopMoved > 0 ) {
-                              mTopMoved = 0;
-                        }
-                        if( mTopMoved < -topDis ) {
-                              mTopMoved = -topDis;
-                        }
-
-                        mBottomMoved = -bottomDis + bottomMoved;
-                        if( mBottomMoved > 0 ) {
-                              mBottomMoved = 0;
-                        }
-                        if( mBottomMoved < -bottomDis ) {
-                              mBottomMoved = -bottomDis;
-                        }
+                  mState = STATE_MOVING;
+                  if( isNeedReLayout ) {
                         requestLayout();
                   }
             }
 
-            private void computeScroll ( ) {
+            private void calculateMovedByDy ( float dy ) {
 
+                  /* 记录原始尺寸,用于后续决定是否需要重新布局 */
+                  int topMoved = mTopMoved;
+                  int bottomMoved = mBottomMoved;
+
+                  /* 可以移动的距离 */
                   int topDis = mCurrentSelectedPosition / 7 * mCellHeight;
                   int bottomDis = mPageHeight - ( topDis + mCellHeight );
+                  /* 上下可移动距离之比 */
+                  float topRadio = topDis * 1f / ( topDis + bottomDis );
+                  /* 根据比例分配移动的距离 */
+                  float topNeedMove = dy * topRadio;
+                  float bottomNeedMove = dy - topNeedMove;
 
-                  if( mTopMoved == 0 && mBottomMoved == 0 ) {
-
-                        /* 已经展开 */
-                        mState = STATE_EXPAND;
-                        setChildrenExpandState();
-                        ( (MonthLayout) getParent() ).onDateChanged( mDate, mPosition, true );
-                        if( mTargetState == STATE_EXPAND ) {
-                              mTargetState = -1;
-                        }
-                  } else if( mTopMoved == -topDis && mBottomMoved == -bottomDis ) {
-
-                        /* 已经折叠 */
-                        mState = STATE_FOLDED;
-                        setChildrenFoldState();
-                        ( (MonthLayout) getParent() ).onDateChanged( mDate, mPosition, false );
-                        if( mTargetState == STATE_FOLDED ) {
-                              mTargetState = -1;
-                        }
+                  /* 重新计算上部移动的距离 */
+                  mTopMoved += topNeedMove;
+                  if( mTopMoved < -topDis ) {
+                        mTopMoved = -topDis;
+                  }
+                  if( mTopMoved > 0 ) {
+                        mTopMoved = 0;
                   }
 
-                  /* 正在展开折叠,每次增加/减少mCellHeight / 5距离 */
-                  int total = topDis + bottomDis;
-                  if( mTargetState == STATE_EXPAND ) {
-                        int i = total + mTopMoved + mBottomMoved + mCellHeight / 5;
-                        moving( i );
+                  /* 重新计算下部移动的距离 */
+                  mBottomMoved += bottomNeedMove;
+                  if( mBottomMoved < -bottomDis ) {
+                        mBottomMoved = -bottomDis;
                   }
-                  if( mTargetState == STATE_FOLDED ) {
-                        int i = mTopMoved + mBottomMoved - mCellHeight / 5;
-                        moving( i );
+                  if( mBottomMoved > 0 ) {
+                        mBottomMoved = 0;
                   }
+
+                  /* 判断是否需要重新布局 */
+                  isNeedReLayout = topMoved != mTopMoved || bottomMoved != mBottomMoved;
             }
 
-            private int getTopMoved ( ) {
-
-                  return mTopMoved;
-            }
-
-            private int getBottomMoved ( ) {
-
-                  return mBottomMoved;
-            }
-
+            /**
+             * 计算折叠时需要移动的尺寸
+             */
             private void calculateFoldMoved ( ) {
 
                   int topDis = mCurrentSelectedPosition / 7 * mCellHeight;
@@ -518,15 +441,89 @@ public class MonthPage extends ViewGroup implements OnClickListener {
                   mBottomMoved = -bottomDis;
             }
 
+            /**
+             * 计算展开时需要移动的尺寸
+             */
             private void calculateExpandMoved ( ) {
 
                   mTopMoved = 0;
                   mBottomMoved = 0;
             }
 
+            /**
+             * 手势操作时高度
+             *
+             * @param linesHeight 页面显示完整需要的高度
+             *
+             * @return 修正后的高度
+             */
             private int calculateMeasuredHeight ( int linesHeight ) {
 
                   return linesHeight + mTopMoved + mBottomMoved;
+            }
+
+            private boolean isCurrentAtFoldState ( ) {
+
+                  int topDis = mCurrentSelectedPosition / 7 * mCellHeight;
+                  int bottomDis = mPageHeight - ( topDis + mCellHeight );
+                  return mTopMoved == -topDis && mBottomMoved == -bottomDis;
+            }
+
+            private void setAnimateExpand ( ) {
+
+                  setAnimateState( 1 );
+            }
+
+            private void setAnimateFold ( ) {
+
+                  setAnimateState( -1 );
+            }
+
+            private void setAnimateState ( int direction ) {
+
+                  mDirection = direction;
+                  mState = STATE_ANIMATE;
+
+                  animateIfNeed();
+            }
+
+            private void animateIfNeed ( ) {
+
+                  if( needMockMove() ) {
+                        calculateMovedByDy( mDirection * mCellHeight / 20f );
+                        requestLayout();
+                  }
+            }
+
+            private boolean needMockMove ( ) {
+
+                  if( mState == STATE_ANIMATE ) {
+                        if( mDirection == 1 ) {
+                              boolean result = mTopMoved != 0 || mBottomMoved != 0;
+                              if( !result ) {
+                                    mDirection = 0;
+                                    mState = STATE_EXPAND;
+                                    MonthLayout parent = (MonthLayout) getParent();
+                                    parent.onMonthModeChange( mDate, mPosition, true );
+                              }
+                              return result;
+                        }
+
+                        if( mDirection == -1 ) {
+                              int topDis = mCurrentSelectedPosition / 7 * mCellHeight;
+                              int bottomDis = mPageHeight - ( topDis + mCellHeight );
+                              boolean result = mTopMoved != -topDis || mBottomMoved != -bottomDis;
+                              if( !result ) {
+                                    mDirection = 0;
+                                    mState = STATE_FOLDED;
+                                    MonthLayout parent = (MonthLayout) getParent();
+                                    parent.onMonthModeChange( mDate, mPosition, false );
+                              }
+                              return result;
+                        }
+                  }
+
+                  return false;
             }
       }
 }
