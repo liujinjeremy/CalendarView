@@ -4,7 +4,6 @@ import static tech.threekilogram.calendarview.month.MonthDayView.SELECTED;
 import static tech.threekilogram.calendarview.month.MonthDayView.UNSELECTED;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -322,12 +321,12 @@ public class MonthPage extends ViewGroup implements OnClickListener {
 
       void moveToExpand ( ) {
 
-            mMoveHelper.setAnimateExpand();
+            mMoveHelper.setAnimateState( 1 );
       }
 
       void moveToFold ( ) {
 
-            mMoveHelper.setAnimateFold();
+            mMoveHelper.setAnimateState( -1 );
       }
 
       void onDownTouchEvent ( ) {
@@ -335,14 +334,12 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             mMoveHelper.forceStopAnimateIfRunning();
       }
 
-      boolean isExpanded ( ) {
+      boolean isMoving ( ) {
 
-            return mState == STATE_EXPAND;
+            return mState == STATE_MOVING || mState == STATE_ANIMATE;
       }
 
       void onUpTouchEvent ( float totalDy, boolean isMonthMode ) {
-
-            Log.i( TAG, "onUpTouchEvent: " + totalDy + " " + isMonthMode );
 
             if( totalDy > 0 ) {
                   moveToExpand();
@@ -351,16 +348,12 @@ public class MonthPage extends ViewGroup implements OnClickListener {
 
             if( totalDy < 0 ) {
                   moveToFold();
+                  return;
             }
 
             if( totalDy == 0 ) {
                   mMoveHelper.checkAnimateState( isMonthMode );
             }
-      }
-
-      boolean isFolded ( ) {
-
-            return mState == STATE_FOLDED;
       }
 
       private class MoveHelper {
@@ -400,6 +393,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
                   mState = STATE_MOVING;
                   if( calculateMovedByDy( dy ) ) {
                         requestLayout();
+                        ( (MonthLayout) getParent() ).onCurrentItemVerticalMove( mTopMoved + mBottomMoved );
                   }
             }
 
@@ -479,16 +473,6 @@ public class MonthPage extends ViewGroup implements OnClickListener {
                   return mTopMoved == -topDis && mBottomMoved == -bottomDis;
             }
 
-            private void setAnimateExpand ( ) {
-
-                  setAnimateState( 1 );
-            }
-
-            private void setAnimateFold ( ) {
-
-                  setAnimateState( -1 );
-            }
-
             private void setAnimateState ( int direction ) {
 
                   mDirection = direction;
@@ -500,10 +484,10 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             private void animateIfNeed ( ) {
 
                   if( needMockMove() ) {
-                        calculateMovedByDy( mDirection * mCellHeight / 5f );
-                        requestLayout();
-
-                        Log.i( TAG, "animateIfNeed: " );
+                        if( calculateMovedByDy( mDirection * mCellHeight / 5f ) ) {
+                              requestLayout();
+                              ( (MonthLayout) getParent() ).onCurrentItemVerticalMove( mTopMoved + mBottomMoved );
+                        }
                   }
             }
 
@@ -553,11 +537,10 @@ public class MonthPage extends ViewGroup implements OnClickListener {
                   }
 
                   if( isMonthMode ) {
-                        mDirection = 1;
+                        setAnimateState( 1 );
                   } else {
-                        mDirection = -1;
+                        setAnimateState( -1 );
                   }
-                  setAnimateState( mDirection );
             }
       }
 }

@@ -153,14 +153,13 @@ public class MonthLayout extends ViewPager implements ViewComponent {
       @Override
       protected void onMeasure ( int widthMeasureSpec, int heightMeasureSpec ) {
 
+            if( mChangeHeight.trySetDimension( widthMeasureSpec, heightMeasureSpec ) ) {
+                  return;
+            }
+
             int widthSize = MeasureSpec.getSize( widthMeasureSpec );
             int heightSize = MeasureSpec.getSize( heightMeasureSpec );
             mCellSize.calculateCellSize( widthSize, heightSize );
-
-            if( mScroller.isScrolling() ) {
-                  mChangeHeight.setDimension( widthSize );
-                  return;
-            }
 
             super.onMeasure( widthMeasureSpec, heightMeasureSpec );
 
@@ -181,7 +180,7 @@ public class MonthLayout extends ViewPager implements ViewComponent {
       @Override
       protected void onLayout ( boolean changed, int l, int t, int r, int b ) {
 
-            if( mScroller.isScrolling() ) {
+            if( mChangeHeight.tryLayout() ) {
                   return;
             }
             super.onLayout( changed, l, t, r, b );
@@ -260,15 +259,57 @@ public class MonthLayout extends ViewPager implements ViewComponent {
             onDateChanged( date, position, monthMode );
       }
 
+      void onCurrentItemVerticalMove ( float moved ) {
+
+            mChangeHeight.mSetHeight = moved;
+      }
+
       private class ChangeHeight {
 
-            private int mSetHeight;
+            private float mSetHeight;
 
-            private void setDimension ( int width ) {
+            private boolean trySetDimension ( int widthMeasureSpec, int heightMeasureSpec ) {
 
-                  if( mSetHeight > 0 ) {
-                        setMeasuredDimension( width, mSetHeight );
+                  int widthSize = MeasureSpec.getSize( widthMeasureSpec );
+                  if( mScroller.isScrolling() ) {
+                        if( mSetHeight > 0 ) {
+                              setMeasuredDimension( widthSize, (int) mSetHeight );
+                              return true;
+                        }
                   }
+
+                  MonthPage currentPage = getCurrentPage();
+                  if( currentPage != null ) {
+                        if( currentPage.isMoving() ) {
+                              currentPage.measure( widthMeasureSpec, heightMeasureSpec );
+                              setMeasuredDimension( widthSize, currentPage.getMeasuredHeight() );
+                              return true;
+                        }
+                  }
+                  return false;
+            }
+
+            private boolean tryLayout ( ) {
+
+                  if( mScroller.isScrolling() ) {
+                        return true;
+                  }
+
+                  MonthPage currentPage = getCurrentPage();
+                  if( currentPage != null ) {
+                        if( currentPage.isMoving() ) {
+                              int measuredHeight = getMeasuredHeight();
+                              int childCount = getChildCount();
+                              for( int i = 0; i < childCount; i++ ) {
+                                    View child = getChildAt( i );
+                                    child.layout( child.getLeft(), child.getTop(), child.getRight(),
+                                                  child.getTop() + measuredHeight
+                                    );
+                              }
+                              return true;
+                        }
+                  }
+                  return false;
             }
 
             private void changeHeightWhenScroll ( int currentPosition, int nextPosition, float offset ) {
