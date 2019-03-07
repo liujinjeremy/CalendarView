@@ -4,6 +4,7 @@ import static tech.threekilogram.calendarview.month.MonthDayView.SELECTED;
 import static tech.threekilogram.calendarview.month.MonthDayView.UNSELECTED;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -63,7 +64,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
       /**
        * 当前状态
        */
-      private int     mState;
+      public  int     mState;
 
       /**
        * 显示天的view的宽度
@@ -314,7 +315,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
        *
        * @param dy 距离
        */
-      public void expandOrFoldBy ( float dy ) {
+      public void onVerticalMoveBy ( float dy ) {
 
             mMoveHelper.move( dy );
       }
@@ -339,12 +340,9 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             return mState == STATE_EXPAND;
       }
 
-      boolean isFolded ( ) {
-
-            return mState == STATE_FOLDED;
-      }
-
       void onUpTouchEvent ( float totalDy, boolean isMonthMode ) {
+
+            Log.i( TAG, "onUpTouchEvent: " + totalDy + " " + isMonthMode );
 
             if( totalDy > 0 ) {
                   moveToExpand();
@@ -358,6 +356,11 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             if( totalDy == 0 ) {
                   mMoveHelper.checkAnimateState( isMonthMode );
             }
+      }
+
+      boolean isFolded ( ) {
+
+            return mState == STATE_FOLDED;
       }
 
       private class MoveHelper {
@@ -394,13 +397,13 @@ public class MonthPage extends ViewGroup implements OnClickListener {
              */
             private void move ( float dy ) {
 
-                  calculateMovedByDy( dy );
-
                   mState = STATE_MOVING;
-                  requestLayout();
+                  if( calculateMovedByDy( dy ) ) {
+                        requestLayout();
+                  }
             }
 
-            private void calculateMovedByDy ( float dy ) {
+            private boolean calculateMovedByDy ( float dy ) {
 
                   /* 记录原始尺寸,用于后续决定是否需要重新布局 */
                   float topMoved = mTopMoved;
@@ -434,7 +437,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
                   }
 
                   /* 判断是否需要重新布局 */
-                  boolean result = topMoved != mTopMoved || bottomMoved != mBottomMoved;
+                  return topMoved != mTopMoved || bottomMoved != mBottomMoved;
             }
 
             /**
@@ -499,6 +502,8 @@ public class MonthPage extends ViewGroup implements OnClickListener {
                   if( needMockMove() ) {
                         calculateMovedByDy( mDirection * mCellHeight / 5f );
                         requestLayout();
+
+                        Log.i( TAG, "animateIfNeed: " );
                   }
             }
 

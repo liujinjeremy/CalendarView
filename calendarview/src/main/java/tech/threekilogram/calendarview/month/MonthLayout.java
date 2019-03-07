@@ -32,7 +32,7 @@ public class MonthLayout extends ViewPager implements ViewComponent {
       /**
        * 页面滚动时改变高度
        */
-      private ChangeHeightScroller mScroller;
+      private OnPageScroller       mScroller;
       /**
        * 展开折叠页面
        */
@@ -45,6 +45,10 @@ public class MonthLayout extends ViewPager implements ViewComponent {
        * 计算页面需要使用的基础尺寸
        */
       private CellSize             mCellSize;
+      /**
+       * 用于滚动时改变高度,或者页面展开折叠时改变高度
+       */
+      private ChangeHeight         mChangeHeight;
 
       /**
        * 只能new出来不能再布局中使用
@@ -112,11 +116,12 @@ public class MonthLayout extends ViewPager implements ViewComponent {
             setAdapter( adapter );
             setCurrentItem( position );
 
-            mScroller = new ChangeHeightScroller( this );
+            mScroller = new OnPageScroller( this );
             addOnPageChangeListener( mScroller );
 
             mExpandFoldPage = new ExpandFoldPage();
             mCellSize = new CellSize();
+            mChangeHeight = new ChangeHeight();
       }
 
       @Override
@@ -149,15 +154,13 @@ public class MonthLayout extends ViewPager implements ViewComponent {
       protected void onMeasure ( int widthMeasureSpec, int heightMeasureSpec ) {
 
             int widthSize = MeasureSpec.getSize( widthMeasureSpec );
-
-            /* 滚动时,重设页面高度,不必重新测量,已经设置好,直接使用 */
-            if( mScroller.isScrolling ) {
-                  mScroller.setMeasuredDimension( widthSize );
-                  return;
-            }
-
             int heightSize = MeasureSpec.getSize( heightMeasureSpec );
             mCellSize.calculateCellSize( widthSize, heightSize );
+
+            if( mScroller.isScrolling() ) {
+                  mChangeHeight.setDimension( widthSize );
+                  return;
+            }
 
             super.onMeasure( widthMeasureSpec, heightMeasureSpec );
 
@@ -178,7 +181,7 @@ public class MonthLayout extends ViewPager implements ViewComponent {
       @Override
       protected void onLayout ( boolean changed, int l, int t, int r, int b ) {
 
-            if( mScroller.isScrolling ) {
+            if( mScroller.isScrolling() ) {
                   return;
             }
             super.onLayout( changed, l, t, r, b );
@@ -255,6 +258,49 @@ public class MonthLayout extends ViewPager implements ViewComponent {
       void onMonthModeChange ( Date date, int position, boolean monthMode ) {
 
             onDateChanged( date, position, monthMode );
+      }
+
+      private class ChangeHeight {
+
+            private int mSetHeight;
+
+            private void setDimension ( int width ) {
+
+                  if( mSetHeight > 0 ) {
+                        setMeasuredDimension( width, mSetHeight );
+                  }
+            }
+
+            private void changeHeightWhenScroll ( int currentPosition, int nextPosition, float offset ) {
+
+                  int currentHeight = 0;
+                  int nextHeight = 0;
+                  int childCount = getChildCount();
+                  for( int i = 0; i < childCount; i++ ) {
+                        MonthPage child = (MonthPage) getChildAt( i );
+                        if( child.getPosition() == currentPosition ) {
+                              currentHeight = child.getMeasuredHeight();
+
+                              if( currentHeight != 0 && nextHeight != 0 ) {
+                                    break;
+                              } else {
+                                    continue;
+                              }
+                        }
+                        if( child.getPosition() == nextPosition ) {
+                              nextHeight = child.getMeasuredHeight();
+                              if( currentHeight != 0 && nextHeight != 0 ) {
+                                    break;
+                              }
+                        }
+                  }
+
+                  float height = currentHeight + ( nextHeight - currentHeight ) * Math.abs( offset );
+                  if( currentHeight != height ) {
+                        mSetHeight = (int) height;
+                        requestLayout();
+                  }
+            }
       }
 
       /**
@@ -422,19 +468,14 @@ public class MonthLayout extends ViewPager implements ViewComponent {
       /**
        * 滚动时改变页面高度
        */
-      private class ChangeHeightScroller extends ViewPagerScrollListener {
-
-            /**
-             * 页面是否是滚动
-             */
-            private boolean isScrolling;
+      private class OnPageScroller extends ViewPagerScrollListener {
 
             /**
              * 创建
              *
              * @param pager pager
              */
-            private ChangeHeightScroller ( ViewPager pager ) {
+            private OnPageScroller ( ViewPager pager ) {
 
                   super( pager );
             }
@@ -449,69 +490,18 @@ public class MonthLayout extends ViewPager implements ViewComponent {
             @Override
             protected void onScrolled ( int state, int current, float offset, int offsetPixels ) {
 
-                  isScrolling = ( offset != 1 ) && ( offset != -1 );
-
                   if( offset < 0 ) {
-
-                        int currentHeight = 0;
-                        int nextHeight = 0;
-                        int childCount = getChildCount();
-                        for( int i = 0; i < childCount; i++ ) {
-                              MonthPage child = (MonthPage) getChildAt( i );
-                              if( child.getPosition() == current ) {
-                                    currentHeight = child.getMeasuredHeight();
-                                    continue;
-                              }
-                              if( child.getPosition() == current + 1 ) {
-                                    nextHeight = child.getMeasuredHeight();
-                              }
-                        }
-
-                        changeHeight( currentHeight, nextHeight, -offset );
+                        mChangeHeight.changeHeightWhenScroll( current, current + 1, offset );
                   }
 
                   if( offset > 0 ) {
-
-                        int currentHeight = 0;
-                        int nextHeight = 0;
-                        int childCount = getChildCount();
-                        for( int i = 0; i < childCount; i++ ) {
-                              MonthPage child = (MonthPage) getChildAt( i );
-                              if( child.getPosition() == current ) {
-                                    currentHeight = child.getMeasuredHeight();
-                                    continue;
-                              }
-                              if( child.getPosition() == current - 1 ) {
-                                    nextHeight = child.getMeasuredHeight();
-                              }
-                        }
-
-                        changeHeight( currentHeight, nextHeight, offset );
+                        mChangeHeight.changeHeightWhenScroll( current, current - 1, offset );
                   }
             }
 
-            /**
-             * 页面滑动时改变页面高度
-             *
-             * @param height 当前页面高度
-             * @param nextHeight 下一个页面高度
-             * @param offset 滑动进度
-             */
-            private void changeHeight ( int height, int nextHeight, float offset ) {
+            private boolean isScrolling ( ) {
 
-                  ViewGroup.LayoutParams layoutParams = getLayoutParams();
-                  layoutParams.height = (int) ( height + ( nextHeight - height ) * offset );
-                  requestLayout();
-            }
-
-            /**
-             * 当处于滚动状态时,用来设置布局尺寸
-             *
-             * @param widthSize 布局宽度
-             */
-            private void setMeasuredDimension ( int widthSize ) {
-
-                  MonthLayout.this.setMeasuredDimension( widthSize, getLayoutParams().height );
+                  return mState != SCROLL_STATE_IDLE;
             }
       }
 
@@ -540,6 +530,17 @@ public class MonthLayout extends ViewPager implements ViewComponent {
              */
             private boolean handleMotionEvent ( MotionEvent ev ) {
 
+//                  MonthPage currentPage = getCurrentPage();
+//                  boolean expanded = currentPage.isExpanded();
+//                  boolean folded = currentPage.isFolded();
+//                  /* 页面是否没处于展开或者折叠 */
+//                  boolean pageMoved = !( expanded || folded );
+//
+//                  int scrollX = getScrollX();
+//                  int width = currentPage.getWidth();
+//                  /* 页面是否正在水平滚动 */
+//                  boolean scrolled = scrollX % width != 0;
+
                   float x;
                   float y;
                   switch( ev.getAction() ) {
@@ -549,16 +550,7 @@ public class MonthLayout extends ViewPager implements ViewComponent {
                               mLastX = mDownX = x;
                               mLastY = mDownY = y;
 
-                              MonthPage currentPage = getCurrentPage();
-                              if( currentPage.isExpanded() || currentPage.isFolded() ) {
-                                    superDispatchTouchEvent( ev );
-                                    isHorizontalMove = isVerticalMove = false;
-                              } else {
-                                    currentPage.onDownTouchEvent();
-                                    isVerticalMove = true;
-                                    isHorizontalMove = false;
-                              }
-                              break;
+                              return superDispatchTouchEvent( ev );
                         case MotionEvent.ACTION_MOVE:
 
                               x = ev.getRawX();
@@ -569,55 +561,14 @@ public class MonthLayout extends ViewPager implements ViewComponent {
                               mLastX = x;
                               mLastY = y;
 
-                              if( !isHorizontalMove && !isVerticalMove ) {
-                                    float absX = Math.abs( x - mDownX );
-                                    float absY = Math.abs( y - mDownY );
+                              return superDispatchTouchEvent( ev );
 
-                                    if( absX > absY ) {
-                                          isHorizontalMove = true;
-                                          isVerticalMove = false;
-                                    }
-
-                                    if( absX < absY ) {
-                                          isHorizontalMove = false;
-                                          isVerticalMove = true;
-                                    }
-                              }
-
-                              if( isHorizontalMove ) {
-                                    superDispatchTouchEvent( ev );
-                              }
-
-                              if( isVerticalMove ) {
-                                    getCurrentPage().expandOrFoldBy( dy );
-                              }
-
-                              if( !isHorizontalMove && !isVerticalMove ) {
-                                    superDispatchTouchEvent( ev );
-                              }
-
-                              break;
                         default:
                               x = ev.getRawX();
                               y = ev.getRawY();
 
-                              if( isHorizontalMove ) {
-                                    superDispatchTouchEvent( ev );
-                              }
-
-                              if( isVerticalMove ) {
-                                    float totalDy = y - mDownY;
-                                    getCurrentPage().onUpTouchEvent( totalDy, mSource.isMonthMode );
-                              }
-
-                              if( !isHorizontalMove && !isVerticalMove ) {
-                                    superDispatchTouchEvent( ev );
-                              }
-
-                              isHorizontalMove = isVerticalMove = false;
-                              break;
+                              return superDispatchTouchEvent( ev );
                   }
-                  return true;
             }
 
             private boolean superDispatchTouchEvent ( MotionEvent ev ) {
