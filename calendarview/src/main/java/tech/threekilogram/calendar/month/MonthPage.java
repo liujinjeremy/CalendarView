@@ -298,10 +298,12 @@ public class MonthPage extends ViewGroup implements OnClickListener {
        * 滑动一段距离,直至展开至月显示模式,或者折叠到周显示模式
        *
        * @param dy 距离
+       *
+       * @return 消费了多少距离
        */
-      void onVerticalMoveBy ( float dy ) {
+      public float verticalScrollBy ( float dy ) {
 
-            mMoveHelper.move( dy );
+            return mMoveHelper.move( dy );
       }
 
       void moveToExpand ( ) {
@@ -319,7 +321,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             mMoveHelper.forceStopAnimateIfRunning();
       }
 
-      boolean isMoving ( ) {
+      public boolean isMoving ( ) {
 
             int state = mStateManager.getState();
             return state == STATE_MOVING || state == STATE_ANIMATE;
@@ -331,7 +333,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
        * @param totalDy 一共移动的竖直距离
        * @param isMonthMode 当前是否是月显示模式
        */
-      void onUpTouchEvent ( float totalDy, boolean isMonthMode ) {
+      public void releaseToExpandOrFold ( float totalDy, boolean isMonthMode ) {
 
             if( totalDy > 24 ) {
                   moveToExpand();
@@ -423,14 +425,19 @@ public class MonthPage extends ViewGroup implements OnClickListener {
              * 将页面移动一段距离,按照比例分配给上下需要移动的距离
              *
              * @param dy 手势滑动的距离
+             *
+             * @return 消费了所少距离
              */
-            protected void move ( float dy ) {
+            protected float move ( float dy ) {
 
                   mStateManager.setState( STATE_MOVING );
                   if( calculateMovedByDy( dy ) ) {
                         requestLayout();
                         ( (MonthLayout) getParent() ).onCurrentItemVerticalMove( mTopMoved + mBottomMoved );
+                        return dy;
                   }
+
+                  return 0;
             }
 
             /**

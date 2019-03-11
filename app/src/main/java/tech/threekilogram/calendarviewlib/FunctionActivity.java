@@ -100,11 +100,11 @@ public class FunctionActivity extends AppCompatActivity {
 
       public void fold100 ( View view ) {
 
-            // mCalendar.getMonthLayout().getCurrentPage().onVerticalMoveBy( -100 );
+            // mCalendar.getMonthLayout().getCurrentPage().verticalScrollBy( -100 );
       }
 
       public void expand100 ( View view ) {
 
-            //mCalendar.getMonthLayout().getCurrentPage().onVerticalMoveBy( 100 );
+            //mCalendar.getMonthLayout().getCurrentPage().verticalScrollBy( 100 );
       }
 }

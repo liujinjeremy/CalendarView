@@ -145,7 +145,7 @@ public class MonthLayout extends ViewPager {
 
             MonthPage currentPage = getCurrentPage();
             if( currentPage != null ) {
-                  currentPage.onVerticalMoveBy( dy );
+                  currentPage.verticalScrollBy( dy );
             }
       }
 
@@ -617,7 +617,7 @@ public class MonthLayout extends ViewPager {
 
                               if( isVerticalMove ) {
                                     if( monthPage != null ) {
-                                          monthPage.onVerticalMoveBy( dy );
+                                          monthPage.verticalScrollBy( dy );
                                           return true;
                                     }
                               }
@@ -630,7 +630,7 @@ public class MonthLayout extends ViewPager {
 
                               if( isVerticalMove ) {
                                     if( monthPage != null ) {
-                                          monthPage.onUpTouchEvent( y - mDownY, mSource.isMonthMode );
+                                          monthPage.releaseToExpandOrFold( y - mDownY, mSource.isMonthMode );
                                           isHorizontalMove = isVerticalMove = false;
                                           return true;
                                     }

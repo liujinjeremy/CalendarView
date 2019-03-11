@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.RecyclerView.ViewHolder;
 import java.util.Locale;
 import tech.threekilogram.calendar.CalendarView;
+import tech.threekilogram.calendar.behavior.CalendarBehaviors;
 
 public class BehaviorTestActivity extends AppCompatActivity {
 
@@ -41,6 +42,9 @@ public class BehaviorTestActivity extends AppCompatActivity {
             mRecycler = findViewById( R.id.recycler );
             mRecycler.setLayoutManager( new LinearLayoutManager( this ) );
             mRecycler.setAdapter( new Adapter() );
+
+            CalendarBehaviors behaviors = new CalendarBehaviors();
+            behaviors.setUp( mCalendar, mRecycler );
       }
 
       private class Holder extends ViewHolder {
