@@ -10,10 +10,13 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.RecyclerView.ViewHolder;
 import java.util.Locale;
 import tech.threekilogram.calendar.CalendarView;
 
 public class BehaviorTestActivity extends AppCompatActivity {
+
+      private static final String TAG = BehaviorTestActivity.class.getSimpleName();
 
       private CalendarView mCalendar;
       private RecyclerView mRecycler;
@@ -40,7 +43,7 @@ public class BehaviorTestActivity extends AppCompatActivity {
             mRecycler.setAdapter( new Adapter() );
       }
 
-      private class Holder extends RecyclerView.ViewHolder {
+      private class Holder extends ViewHolder {
 
             TextView mTextView;
 

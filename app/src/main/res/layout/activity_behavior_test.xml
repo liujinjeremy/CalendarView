@@ -7,23 +7,16 @@
     android:layout_height="match_parent"
     tools:context=".BehaviorTestActivity">
 
-      <com.google.android.material.appbar.AppBarLayout
+      <tech.threekilogram.calendar.CalendarView
+          android:id="@+id/calendar"
           android:layout_width="match_parent"
-          android:layout_height="wrap_content">
-
-            <tech.threekilogram.calendar.CalendarView
-                android:layout_width="match_parent"
-                android:minHeight="56dp"
-                app:layout_scrollFlags="scroll|exitUntilCollapsed"
-                android:layout_height="400dp">
-            </tech.threekilogram.calendar.CalendarView>
-
-      </com.google.android.material.appbar.AppBarLayout>
+          android:layout_height="350dp">
+      </tech.threekilogram.calendar.CalendarView>
 
       <androidx.recyclerview.widget.RecyclerView
           android:id="@+id/recycler"
           android:layout_width="match_parent"
           android:layout_height="match_parent"
-          app:layout_behavior="@string/appbar_scrolling_view_behavior">
+          app:layout_behavior="tech.threekilogram.calendar.behavior.CalendarViewLayoutBehavior">
       </androidx.recyclerview.widget.RecyclerView>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

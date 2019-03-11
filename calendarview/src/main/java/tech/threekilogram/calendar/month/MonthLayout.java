@@ -131,14 +131,22 @@ public class MonthLayout extends ViewPager {
             return mOnDateChangeListener;
       }
 
-      int getCellWidth ( ) {
+      public int getCellWidth ( ) {
 
             return mCellSize.mCellWidth;
       }
 
-      int getCellHeight ( ) {
+      public int getCellHeight ( ) {
 
             return mCellSize.mCellHeight;
+      }
+
+      public void verticalMoveCurrentPageBy ( float dy ) {
+
+            MonthPage currentPage = getCurrentPage();
+            if( currentPage != null ) {
+                  currentPage.onVerticalMoveBy( dy );
+            }
       }
 
       @Override

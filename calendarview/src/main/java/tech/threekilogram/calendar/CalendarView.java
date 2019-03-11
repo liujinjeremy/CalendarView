@@ -192,6 +192,9 @@ public class CalendarView extends ViewGroup {
                 + monthHeight
                 + paddingTop + paddingBottom;
 
+            int cellHeight = mMonthLayout.getCellHeight();
+            setMinimumHeight( cellHeight + barHeight );
+
             setMeasuredDimension( widthSize, finalHeight );
       }
 
@@ -199,6 +202,11 @@ public class CalendarView extends ViewGroup {
       protected void onLayout ( boolean changed, int l, int t, int r, int b ) {
 
             mLayoutStrategy.layoutChildren( this, mWeekBar, mMonthLayout );
+      }
+
+      public void verticalMoveBy ( float dy ) {
+
+            mMonthLayout.verticalMoveCurrentPageBy( dy );
       }
 
       /**
@@ -213,8 +221,6 @@ public class CalendarView extends ViewGroup {
              * @param heightMeasureSpec 高度
              * @param weekBar 星期条组件
              * @param monthLayout 显示月份每一天的组件
-             *
-             * @return 布局占用的尺寸, int[0]表示宽度, int[1]表示高度
              */
             void measureChildren (
                 CalendarView parent,

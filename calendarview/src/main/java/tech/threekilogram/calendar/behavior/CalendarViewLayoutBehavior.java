@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup.MarginLayoutParams;
 import androidx.annotation.NonNull;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.coordinatorlayout.widget.CoordinatorLayout.Behavior;
@@ -37,10 +38,18 @@ public class CalendarViewLayoutBehavior extends Behavior {
       }
 
       @Override
-      public boolean onLayoutChild (
-          @NonNull CoordinatorLayout parent, @NonNull View child, int layoutDirection ) {
+      public boolean onDependentViewChanged (
+          @NonNull CoordinatorLayout parent, @NonNull View child, @NonNull View dependency ) {
 
-            Log.i( TAG, "onLayoutChild: " );
-            return super.onLayoutChild( parent, child, layoutDirection );
+            int bottom = dependency.getBottom();
+            int top = child.getTop();
+            MarginLayoutParams layoutParams = (MarginLayoutParams) child.getLayoutParams();
+
+            if( top - layoutParams.topMargin != bottom ) {
+                  child.setY( bottom + layoutParams.topMargin );
+                  return true;
+            }
+
+            return super.onDependentViewChanged( parent, child, dependency );
       }
 }
