@@ -1,4 +1,4 @@
-package tech.threekilogram.calendarview.week;
+package tech.threekilogram.calendar.week;
 
 import android.content.Context;
 import android.util.AttributeSet;
@@ -7,13 +7,12 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import tech.threekilogram.calendarview.CalendarView;
-import tech.threekilogram.calendarview.CalendarView.ViewComponent;
+import tech.threekilogram.calendar.CalendarView;
 
 /**
  * @author Liujin 2019/2/21:12:16:29
  */
-public class LinearWeekBar extends ViewGroup implements ViewComponent {
+public class LinearWeekBar extends ViewGroup {
 
       private static final String TAG = LinearWeekBar.class.getSimpleName();
 
@@ -99,13 +98,6 @@ public class LinearWeekBar extends ViewGroup implements ViewComponent {
             return textView;
       }
 
-      @Override
-      public View getView ( ) {
-
-            return this;
-      }
-
-      @Override
       public void bindParent ( CalendarView calendarView ) {
 
             mCalendarView = calendarView;
@@ -122,7 +114,6 @@ public class LinearWeekBar extends ViewGroup implements ViewComponent {
             }
       }
 
-      @Override
       public void notifyFirstDayIsMondayChanged ( boolean isFirstDayMonday ) {
 
             for( int i = 0; i < 7; i++ ) {

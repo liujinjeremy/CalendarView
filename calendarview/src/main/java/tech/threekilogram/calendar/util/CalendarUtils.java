@@ -1,4 +1,4 @@
-package tech.threekilogram.calendarview.util;
+package tech.threekilogram.calendar.util;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;

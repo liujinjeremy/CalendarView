@@ -1,14 +1,14 @@
-package tech.threekilogram.calendarview.month;
+package tech.threekilogram.calendar.month;
 
-import static tech.threekilogram.calendarview.month.MonthDayView.SELECTED;
-import static tech.threekilogram.calendarview.month.MonthDayView.UNSELECTED;
+import static tech.threekilogram.calendar.month.MonthDayView.SELECTED;
+import static tech.threekilogram.calendar.month.MonthDayView.UNSELECTED;
 
 import android.content.Context;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import java.util.Date;
-import tech.threekilogram.calendarview.util.CalendarUtils;
+import tech.threekilogram.calendar.util.CalendarUtils;
 
 /**
  * {@link MonthLayout}的一个页面,用来显示一个月日期或者一周的日期,通过手势分发可以在月模式和周模式之间转换

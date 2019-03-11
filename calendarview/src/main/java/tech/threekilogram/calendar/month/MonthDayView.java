@@ -1,4 +1,4 @@
-package tech.threekilogram.calendarview.month;
+package tech.threekilogram.calendar.month;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -7,8 +7,8 @@ import android.graphics.Paint;
 import android.graphics.Paint.Align;
 import android.view.View;
 import java.util.Date;
-import tech.threekilogram.calendarview.util.BaseLineUtils;
-import tech.threekilogram.calendarview.util.CalendarUtils;
+import tech.threekilogram.calendar.util.BaseLineUtils;
+import tech.threekilogram.calendar.util.CalendarUtils;
 
 /**
  * 用于在{@link MonthPage}中显示天的信息,可以根据不同的状态显示不同的内容

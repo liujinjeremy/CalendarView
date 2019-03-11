@@ -19,4 +19,9 @@ public class MainActivity extends AppCompatActivity {
 
             FunctionActivity.start( this );
       }
+
+      public void behavior ( View view ) {
+
+            BehaviorTestActivity.start( this );
+      }
 }

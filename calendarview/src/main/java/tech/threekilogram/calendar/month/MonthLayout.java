@@ -1,4 +1,4 @@
-package tech.threekilogram.calendarview.month;
+package tech.threekilogram.calendar.month;
 
 import android.content.Context;
 import android.view.MotionEvent;
@@ -9,15 +9,14 @@ import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 import java.util.Date;
 import java.util.LinkedList;
-import tech.threekilogram.calendarview.CalendarView;
-import tech.threekilogram.calendarview.CalendarView.OnDateChangeListener;
-import tech.threekilogram.calendarview.CalendarView.ViewComponent;
-import tech.threekilogram.calendarview.util.CalendarUtils;
+import tech.threekilogram.calendar.CalendarView;
+import tech.threekilogram.calendar.CalendarView.OnDateChangeListener;
+import tech.threekilogram.calendar.util.CalendarUtils;
 
 /**
  * @author Liujin 2019/2/21:13:00:25
  */
-public class MonthLayout extends ViewPager implements ViewComponent {
+public class MonthLayout extends ViewPager {
 
       private static final String TAG = MonthLayout.class.getSimpleName();
 
@@ -56,12 +55,6 @@ public class MonthLayout extends ViewPager implements ViewComponent {
       public MonthLayout ( @NonNull Context context ) {
 
             super( context );
-      }
-
-      @Override
-      public View getView ( ) {
-
-            return this;
       }
 
       public void setDate ( Date date ) {
@@ -104,7 +97,6 @@ public class MonthLayout extends ViewPager implements ViewComponent {
             getCurrentPage().moveToFold();
       }
 
-      @Override
       public void bindParent ( CalendarView calendarView ) {
 
             mCalendarView = calendarView;
@@ -124,7 +116,6 @@ public class MonthLayout extends ViewPager implements ViewComponent {
             mChangeHeight = new ChangeHeight();
       }
 
-      @Override
       public void notifyFirstDayIsMondayChanged ( boolean isFirstDayMonday ) {
 
             onDateChanged( mSource.mBaseDate, mSource.mBasePosition, mSource.isMonthMode );

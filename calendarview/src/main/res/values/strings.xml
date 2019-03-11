@@ -1,3 +1,4 @@
 <resources>
       <string name="app_name">CalendarView</string>
+      <string name="CalendarViewLayoutBehavior">tech.threekilogram.calendar.behavior.CalendarViewLayoutBehavior</string>
 </resources>

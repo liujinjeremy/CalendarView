@@ -8,9 +8,9 @@ import android.view.View;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import java.util.Date;
-import tech.threekilogram.calendarview.CalendarView;
-import tech.threekilogram.calendarview.CalendarView.OnDateChangeListener;
-import tech.threekilogram.calendarview.util.CalendarUtils;
+import tech.threekilogram.calendar.CalendarView;
+import tech.threekilogram.calendar.CalendarView.OnDateChangeListener;
+import tech.threekilogram.calendar.util.CalendarUtils;
 
 public class FunctionActivity extends AppCompatActivity {
 

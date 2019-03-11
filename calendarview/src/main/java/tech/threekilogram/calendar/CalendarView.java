@@ -1,12 +1,11 @@
-package tech.threekilogram.calendarview;
+package tech.threekilogram.calendar;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.view.View;
 import android.view.ViewGroup;
 import java.util.Date;
-import tech.threekilogram.calendarview.month.MonthLayout;
-import tech.threekilogram.calendarview.week.LinearWeekBar;
+import tech.threekilogram.calendar.month.MonthLayout;
+import tech.threekilogram.calendar.week.LinearWeekBar;
 
 /**
  * 显示日期
@@ -65,11 +64,11 @@ public class CalendarView extends ViewGroup {
 
             if( mWeekBar != weekBar ) {
                   if( mWeekBar != null ) {
-                        removeView( mWeekBar.getView() );
+                        removeView( mWeekBar );
                   }
                   mWeekBar = weekBar;
                   weekBar.bindParent( this );
-                  addView( weekBar.getView() );
+                  addView( weekBar );
                   requestLayout();
             }
       }
@@ -83,11 +82,11 @@ public class CalendarView extends ViewGroup {
 
             if( mMonthLayout != monthLayout ) {
                   if( mMonthLayout != null ) {
-                        removeView( mMonthLayout.getView() );
+                        removeView( mMonthLayout );
                   }
                   mMonthLayout = monthLayout;
                   monthLayout.bindParent( this );
-                  addView( monthLayout.getView() );
+                  addView( monthLayout );
                   requestLayout();
             }
       }
@@ -180,15 +179,15 @@ public class CalendarView extends ViewGroup {
                 .makeMeasureSpec( heightSize - paddingTop - paddingBottom, heightMode );
 
             // 使用策略测量组件
-            mLayoutStrategy.measureComponent(
+            mLayoutStrategy.measureChildren(
                 this,
                 widthMeasureSpec, heightMeasureSpec,
                 mWeekBar, mMonthLayout
             );
 
             // 设置尺寸信息
-            int barHeight = mWeekBar.getView().getMeasuredHeight();
-            int monthHeight = mMonthLayout.getView().getMeasuredHeight();
+            int barHeight = mWeekBar.getMeasuredHeight();
+            int monthHeight = mMonthLayout.getMeasuredHeight();
             int finalHeight = barHeight
                 + monthHeight
                 + paddingTop + paddingBottom;
@@ -199,34 +198,7 @@ public class CalendarView extends ViewGroup {
       @Override
       protected void onLayout ( boolean changed, int l, int t, int r, int b ) {
 
-            mLayoutStrategy.layoutComponent( this, mWeekBar, mMonthLayout );
-      }
-
-      /**
-       * calendar的view组件
-       */
-      public interface ViewComponent {
-
-            /**
-             * 获取组件
-             *
-             * @return view组件
-             */
-            View getView ( );
-
-            /**
-             * 绑定父组件
-             *
-             * @param calendarView 父组件
-             */
-            void bindParent ( CalendarView calendarView );
-
-            /**
-             * 通知每周的第一天是否是周一改变了
-             *
-             * @param isFirstDayMonday 每周第一天是否是周一
-             */
-            void notifyFirstDayIsMondayChanged ( boolean isFirstDayMonday );
+            mLayoutStrategy.layoutChildren( this, mWeekBar, mMonthLayout );
       }
 
       /**
@@ -244,16 +216,16 @@ public class CalendarView extends ViewGroup {
              *
              * @return 布局占用的尺寸, int[0]表示宽度, int[1]表示高度
              */
-            void measureComponent (
+            void measureChildren (
                 CalendarView parent,
                 int widthMeasureSpec,
                 int heightMeasureSpec,
-                ViewComponent weekBar,
-                ViewComponent monthLayout
+                LinearWeekBar weekBar,
+                MonthLayout monthLayout
             );
 
-            void layoutComponent (
-                CalendarView parent, ViewComponent weekBar, ViewComponent monthLayout );
+            void layoutChildren (
+                CalendarView parent, LinearWeekBar weekBar, MonthLayout monthLayout );
       }
 
       /**
@@ -262,12 +234,12 @@ public class CalendarView extends ViewGroup {
       protected class VerticalLinearMeasureLayoutStrategy implements MeasureLayoutStrategy {
 
             @Override
-            public void measureComponent (
+            public void measureChildren (
                 CalendarView parent,
                 int widthMeasureSpec,
                 int heightMeasureSpec,
-                ViewComponent weekBar,
-                ViewComponent monthLayout ) {
+                LinearWeekBar weekBar,
+                MonthLayout monthLayout ) {
 
                   int widthSize = MeasureSpec.getSize( widthMeasureSpec );
                   int heightSize = MeasureSpec.getSize( heightMeasureSpec );
@@ -278,9 +250,9 @@ public class CalendarView extends ViewGroup {
                   // weekBar 高度包裹住自己
                   int weekBarHeightSpec = MeasureSpec
                       .makeMeasureSpec( heightSize, MeasureSpec.AT_MOST );
-                  View view = weekBar.getView();
-                  view.measure( widthExactSpec, weekBarHeightSpec );
-                  int weekBarMeasuredHeight = view.getMeasuredHeight();
+
+                  weekBar.measure( widthExactSpec, weekBarHeightSpec );
+                  int weekBarMeasuredHeight = weekBar.getMeasuredHeight();
 
                   // monthLayout 高度包裹住自己
                   int leftHeight = heightSize - weekBarMeasuredHeight;
@@ -288,34 +260,31 @@ public class CalendarView extends ViewGroup {
                       leftHeight,
                       MeasureSpec.AT_MOST
                   );
-                  View layoutView = monthLayout.getView();
-                  layoutView.measure( widthExactSpec, monthHeightSpec );
+                  monthLayout.measure( widthExactSpec, monthHeightSpec );
             }
 
             @Override
-            public void layoutComponent (
+            public void layoutChildren (
                 CalendarView parent,
-                ViewComponent weekBar,
-                ViewComponent monthLayout ) {
+                LinearWeekBar weekBar,
+                MonthLayout monthLayout ) {
 
                   int paddingLeft = parent.getPaddingLeft();
                   int paddingTop = parent.getPaddingTop();
 
-                  View view = weekBar.getView();
-                  int offset = paddingTop + view.getMeasuredHeight();
-                  view.layout(
+                  int offset = paddingTop + weekBar.getMeasuredHeight();
+                  weekBar.layout(
                       paddingLeft,
                       paddingTop,
-                      paddingLeft + view.getMeasuredWidth(),
+                      paddingLeft + weekBar.getMeasuredWidth(),
                       offset
                   );
 
-                  View layoutView = monthLayout.getView();
-                  layoutView.layout(
+                  monthLayout.layout(
                       paddingLeft,
                       offset,
-                      paddingLeft + layoutView.getMeasuredWidth(),
-                      offset + layoutView.getMeasuredHeight()
+                      paddingLeft + monthLayout.getMeasuredWidth(),
+                      offset + monthLayout.getMeasuredHeight()
                   );
             }
       }

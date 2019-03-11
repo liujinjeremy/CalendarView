@@ -1,4 +1,4 @@
-package tech.threekilogram.calendarview.month;
+package tech.threekilogram.calendar.month;
 
 import androidx.viewpager.widget.ViewPager;
 
