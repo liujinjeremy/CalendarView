@@ -1,5 +1,6 @@
 package tech.threekilogram.calendar.month;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.view.MotionEvent;
 import android.view.View;
@@ -16,6 +17,7 @@ import tech.threekilogram.calendar.util.CalendarUtils;
 /**
  * @author Liujin 2019/2/21:13:00:25
  */
+@SuppressLint("ViewConstructor")
 public class MonthLayout extends ViewPager {
 
       private static final String TAG = MonthLayout.class.getSimpleName();
@@ -23,7 +25,7 @@ public class MonthLayout extends ViewPager {
       /**
        * 父布局
        */
-      private CalendarView         mCalendarView;
+      private CalendarView         mParent;
       /**
        * 提供数据
        */
@@ -44,13 +46,45 @@ public class MonthLayout extends ViewPager {
        * 计算页面需要使用的基础尺寸
        */
       private CellSize             mCellSize;
+      /**
+       * 为{@link MonthPage}生成天界面
+       */
+      private MonthDayViewFactory  mMonthDayViewFactory;
 
       /**
        * 只能new出来不能再布局中使用
        */
-      public MonthLayout ( @NonNull Context context ) {
+      public MonthLayout ( @NonNull Context context, CalendarView parent ) {
 
             super( context );
+            init( parent );
+      }
+
+      /**
+       * 初始化
+       */
+      private void init ( CalendarView parent ) {
+
+            mParent = parent;
+
+            int position = Integer.MAX_VALUE >> 1;
+            mSource = new DateSource( new Date(), position );
+
+            PagerMonthAdapter adapter = new PagerMonthAdapter();
+            setAdapter( adapter );
+            setCurrentItem( position );
+
+            mScroller = new OnPageScroller( this );
+            addOnPageChangeListener( mScroller );
+
+            mExpandFoldPage = new ExpandFoldPage();
+            mCellSize = new CellSize();
+            mMonthDayViewFactory = new DefaultItemFactory();
+      }
+
+      public void setMonthDayViewFactory ( MonthDayViewFactory monthDayViewFactory ) {
+
+            mMonthDayViewFactory = monthDayViewFactory;
       }
 
       public void setDate ( Date date ) {
@@ -91,24 +125,6 @@ public class MonthLayout extends ViewPager {
 
             //noinspection ConstantConditions
             getCurrentPage().animateFold();
-      }
-
-      public void bindParent ( CalendarView calendarView ) {
-
-            mCalendarView = calendarView;
-
-            int position = Integer.MAX_VALUE >> 1;
-            mSource = new DateSource( new Date(), position );
-
-            PagerMonthAdapter adapter = new PagerMonthAdapter();
-            setAdapter( adapter );
-            setCurrentItem( position );
-
-            mScroller = new OnPageScroller( this );
-            addOnPageChangeListener( mScroller );
-
-            mExpandFoldPage = new ExpandFoldPage();
-            mCellSize = new CellSize();
       }
 
       /**
@@ -229,7 +245,7 @@ public class MonthLayout extends ViewPager {
        */
       private void onDateChanged ( Date date, int position, boolean monthMode, boolean needRequestLayout ) {
 
-            onDateChanged( date, position, monthMode, mCalendarView.isFirstDayMonday(), needRequestLayout );
+            onDateChanged( date, position, monthMode, mParent.isFirstDayMonday(), needRequestLayout );
       }
 
       /**
@@ -336,6 +352,25 @@ public class MonthLayout extends ViewPager {
             }
       }
 
+      public interface MonthDayViewFactory {
+
+            /**
+             * 创建子view
+             *
+             * @return 子view
+             */
+            public MonthDayView generateItemView ( Context context );
+      }
+
+      private class DefaultItemFactory implements MonthDayViewFactory {
+
+            @Override
+            public MonthDayView generateItemView ( Context context ) {
+
+                  return new MonthDayView( context );
+            }
+      }
+
       /**
        * adapter 设置页面
        */
@@ -358,13 +393,13 @@ public class MonthLayout extends ViewPager {
 
                   MonthPage page;
                   if( mReUsed.isEmpty() ) {
-                        page = new MonthPage( container.getContext(), MonthLayout.this );
+                        page = new MonthPage( container.getContext(), MonthLayout.this, mMonthDayViewFactory );
                   } else {
                         page = (MonthPage) mReUsed.pollFirst();
                   }
 
                   Date date = mSource.getDate( position );
-                  page.setInfo( date, position, mCalendarView.isFirstDayMonday(), mSource.isMonthMode );
+                  page.setInfo( date, position, mParent.isFirstDayMonday(), mSource.isMonthMode );
 
                   container.addView( page );
                   return page;

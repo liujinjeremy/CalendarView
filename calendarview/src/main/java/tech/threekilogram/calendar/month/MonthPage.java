@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import java.util.Date;
+import tech.threekilogram.calendar.month.MonthLayout.MonthDayViewFactory;
 import tech.threekilogram.calendar.util.CalendarUtils;
 
 /**
@@ -71,37 +72,29 @@ public class MonthPage extends ViewGroup implements OnClickListener {
       private int mPageHeight;
 
       /**
-       * 生成天界面
-       */
-      private MonthDayViewFactory mMonthDayViewFactory;
-      /**
        * 辅助管理当前状态,当从折叠状态改变为其他状态时,改变非本月的日期的子view的可见性,折叠时可见,展开时不可见
        */
-      private StateManager        mStateManager;
+      private StateManager mStateManager;
       /**
        * 辅助类用于界面展开折叠
        */
-      private MoveHelper          mMoveHelper;
+      private MoveHelper   mMoveHelper;
 
-      public MonthPage ( Context context, MonthLayout parent ) {
+      public MonthPage ( Context context, MonthLayout parent, MonthDayViewFactory factory ) {
 
             super( context );
             mParent = parent;
-            init();
+            init( factory );
       }
 
       /**
        * 初始化
        */
-      private void init ( ) {
-
-            if( mMonthDayViewFactory == null ) {
-                  mMonthDayViewFactory = new DefaultItemFactory();
-            }
+      private void init ( MonthDayViewFactory factory ) {
 
             /*每个月最多使用7列6行个子view就能包含所有日期*/
             for( int i = 0; i < 6 * 7; i++ ) {
-                  View child = mMonthDayViewFactory.generateItemView( getContext() );
+                  View child = factory.generateItemView( getContext() );
                   addView( child );
                   child.setOnClickListener( this );
             }
@@ -133,11 +126,6 @@ public class MonthPage extends ViewGroup implements OnClickListener {
       public boolean isAnimateOrMoving ( ) {
 
             return mStateManager.isAnimateOrMoving();
-      }
-
-      public void setMonthDayViewFactory ( MonthDayViewFactory monthDayViewFactory ) {
-
-            mMonthDayViewFactory = monthDayViewFactory;
       }
 
       /**
@@ -354,25 +342,6 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             }
 
             mMoveHelper.checkAnimateState( isMonthMode );
-      }
-
-      public interface MonthDayViewFactory {
-
-            /**
-             * 创建子view
-             *
-             * @return 子view
-             */
-            public MonthDayView generateItemView ( Context context );
-      }
-
-      private class DefaultItemFactory implements MonthDayViewFactory {
-
-            @Override
-            public MonthDayView generateItemView ( Context context ) {
-
-                  return new MonthDayView( context );
-            }
       }
 
       /**
