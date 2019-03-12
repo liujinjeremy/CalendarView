@@ -90,12 +90,12 @@ public class FunctionActivity extends AppCompatActivity {
 
       public void open ( View view ) {
 
-            mCalendar.expandToMonthMode();
+            mCalendar.animateToMonthMode();
       }
 
       public void close ( View view ) {
 
-            mCalendar.foldToWeekMode();
+            mCalendar.animateToWeekMode();
       }
 
       public void fold100 ( View view ) {

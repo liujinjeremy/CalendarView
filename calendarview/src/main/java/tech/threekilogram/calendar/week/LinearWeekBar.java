@@ -1,7 +1,6 @@
 package tech.threekilogram.calendar.week;
 
 import android.content.Context;
-import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
@@ -14,31 +13,38 @@ import tech.threekilogram.calendar.CalendarView;
  */
 public class LinearWeekBar extends ViewGroup {
 
-      private static final String TAG = LinearWeekBar.class.getSimpleName();
-
-      /**
-       * 每周第一天是周一时,显示的text
-       */
-      private static String[] sTexts = { "周日", "周一", "周二", "周三", "周四", "周五", "周六" };
-
       /**
        * parent 用于通信
        */
-      private CalendarView mCalendarView;
+      private CalendarView       mParent;
+      private WeekBarItemFactory mWeekBarItemFactory;
 
-      public LinearWeekBar ( Context context ) {
+      public LinearWeekBar ( Context context, CalendarView parent ) {
 
-            this( context, null, 0 );
+            super( context );
+            mParent = parent;
+
+            init();
       }
 
-      public LinearWeekBar ( Context context, AttributeSet attrs ) {
+      private void init ( ) {
 
-            this( context, attrs, 0 );
-      }
+            if( mWeekBarItemFactory == null ) {
+                  mWeekBarItemFactory = new TextWeekBarItemFactory();
+            }
 
-      public LinearWeekBar ( Context context, AttributeSet attrs, int defStyleAttr ) {
-
-            super( context, attrs, defStyleAttr );
+            boolean firstDayMonday = mParent.isFirstDayMonday();
+            for( int i = 0; i < 7; i++ ) {
+                  int index;
+                  if( !firstDayMonday ) {
+                        index = i;
+                  } else {
+                        index = ( i + 1 ) % 7;
+                  }
+                  View view = mWeekBarItemFactory.generateItemView( getContext() );
+                  mWeekBarItemFactory.bindWeek( view, index );
+                  addView( view );
+            }
       }
 
       /**
@@ -85,45 +91,55 @@ public class LinearWeekBar extends ViewGroup {
             }
       }
 
-      /**
-       * 生成每个条目
-       */
-      private TextView generateItemView ( String text ) {
-
-            TextView textView = new TextView( getContext() );
-            textView.setText( text );
-            textView.setGravity( Gravity.CENTER );
-            textView.setTextSize( TypedValue.COMPLEX_UNIT_DIP, 12 );
-            textView.setPadding( 0, 10, 0, 10 );
-            return textView;
-      }
-
-      public void bindParent ( CalendarView calendarView ) {
-
-            mCalendarView = calendarView;
-
-            boolean firstDayMonday = calendarView.isFirstDayMonday();
-            for( int i = 0; i < 7; i++ ) {
-                  String text;
-                  if( !firstDayMonday ) {
-                        text = sTexts[ i ];
-                  } else {
-                        text = sTexts[ ( i + 1 ) % 7 ];
-                  }
-                  addView( generateItemView( text ) );
-            }
-      }
-
       public void notifyFirstDayIsMondayChanged ( boolean isFirstDayMonday ) {
 
             for( int i = 0; i < 7; i++ ) {
-                  String text;
+                  int index;
                   if( !isFirstDayMonday ) {
-                        text = sTexts[ i ];
+                        index = i;
                   } else {
-                        text = sTexts[ ( i + 1 ) % 7 ];
+                        index = ( i + 1 ) % 7;
                   }
-                  ( (TextView) getChildAt( i ) ).setText( text );
+                  mWeekBarItemFactory.bindWeek( getChildAt( i ), index );
+            }
+      }
+
+      public interface WeekBarItemFactory {
+
+            int SUNDAY    = 0;
+            int MONDAY    = 1;
+            int TUESDAY   = 2;
+            int WEDNESDAY = 3;
+            int THURSDAY  = 4;
+            int FRIDAY    = 5;
+            int SATURDAY  = 6;
+
+            View generateItemView ( Context context );
+
+            void bindWeek ( View item, int week );
+      }
+
+      private static class TextWeekBarItemFactory implements WeekBarItemFactory {
+
+            /**
+             * 每周第一天是周一时,显示的text
+             */
+            private static String[] sTexts = { "周日", "周一", "周二", "周三", "周四", "周五", "周六" };
+
+            @Override
+            public View generateItemView ( Context context ) {
+
+                  TextView textView = new TextView( context );
+                  textView.setGravity( Gravity.CENTER );
+                  textView.setTextSize( TypedValue.COMPLEX_UNIT_DIP, 12 );
+                  textView.setPadding( 0, 10, 0, 10 );
+                  return textView;
+            }
+
+            @Override
+            public void bindWeek ( View item, int week ) {
+
+                  ( (TextView) item ).setText( sTexts[ week ] );
             }
       }
 }

@@ -14,8 +14,6 @@ import tech.threekilogram.calendar.week.LinearWeekBar;
  */
 public class CalendarView extends ViewGroup {
 
-      private static final String TAG = CalendarView.class.getSimpleName();
-
       /**
        * 头部星期条
        */
@@ -53,42 +51,16 @@ public class CalendarView extends ViewGroup {
 
             mLayoutStrategy = new VerticalLinearMeasureLayoutStrategy();
 
-            MonthLayout monthLayout = new MonthLayout( context );
-            setMonthLayout( monthLayout );
+            mMonthLayout = new MonthLayout( context, this );
+            addView( mMonthLayout );
 
-            LinearWeekBar weekBar = new LinearWeekBar( context );
-            setWeekBar( weekBar );
-      }
-
-      void setWeekBar ( LinearWeekBar weekBar ) {
-
-            if( mWeekBar != weekBar ) {
-                  if( mWeekBar != null ) {
-                        removeView( mWeekBar );
-                  }
-                  mWeekBar = weekBar;
-                  weekBar.bindParent( this );
-                  addView( weekBar );
-                  requestLayout();
-            }
+            mWeekBar = new LinearWeekBar( context, this );
+            addView( mWeekBar );
       }
 
       public LinearWeekBar getWeekBar ( ) {
 
             return mWeekBar;
-      }
-
-      void setMonthLayout ( MonthLayout monthLayout ) {
-
-            if( mMonthLayout != monthLayout ) {
-                  if( mMonthLayout != null ) {
-                        removeView( mMonthLayout );
-                  }
-                  mMonthLayout = monthLayout;
-                  monthLayout.bindParent( this );
-                  addView( monthLayout );
-                  requestLayout();
-            }
       }
 
       public MonthLayout getMonthLayout ( ) {
@@ -130,12 +102,12 @@ public class CalendarView extends ViewGroup {
             mMonthLayout.setMonthMode( isMonthMode );
       }
 
-      public void expandToMonthMode ( ) {
+      public void animateToMonthMode ( ) {
 
             mMonthLayout.expandToMonthMode();
       }
 
-      public void foldToWeekMode ( ) {
+      public void animateToWeekMode ( ) {
 
             mMonthLayout.foldToWeekMode();
       }

@@ -20,8 +20,6 @@ import tech.threekilogram.calendar.util.CalendarUtils;
 @SuppressLint("ViewConstructor")
 public class MonthLayout extends ViewPager {
 
-      private static final String TAG = MonthLayout.class.getSimpleName();
-
       /**
        * 父布局
        */
@@ -147,7 +145,7 @@ public class MonthLayout extends ViewPager {
 
       public void notifyFirstDayIsMondayChanged ( boolean isFirstDayMonday ) {
 
-            onDateChanged( mSource.mBaseDate, mSource.mBasePosition, mSource.isMonthMode, isFirstDayMonday );
+            onDateChanged( mSource.mBaseDate, mSource.mBasePosition, mSource.isMonthMode, isFirstDayMonday, true );
       }
 
       public void setOnDateChangeListener ( OnDateChangeListener onDateChangeListener ) {
@@ -168,6 +166,16 @@ public class MonthLayout extends ViewPager {
       public int getCellHeight ( ) {
 
             return mCellSize.mCellHeight;
+      }
+
+      public void setOnPagerScrollHeightChangeStrategy ( OnPagerScrollHeightChangeStrategy strategy ) {
+
+            mScroller.mStrategy = strategy;
+      }
+
+      public void setOnCurrentPageExpandFoldStrategy ( OnCurrentPageExpandFoldStrategy strategy ) {
+
+            mExpandFoldPage.mStrategy = strategy;
       }
 
       @Override
