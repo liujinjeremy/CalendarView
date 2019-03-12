@@ -1,6 +1,8 @@
 package tech.threekilogram.calendar.behavior;
 
-import android.view.View;
+import android.graphics.Color;
+import android.util.Log;
+import android.view.View.MeasureSpec;
 import android.view.ViewGroup.MarginLayoutParams;
 import androidx.annotation.NonNull;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
@@ -9,7 +11,6 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.RecyclerView.OnScrollListener;
 import tech.threekilogram.calendar.CalendarView;
-import tech.threekilogram.calendar.month.MonthPage;
 
 /**
  * @author Liujin 2019/3/11:15:37:33
@@ -18,11 +19,9 @@ public class CalendarBehaviors {
 
       private static final String TAG = CalendarBehaviors.class.getSimpleName();
 
-      private RecyclerView           mRecyclerView;
-      private RecyclerBehavior       mRecyclerBehavior;
-      private RecyclerScrollListener mRecyclerScrollListener;
-
-      private CalendarView     mCalendarView;
+      private RecyclerView mRecyclerView;
+      private CalendarView mCalendarView;
+      private RecyclerBehavior mRecyclerBehavior;
       private CalendarBehavior mCalendarBehavior;
 
       /**
@@ -34,20 +33,13 @@ public class CalendarBehaviors {
       public void setUp ( CalendarView calendarView, RecyclerView recyclerView ) {
 
             mCalendarView = calendarView;
+            mCalendarView.setBackgroundColor( Color.LTGRAY );
             mRecyclerView = recyclerView;
 
             /* set recycler behavior */
             LayoutParams layoutParams = (LayoutParams) recyclerView.getLayoutParams();
             mRecyclerBehavior = new RecyclerBehavior();
             layoutParams.setBehavior( mRecyclerBehavior );
-
-            /* add  OnScrollListener for recycler to get scrolled total y */
-            if( mRecyclerScrollListener != null ) {
-                  recyclerView.removeOnScrollListener( mRecyclerScrollListener );
-            } else {
-                  mRecyclerScrollListener = new RecyclerScrollListener();
-            }
-            recyclerView.addOnScrollListener( mRecyclerScrollListener );
 
             /* calendar set behavior */
             layoutParams = ( (LayoutParams) calendarView.getLayoutParams() );
@@ -61,25 +53,70 @@ public class CalendarBehaviors {
       private class RecyclerBehavior extends Behavior<RecyclerView> {
 
             @Override
-            public boolean layoutDependsOn (
-                @NonNull CoordinatorLayout parent, @NonNull RecyclerView child, @NonNull View dependency ) {
+            public boolean onMeasureChild (
+                @NonNull CoordinatorLayout parent, @NonNull RecyclerView child, int parentWidthMeasureSpec, int widthUsed,
+                int parentHeightMeasureSpec, int heightUsed ) {
 
-                  return dependency == mCalendarView;
+                  int width = MeasureSpec.getSize( parentWidthMeasureSpec );
+                  int height = MeasureSpec.getSize( parentHeightMeasureSpec );
+                  String format = String.format( "%d %d - %d %d", width, height, widthUsed, heightUsed );
+                  Log.i( TAG, "onMeasureChild: " + format );
+
+                  return true;
             }
 
             @Override
-            public boolean onDependentViewChanged (
-                @NonNull CoordinatorLayout parent, @NonNull RecyclerView child, @NonNull View dependency ) {
+            public boolean onLayoutChild ( @NonNull CoordinatorLayout parent, @NonNull RecyclerView child, int layoutDirection ) {
 
-                  int bottom = mCalendarView.getBottom();
+                  Log.i( TAG, "onLayoutChild: " + child );
+                  return true;
+            }
+      }
+
+      /**
+       * {@link #mCalendarView}的behavior
+       */
+      private class CalendarBehavior extends Behavior<CalendarView> {
+
+            @Override
+            public boolean onMeasureChild (
+                @NonNull CoordinatorLayout parent, @NonNull CalendarView child, int parentWidthMeasureSpec, int widthUsed,
+                int parentHeightMeasureSpec, int heightUsed ) {
+
                   MarginLayoutParams layoutParams = (MarginLayoutParams) child.getLayoutParams();
-                  float y = child.getY();
-
-                  if( y - layoutParams.topMargin != bottom ) {
-                        child.setY( bottom + layoutParams.topMargin );
-                        return true;
+                  int width;
+                  if( layoutParams.width > 0 ) {
+                        width = layoutParams.width;
+                  } else {
+                        width = MeasureSpec.getSize( parentWidthMeasureSpec );
                   }
-                  return super.onDependentViewChanged( parent, child, dependency );
+                  int height;
+                  if( layoutParams.height > 0 ) {
+                        height = layoutParams.height;
+                  } else {
+                        height = MeasureSpec.getSize( parentHeightMeasureSpec );
+                  }
+
+                  int childWidthSpec = MeasureSpec
+                      .makeMeasureSpec( width - layoutParams.leftMargin - layoutParams.rightMargin, MeasureSpec.EXACTLY );
+                  int childHeightSpec = MeasureSpec
+                      .makeMeasureSpec( height - layoutParams.topMargin - layoutParams.bottomMargin, MeasureSpec.EXACTLY );
+
+                  child.measure( childWidthSpec, childHeightSpec );
+                  Log.i( TAG, "onMeasureChild: " );
+                  return true;
+            }
+
+            @Override
+            public boolean onLayoutChild ( @NonNull CoordinatorLayout parent, @NonNull CalendarView child, int layoutDirection ) {
+
+                  MarginLayoutParams layoutParams = (MarginLayoutParams) child.getLayoutParams();
+                  child.layout( layoutParams.leftMargin, layoutParams.topMargin,
+                                layoutParams.leftMargin + child.getMeasuredWidth(),
+                                layoutParams.topMargin + child.getMeasuredHeight()
+                  );
+                  Log.i( TAG, "onLayoutChild: " );
+                  return true;
             }
       }
 
@@ -101,51 +138,6 @@ public class CalendarBehaviors {
             public void onScrolled ( @NonNull RecyclerView recyclerView, int dx, int dy ) {
 
                   mMoved += dy;
-            }
-      }
-
-      /**
-       * {@link #mCalendarView}的behavior
-       */
-      private class CalendarBehavior extends Behavior<CalendarView> {
-
-            private float mLastDy = -1;
-
-            @Override
-            public boolean onStartNestedScroll (
-                @NonNull CoordinatorLayout coordinatorLayout,
-                @NonNull CalendarView child,
-                @NonNull View directTargetChild,
-                @NonNull View target,
-                int axes, int type ) {
-
-                  /* 当竖直滑动时捕获滑动 */
-                  return true;
-            }
-
-            @Override
-            public void onNestedScrollAccepted (
-                @NonNull CoordinatorLayout coordinatorLayout, @NonNull CalendarView child, @NonNull View directTargetChild,
-                @NonNull View target, int axes, int type ) {
-
-            }
-
-            @Override
-            public void onNestedPreScroll (
-                @NonNull CoordinatorLayout coordinatorLayout, @NonNull CalendarView child, @NonNull View target, int dx, int dy,
-                @NonNull int[] consumed, int type ) {
-
-            }
-
-            @Override
-            public void onStopNestedScroll (
-                @NonNull CoordinatorLayout coordinatorLayout, @NonNull CalendarView child, @NonNull View target, int type ) {
-
-            }
-
-            private MonthPage getCurrentPage ( CalendarView child ) {
-
-                  return child.getMonthLayout().getCurrentPage();
             }
       }
 }

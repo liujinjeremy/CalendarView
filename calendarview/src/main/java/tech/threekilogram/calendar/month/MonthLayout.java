@@ -1,6 +1,7 @@
 package tech.threekilogram.calendar.month;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,7 +36,7 @@ public class MonthLayout extends ViewPager {
       /**
        * 展开折叠页面
        */
-      private ExpandFoldPage       mExpandFoldPage;
+      //private ExpandFoldPage       mExpandFoldPage;
       /**
        * 监听日期变化
        */
@@ -44,10 +45,6 @@ public class MonthLayout extends ViewPager {
        * 计算页面需要使用的基础尺寸
        */
       private CellSize             mCellSize;
-      /**
-       * 用于滚动时改变高度,或者页面展开折叠时改变高度
-       */
-      private ChangeHeight         mChangeHeight;
 
       /**
        * 只能new出来不能再布局中使用
@@ -111,9 +108,8 @@ public class MonthLayout extends ViewPager {
             mScroller = new OnPageScroller( this );
             addOnPageChangeListener( mScroller );
 
-            mExpandFoldPage = new ExpandFoldPage();
+            //mExpandFoldPage = new ExpandFoldPage();
             mCellSize = new CellSize();
-            mChangeHeight = new ChangeHeight();
       }
 
       public void notifyFirstDayIsMondayChanged ( boolean isFirstDayMonday ) {
@@ -152,9 +148,18 @@ public class MonthLayout extends ViewPager {
       @Override
       protected void onMeasure ( int widthMeasureSpec, int heightMeasureSpec ) {
 
-            if( mChangeHeight.trySetDimension( widthMeasureSpec, heightMeasureSpec ) ) {
-                  return;
+            Log.i( TAG, "onMeasure: " );
+            if( mScroller.isScrolling() ) {
+                  if( mScroller.tryMeasure( widthMeasureSpec, heightMeasureSpec ) ) {
+                        return;
+                  }
             }
+
+//            if( mExpandFoldPage.isCurrentPageExpandFolding() ) {
+//                  if( mExpandFoldPage.tryMeasure( widthMeasureSpec, heightMeasureSpec ) ) {
+//                        return;
+//                  }
+//            }
 
             int widthSize = MeasureSpec.getSize( widthMeasureSpec );
             int heightSize = MeasureSpec.getSize( heightMeasureSpec );
@@ -179,9 +184,18 @@ public class MonthLayout extends ViewPager {
       @Override
       protected void onLayout ( boolean changed, int l, int t, int r, int b ) {
 
-            if( mChangeHeight.tryLayout() ) {
-                  return;
+            if( mScroller.isScrolling() ) {
+                  if( mScroller.tryLayout( l, t, r, b ) ) {
+                        return;
+                  }
             }
+
+//            if( mExpandFoldPage.isCurrentPageExpandFolding() ) {
+//                  if( mExpandFoldPage.tryLayout( l, t, r, b ) ) {
+//                        return;
+//                  }
+//            }
+
             super.onLayout( changed, l, t, r, b );
       }
 
@@ -192,11 +206,11 @@ public class MonthLayout extends ViewPager {
             mCellSize.decideCellSize();
       }
 
-      @Override
-      public boolean dispatchTouchEvent ( MotionEvent ev ) {
-
-            return mExpandFoldPage.handleMotionEvent( ev );
-      }
+//      @Override
+//      public boolean dispatchTouchEvent ( MotionEvent ev ) {
+//
+//            return mExpandFoldPage.handleMotionEvent( ev );
+//      }
 
       /**
        * 工具方法,获取当前页面
@@ -258,57 +272,53 @@ public class MonthLayout extends ViewPager {
             onDateChanged( date, position, monthMode );
       }
 
-      void onCurrentItemVerticalMove ( float moved ) {
+      /**
+       * 滚动时改变页面高度
+       */
+      private class OnPageScroller extends ViewPagerScrollListener {
 
-            mChangeHeight.mSetHeight = moved;
-      }
+            private OnPagerScrollHeightChangeStrategy mStrategy = new RelayoutScrollHeightChangeStrategy();
 
-      private class ChangeHeight {
+            /**
+             * 创建
+             *
+             * @param pager pager
+             */
+            private OnPageScroller ( ViewPager pager ) {
 
-            private float mSetHeight;
-
-            private boolean trySetDimension ( int widthMeasureSpec, int heightMeasureSpec ) {
-
-                  int widthSize = MeasureSpec.getSize( widthMeasureSpec );
-                  if( mScroller.isScrolling() ) {
-                        if( mSetHeight > 0 ) {
-                              setMeasuredDimension( widthSize, (int) mSetHeight );
-                              return true;
-                        }
-                  }
-
-                  MonthPage currentPage = getCurrentPage();
-                  if( currentPage != null ) {
-                        if( currentPage.isMoving() ) {
-                              currentPage.measure( widthMeasureSpec, heightMeasureSpec );
-                              setMeasuredDimension( widthSize, currentPage.getMeasuredHeight() );
-                              return true;
-                        }
-                  }
-                  return false;
+                  super( pager );
             }
 
-            private boolean tryLayout ( ) {
+            @Override
+            public void onPageSelected ( int position ) {
 
-                  if( mScroller.isScrolling() ) {
-                        return true;
+                  super.onPageSelected( position );
+                  onNewPageSelected( position );
+            }
+
+            @Override
+            protected void onScrolled ( int state, int current, float offset, int offsetPixels ) {
+
+                  if( offset < 0 ) {
+                        changeHeightWhenScroll( current, current + 1, offset );
+                        return;
+                  }
+
+                  if( offset > 0 ) {
+                        changeHeightWhenScroll( current, current - 1, offset );
+                        return;
                   }
 
                   MonthPage currentPage = getCurrentPage();
                   if( currentPage != null ) {
-                        if( currentPage.isMoving() ) {
-                              int measuredHeight = getMeasuredHeight();
-                              int childCount = getChildCount();
-                              for( int i = 0; i < childCount; i++ ) {
-                                    View child = getChildAt( i );
-                                    child.layout( child.getLeft(), child.getTop(), child.getRight(),
-                                                  child.getTop() + measuredHeight
-                                    );
-                              }
-                              return true;
-                        }
+                        int height = currentPage.getMeasuredHeight();
+                        mStrategy.onHeightChange( height, height, 0, height );
                   }
-                  return false;
+            }
+
+            private boolean isScrolling ( ) {
+
+                  return mState != SCROLL_STATE_IDLE;
             }
 
             private void changeHeightWhenScroll ( int currentPosition, int nextPosition, float offset ) {
@@ -335,13 +345,108 @@ public class MonthLayout extends ViewPager {
                         }
                   }
 
-                  float height = currentHeight + ( nextHeight - currentHeight ) * Math.abs( offset );
-                  if( currentHeight != height ) {
-                        mSetHeight = (int) height;
-                        requestLayout();
-                  }
+                  int height = (int) ( currentHeight + ( nextHeight - currentHeight ) * Math.abs( offset ) );
+                  mStrategy.onHeightChange( currentHeight, nextHeight, offset, height );
+            }
+
+            private void setStrategy ( OnPagerScrollHeightChangeStrategy strategy ) {
+
+                  mStrategy = strategy;
+            }
+
+            private boolean tryMeasure ( int widthMeasureSpec, int heightMeasureSpec ) {
+
+                  return mStrategy.onMeasureWhenScrolling( widthMeasureSpec, heightMeasureSpec );
+            }
+
+            private boolean tryLayout ( int parentLeft, int parentTop, int parentRight, int parentBottom ) {
+
+                  return mStrategy.onLayoutWhenScrolling( parentLeft, parentTop, parentRight, parentBottom );
             }
       }
+
+      /**
+       * 用于页面滚动时需要改变页面高度时,使用的策略
+       */
+      public interface OnPagerScrollHeightChangeStrategy {
+
+            void onHeightChange ( int currentPageHeight, int targetPageHeight, float offset, int calculateHeight );
+
+            boolean onMeasureWhenScrolling ( int parentWidthSpec, int parentHeightSpec );
+
+            boolean onLayoutWhenScrolling ( int parentLeft, int parentTop, int parentRight, int parentBottom );
+      }
+
+      private class RelayoutScrollHeightChangeStrategy implements OnPagerScrollHeightChangeStrategy {
+
+            private int mCalculateHeight = -1;
+
+            @Override
+            public void onHeightChange ( int currentPageHeight, int targetPageHeight, float offset, int calculateHeight ) {
+
+                  if( calculateHeight != currentPageHeight ) {
+                        mCalculateHeight = calculateHeight;
+                        Log.i( TAG, "onHeightChange: " );
+                        requestLayout();
+                  } else {
+                        mCalculateHeight = -1;
+                  }
+            }
+
+            @Override
+            public boolean onMeasureWhenScrolling ( int parentWidthSpec, int parentHeightSpec ) {
+
+                  int widthSize = MeasureSpec.getSize( parentWidthSpec );
+                  if( mCalculateHeight > 0 ) {
+                        Log.i( TAG, "onMeasureWhenScrolling: set" );
+                        setMeasuredDimension( widthSize, mCalculateHeight );
+                        return true;
+                  }
+                  Log.i( TAG, "onMeasureWhenScrolling: not set" );
+                  return false;
+            }
+
+            @Override
+            public boolean onLayoutWhenScrolling ( int parentLeft, int parentTop, int parentRight, int parentBottom ) {
+
+                  return true;
+            }
+      }
+
+//      private class ChangeHeight {
+//
+//            private boolean trySetDimension ( int widthMeasureSpec, int heightMeasureSpec ) {
+//
+//                  MonthPage currentPage = getCurrentPage();
+//                  if( currentPage != null ) {
+//                        if( currentPage.isMoving() ) {
+//                              currentPage.measure( widthMeasureSpec, heightMeasureSpec );
+//                              setMeasuredDimension( widthSize, currentPage.getMeasuredHeight() );
+//                              return true;
+//                        }
+//                  }
+//                  return false;
+//            }
+//
+//            private boolean tryLayout ( ) {
+//
+//                  MonthPage currentPage = getCurrentPage();
+//                  if( currentPage != null ) {
+//                        if( currentPage.isMoving() ) {
+//                              int measuredHeight = getMeasuredHeight();
+//                              int childCount = getChildCount();
+//                              for( int i = 0; i < childCount; i++ ) {
+//                                    View child = getChildAt( i );
+//                                    child.layout( child.getLeft(), child.getTop(), child.getRight(),
+//                                                  child.getTop() + measuredHeight
+//                                    );
+//                              }
+//                              return true;
+//                        }
+//                  }
+//                  return false;
+//            }
+//      }
 
       /**
        * 此类用于将原始尺寸分成7*6份,并且计算每份的尺寸,每一页通过该类获取尺寸,以保证统一
@@ -505,43 +610,36 @@ public class MonthLayout extends ViewPager {
             }
       }
 
-      /**
-       * 滚动时改变页面高度
-       */
-      private class OnPageScroller extends ViewPagerScrollListener {
+      public interface OnCurrentPageExpandFoldStrategy {
 
-            /**
-             * 创建
-             *
-             * @param pager pager
-             */
-            private OnPageScroller ( ViewPager pager ) {
+            void onCurrentPageHeightChange ( int currentPageHeight );
 
-                  super( pager );
+            boolean onMeasureWhenCurrentPageExpandFold ( int parentWidthSpec, int parentHeightSpec );
+
+            boolean onLayoutWhenCurrentPageExpandFold ( int parentLeft, int parentTop, int parentRight, int parentBottom );
+      }
+
+      private class RelayoutCurrentPageExpandFoldStrategy implements OnCurrentPageExpandFoldStrategy {
+
+            private int mCurrentPageHeight;
+
+            @Override
+            public void onCurrentPageHeightChange ( int currentPageHeight ) {
+
+                  mCurrentPageHeight = currentPageHeight;
             }
 
             @Override
-            public void onPageSelected ( int position ) {
+            public boolean onMeasureWhenCurrentPageExpandFold ( int parentWidthSpec, int parentHeightSpec ) {
 
-                  super.onPageSelected( position );
-                  onNewPageSelected( position );
+                  return false;
             }
 
             @Override
-            protected void onScrolled ( int state, int current, float offset, int offsetPixels ) {
+            public boolean onLayoutWhenCurrentPageExpandFold (
+                int parentLeft, int parentTop, int parentRight, int parentBottom ) {
 
-                  if( offset < 0 ) {
-                        mChangeHeight.changeHeightWhenScroll( current, current + 1, offset );
-                  }
-
-                  if( offset > 0 ) {
-                        mChangeHeight.changeHeightWhenScroll( current, current - 1, offset );
-                  }
-            }
-
-            private boolean isScrolling ( ) {
-
-                  return mState != SCROLL_STATE_IDLE;
+                  return false;
             }
       }
 
@@ -560,6 +658,8 @@ public class MonthLayout extends ViewPager {
 
             private boolean isHorizontalMove;
             private boolean isVerticalMove;
+
+            private OnCurrentPageExpandFoldStrategy mStrategy = new RelayoutCurrentPageExpandFoldStrategy();
 
             /**
              * 拦截垂直滑动事件,并且通知给当前页面,竖直滑动距离
@@ -644,6 +744,25 @@ public class MonthLayout extends ViewPager {
             private boolean superDispatchTouchEvent ( MotionEvent ev ) {
 
                   return MonthLayout.super.dispatchTouchEvent( ev );
+            }
+
+            private boolean isCurrentPageExpandFolding ( ) {
+
+                  MonthPage currentPage = getCurrentPage();
+                  if( currentPage != null ) {
+                        return currentPage.isMoving();
+                  }
+                  return false;
+            }
+
+            private boolean tryMeasure ( int widthMeasureSpec, int heightMeasureSpec ) {
+
+                  return mStrategy.onMeasureWhenCurrentPageExpandFold( widthMeasureSpec, heightMeasureSpec );
+            }
+
+            private boolean tryLayout ( int l, int t, int r, int b ) {
+
+                  return mStrategy.onLayoutWhenCurrentPageExpandFold( l, t, r, b );
             }
       }
 }

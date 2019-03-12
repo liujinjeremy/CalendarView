@@ -433,7 +433,6 @@ public class MonthPage extends ViewGroup implements OnClickListener {
                   mStateManager.setState( STATE_MOVING );
                   if( calculateMovedByDy( dy ) ) {
                         requestLayout();
-                        ( (MonthLayout) getParent() ).onCurrentItemVerticalMove( mTopMoved + mBottomMoved );
                         return dy;
                   }
 
@@ -537,7 +536,6 @@ public class MonthPage extends ViewGroup implements OnClickListener {
                   if( needMockMove() ) {
                         if( calculateMovedByDy( mDirection * mCellHeight / 5f ) ) {
                               requestLayout();
-                              ( (MonthLayout) getParent() ).onCurrentItemVerticalMove( mTopMoved + mBottomMoved );
                         }
                   }
             }

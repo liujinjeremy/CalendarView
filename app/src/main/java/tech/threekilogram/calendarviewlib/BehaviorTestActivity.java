@@ -19,8 +19,10 @@ public class BehaviorTestActivity extends AppCompatActivity {
 
       private static final String TAG = BehaviorTestActivity.class.getSimpleName();
 
-      private CalendarView mCalendar;
-      private RecyclerView mRecycler;
+      private CalendarView      mCalendar;
+      private RecyclerView      mRecycler;
+      private MockEvent         mMockEvent = new MockEvent();
+      private CalendarBehaviors mBehaviors = new CalendarBehaviors();
 
       public static void start ( Context context ) {
 
@@ -43,8 +45,27 @@ public class BehaviorTestActivity extends AppCompatActivity {
             mRecycler.setLayoutManager( new LinearLayoutManager( this ) );
             mRecycler.setAdapter( new Adapter() );
 
-            CalendarBehaviors behaviors = new CalendarBehaviors();
-            behaviors.setUp( mCalendar, mRecycler );
+            mBehaviors.setUp( mCalendar, mRecycler );
+      }
+
+      public void down ( View view ) {
+
+            mMockEvent.dispatchDown( mRecycler );
+      }
+
+      public void up ( View view ) {
+
+            mMockEvent.dispatchUp( mRecycler );
+      }
+
+      public void _move ( View view ) {
+
+            mMockEvent.dispatchMoveBy( mRecycler, -50, -50 );
+      }
+
+      public void move ( View view ) {
+
+            mMockEvent.dispatchMoveBy( mRecycler, 50, 50 );
       }
 
       private class Holder extends ViewHolder {
