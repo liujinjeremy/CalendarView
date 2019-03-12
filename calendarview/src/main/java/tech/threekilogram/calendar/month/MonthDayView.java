@@ -68,7 +68,7 @@ public class MonthDayView extends View {
        *
        * @param state 新的状态
        */
-      void setState ( int state ) {
+      public void setState ( int state ) {
 
             if( mState != state ) {
                   mState = state;

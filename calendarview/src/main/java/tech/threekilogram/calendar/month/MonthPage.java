@@ -3,6 +3,7 @@ package tech.threekilogram.calendar.month;
 import static tech.threekilogram.calendar.month.MonthDayView.SELECTED;
 import static tech.threekilogram.calendar.month.MonthDayView.UNSELECTED;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -15,81 +16,92 @@ import tech.threekilogram.calendar.util.CalendarUtils;
  *
  * @author Liujin 2019/2/21:21:32:09
  */
+@SuppressLint("ViewConstructor")
 public class MonthPage extends ViewGroup implements OnClickListener {
 
       /**
        * 当前状态之一:已经展开
        */
-      protected static final int STATE_EXPAND  = 0;
+      private static final int STATE_EXPAND  = 0;
       /**
        * 当前状态之一:已经折叠
        */
-      protected static final int STATE_FOLDED  = 1;
+      private static final int STATE_FOLDED  = 1;
       /**
        * 当前状态之一:正在折叠/展开
        */
-      protected static final int STATE_MOVING  = 2;
+      private static final int STATE_MOVING  = 2;
       /**
        * 当前状态之一:使用动画在手指离开后,自动折叠或者展开
        */
-      protected static final int STATE_ANIMATE = 3;
+      private static final int STATE_ANIMATE = 3;
 
+      /**
+       * 父布局
+       */
+      private MonthLayout mParent;
       /**
        * 记录当前页面日期
        */
-      protected Date    mDate;
+      private Date        mDate;
       /**
        * 记录当前页面位于{@link MonthLayout#getAdapter()}中的位置
        */
-      protected int     mPosition;
-      /**
-       * 记录当前页面第一天是否是周一
-       */
-      protected boolean isFirstDayMonday;
+      private int         mPosition;
       /**
        * {@link #mDate}代表的日期在当前布局中的位置索引,例如:日期是2019/3/7,那么在布局中第10个子view处于选中状态,该值为10
        */
-      protected int     mCurrentSelectedPosition;
+      private int         mCurrentSelectedPosition;
       /**
        * {@link #mDate}代表的月份的总天数
        */
-      protected int     mMonthDayCount;
+      private int         mMonthDayCount;
       /**
        * {@link #mDate}位于的月份第一天在布局中的位置索引
        */
-      protected int     mFirstDayOffset;
+      private int         mFirstDayOffset;
 
-      /**
-       * 显示天的view的宽度
-       */
-      protected int          mCellWidth  = -1;
       /**
        * 显示天的view的高度
        */
-      protected int          mCellHeight = -1;
+      private int mCellHeight = -1;
       /**
        * 根据总天数计算的页面高度,有的月份占据4行有的月份占据6行,根据天数和起始的日期是周几计算
        */
-      protected int          mPageHeight;
+      private int mPageHeight;
+
+      /**
+       * 生成天界面
+       */
+      private MonthDayViewFactory mMonthDayViewFactory;
       /**
        * 辅助管理当前状态,当从折叠状态改变为其他状态时,改变非本月的日期的子view的可见性,折叠时可见,展开时不可见
        */
-      protected StateManager mStateManager;
+      private StateManager        mStateManager;
       /**
        * 辅助类用于界面展开折叠
        */
-      protected MoveHelper   mMoveHelper;
+      private MoveHelper          mMoveHelper;
 
-      public MonthPage ( Context context ) {
+      public MonthPage ( Context context, MonthLayout parent ) {
 
             super( context );
+            mParent = parent;
             init();
       }
 
-      protected void init ( ) {
+      /**
+       * 初始化
+       */
+      private void init ( ) {
+
+            if( mMonthDayViewFactory == null ) {
+                  mMonthDayViewFactory = new DefaultItemFactory();
+            }
+
             /*每个月最多使用7列6行个子view就能包含所有日期*/
             for( int i = 0; i < 6 * 7; i++ ) {
-                  View child = generateItemView();
+                  View child = mMonthDayViewFactory.generateItemView( getContext() );
                   addView( child );
                   child.setOnClickListener( this );
             }
@@ -98,24 +110,34 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             mStateManager = new StateManager();
       }
 
-      /**
-       * 创建子view
-       *
-       * @return 子view
-       */
-      protected View generateItemView ( ) {
-
-            return new MonthDayView( getContext() );
-      }
-
-      protected Date getDate ( ) {
+      public Date getDate ( ) {
 
             return mDate;
       }
 
-      protected int getPosition ( ) {
+      public int getPosition ( ) {
 
             return mPosition;
+      }
+
+      public void animateExpand ( ) {
+
+            mMoveHelper.setAnimateState( 1 );
+      }
+
+      public void animateFold ( ) {
+
+            mMoveHelper.setAnimateState( -1 );
+      }
+
+      public boolean isAnimateOrMoving ( ) {
+
+            return mStateManager.isAnimateOrMoving();
+      }
+
+      public void setMonthDayViewFactory ( MonthDayViewFactory monthDayViewFactory ) {
+
+            mMonthDayViewFactory = monthDayViewFactory;
       }
 
       /**
@@ -126,11 +148,14 @@ public class MonthPage extends ViewGroup implements OnClickListener {
        * @param date 显示日期
        * @param position 位于pager的位置
        */
-      protected void setInfo ( Date date, int position, boolean isFirstDayMonday, boolean monthMode ) {
+      void setInfo ( Date date, int position, boolean isFirstDayMonday, boolean monthMode ) {
 
             mDate = date;
             mPosition = position;
-            this.isFirstDayMonday = isFirstDayMonday;
+            /**
+             * 记录当前页面第一天是否是周一
+             */
+            boolean isFirstDayMonday1 = isFirstDayMonday;
 
             if( monthMode ) {
                   mStateManager.setState( STATE_EXPAND );
@@ -140,7 +165,6 @@ public class MonthPage extends ViewGroup implements OnClickListener {
 
             calculateMonthInfo( isFirstDayMonday, date );
             bindChildren();
-            requestLayout();
       }
 
       /**
@@ -149,7 +173,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
        * @param isFirstDayMonday 每周的第一天是否是周一,true:是周一
        * @param date 需要判断的日期
        */
-      protected void calculateMonthInfo ( boolean isFirstDayMonday, Date date ) {
+      private void calculateMonthInfo ( boolean isFirstDayMonday, Date date ) {
 
             mMonthDayCount = CalendarUtils.getDayCountOfMonth( date );
             int dayOfWeek = CalendarUtils.getDayOfWeekAtMonthFirstDay( date );
@@ -167,7 +191,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
       /**
        * 设置显示状态,绑定数据
        */
-      protected void bindChildren ( ) {
+      private void bindChildren ( ) {
 
             int childCount = getChildCount();
             int offset = -mFirstDayOffset;
@@ -206,14 +230,16 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             int widthSize = MeasureSpec.getSize( widthMeasureSpec );
 
             /* 从父布局获取基础尺寸,保证所有页面基础尺寸一致 */
-            MonthLayout parent = (MonthLayout) getParent();
-            mCellWidth = parent.getCellWidth();
-            mCellHeight = parent.getCellHeight();
+            /**
+             * 显示天的view的宽度
+             */
+            int cellWidth = mParent.getCellWidth();
+            mCellHeight = mParent.getCellHeight();
 
             /* 如果需要测量,那么测量所有child */
             View view = getChildAt( 0 );
-            if( view.getMeasuredWidth() != mCellWidth || view.getMeasuredHeight() != mCellHeight ) {
-                  int cellWidthSpec = MeasureSpec.makeMeasureSpec( mCellWidth, MeasureSpec.EXACTLY );
+            if( view.getMeasuredWidth() != cellWidth || view.getMeasuredHeight() != mCellHeight ) {
+                  int cellWidthSpec = MeasureSpec.makeMeasureSpec( cellWidth, MeasureSpec.EXACTLY );
                   int cellHeightSpec = MeasureSpec.makeMeasureSpec( mCellHeight, MeasureSpec.EXACTLY );
 
                   int childCount = getChildCount();
@@ -226,8 +252,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             /* 设置高度信息 */
             int count = mMonthDayCount + mFirstDayOffset;
             int lines = count % 7 == 0 ? count / 7 : count / 7 + 1;
-            int resultHeight = lines * mCellHeight;
-            mPageHeight = resultHeight;
+            mPageHeight = lines * mCellHeight;
 
             /* 当折叠或者展开时,计算偏移量 */
             int state = mStateManager.getState();
@@ -238,7 +263,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             }
 
             /* 根据偏移量设置自身尺寸 */
-            int measuredHeight = mMoveHelper.calculateMeasuredHeight( resultHeight );
+            int measuredHeight = mMoveHelper.getMovedMeasureHeight();
             setMeasuredDimension( widthSize, measuredHeight );
       }
 
@@ -289,9 +314,13 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             Date date = itemView.getDate();
             /* 日期变化了 */
             if( !date.equals( mDate ) ) {
-                  MonthLayout parent = (MonthLayout) getParent();
-                  parent.onNewDateClicked( date, mPosition );
+                  mParent.onNewDateClicked( date, mPosition );
             }
+      }
+
+      void onDownTouchEvent ( ) {
+
+            mMoveHelper.forceStopAnimateIfRunning();
       }
 
       /**
@@ -301,30 +330,9 @@ public class MonthPage extends ViewGroup implements OnClickListener {
        *
        * @return 消费了多少距离
        */
-      public float verticalScrollBy ( float dy ) {
+      float onMoveTouchEvent ( float dy ) {
 
-            return mMoveHelper.move( dy );
-      }
-
-      void moveToExpand ( ) {
-
-            mMoveHelper.setAnimateState( 1 );
-      }
-
-      void moveToFold ( ) {
-
-            mMoveHelper.setAnimateState( -1 );
-      }
-
-      void onDownTouchEvent ( ) {
-
-            mMoveHelper.forceStopAnimateIfRunning();
-      }
-
-      public boolean isMoving ( ) {
-
-            int state = mStateManager.getState();
-            return state == STATE_MOVING || state == STATE_ANIMATE;
+            return mMoveHelper.expandFoldBy( dy );
       }
 
       /**
@@ -333,33 +341,52 @@ public class MonthPage extends ViewGroup implements OnClickListener {
        * @param totalDy 一共移动的竖直距离
        * @param isMonthMode 当前是否是月显示模式
        */
-      public void releaseToExpandOrFold ( float totalDy, boolean isMonthMode ) {
+      void onTouchEventRelease ( float totalDy, boolean isMonthMode ) {
 
-            if( totalDy > 24 ) {
-                  moveToExpand();
+            if( totalDy > 4 ) {
+                  animateExpand();
                   return;
             }
 
-            if( totalDy < -24 ) {
-                  moveToFold();
+            if( totalDy < -4 ) {
+                  animateFold();
                   return;
             }
 
             mMoveHelper.checkAnimateState( isMonthMode );
       }
 
+      public interface MonthDayViewFactory {
+
+            /**
+             * 创建子view
+             *
+             * @return 子view
+             */
+            public MonthDayView generateItemView ( Context context );
+      }
+
+      private class DefaultItemFactory implements MonthDayViewFactory {
+
+            @Override
+            public MonthDayView generateItemView ( Context context ) {
+
+                  return new MonthDayView( context );
+            }
+      }
+
       /**
        * 辅助类管理当前状态
        */
       @SuppressWarnings("WeakerAccess")
-      protected class StateManager {
+      private class StateManager {
 
             /**
              * 当前状态
              */
-            protected int mState;
+            private int mState;
 
-            protected void setState ( int newState ) {
+            private void setState ( int newState ) {
 
                   int old = mState;
                   mState = newState;
@@ -368,7 +395,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
                   }
             }
 
-            protected int getState ( ) {
+            private int getState ( ) {
 
                   return mState;
             }
@@ -376,7 +403,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             /**
              * {@link}
              */
-            protected void updateChildrenVisibility ( ) {
+            private void updateChildrenVisibility ( ) {
 
                   for( int i = 0; i < mFirstDayOffset; i++ ) {
                         MonthDayView child = (MonthDayView) getChildAt( i );
@@ -397,6 +424,12 @@ public class MonthPage extends ViewGroup implements OnClickListener {
                         }
                   }
             }
+
+            private boolean isAnimateOrMoving ( ) {
+
+                  int state = mStateManager.getState();
+                  return state == STATE_MOVING || state == STATE_ANIMATE;
+            }
       }
 
       /**
@@ -406,20 +439,20 @@ public class MonthPage extends ViewGroup implements OnClickListener {
        * 页面会逐渐变化为月显示模式或者周显示模式
        */
       @SuppressWarnings("WeakerAccess")
-      protected class MoveHelper {
+      private class MoveHelper {
 
             /**
              * 所有子view的top偏移
              */
-            protected float mTopMoved;
+            private int mTopMoved;
             /**
              * 当前页面bottom偏移
              */
-            protected float mBottomMoved;
+            private int mBottomMoved;
             /**
              * 手势释放后,需要收缩或者折叠时,用于计算方向,只有两个值1或者-1
              */
-            protected int   mDirection = 0;
+            private int mDirection = 0;
 
             /**
              * 将页面移动一段距离,按照比例分配给上下需要移动的距离
@@ -428,11 +461,11 @@ public class MonthPage extends ViewGroup implements OnClickListener {
              *
              * @return 消费了所少距离
              */
-            protected float move ( float dy ) {
+            private float expandFoldBy ( float dy ) {
 
                   mStateManager.setState( STATE_MOVING );
-                  if( calculateMovedByDy( dy ) ) {
-                        requestLayout();
+                  if( calculateMovedBy( dy ) ) {
+                        mParent.onCurrentPageExpandFolding( getMovedMeasureHeight() );
                         return dy;
                   }
 
@@ -446,11 +479,11 @@ public class MonthPage extends ViewGroup implements OnClickListener {
              *
              * @return true:偏移量发生变化,需要重新布局
              */
-            protected boolean calculateMovedByDy ( float dy ) {
+            private boolean calculateMovedBy ( float dy ) {
 
                   /* 记录原始尺寸,用于后续决定是否需要重新布局 */
-                  float topMoved = mTopMoved;
-                  float bottomMoved = mBottomMoved;
+                  int topMoved = mTopMoved;
+                  int bottomMoved = mBottomMoved;
 
                   /* 上下部分可以移动的距离 */
                   int topDis = mCurrentSelectedPosition / 7 * mCellHeight;
@@ -479,14 +512,14 @@ public class MonthPage extends ViewGroup implements OnClickListener {
                         mBottomMoved = 0;
                   }
 
-                  /* 判断是否需要重新布局 */
+                  /* 判断偏移量是否已经发生变化 */
                   return topMoved != mTopMoved || bottomMoved != mBottomMoved;
             }
 
             /**
-             * 计算折叠时需要移动的尺寸
+             * 计算已经折叠的偏移尺寸
              */
-            protected void calculateFoldMoved ( ) {
+            private void calculateFoldMoved ( ) {
 
                   int topDis = mCurrentSelectedPosition / 7 * mCellHeight;
                   int bottomDis = mPageHeight - ( topDis + mCellHeight );
@@ -495,9 +528,9 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             }
 
             /**
-             * 计算展开时需要移动的尺寸
+             * 计算已经展开的偏移尺寸
              */
-            protected void calculateExpandMoved ( ) {
+            private void calculateExpandMoved ( ) {
 
                   mTopMoved = 0;
                   mBottomMoved = 0;
@@ -506,13 +539,11 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             /**
              * {@link #onMeasure(int, int)}中根据偏移量计算该view高度
              *
-             * @param linesHeight 页面显示完整需要的高度
-             *
              * @return 修正后的高度
              */
-            protected int calculateMeasuredHeight ( int linesHeight ) {
+            private int getMovedMeasureHeight ( ) {
 
-                  return (int) ( linesHeight + mTopMoved + mBottomMoved );
+                  return mPageHeight + mTopMoved + mBottomMoved;
             }
 
             /**
@@ -520,7 +551,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
              *
              * @param direction 方向,1为展开方向,-1为折叠方向
              */
-            protected void setAnimateState ( int direction ) {
+            private void setAnimateState ( int direction ) {
 
                   mDirection = direction;
                   mStateManager.setState( STATE_ANIMATE );
@@ -531,11 +562,11 @@ public class MonthPage extends ViewGroup implements OnClickListener {
              * 用于判断是否已经处于需要的状态,即:已经折叠或者展开;如果没有完成,按照每次移动基础距离的1/5的速度继续进行,
              * 该方法的正确运行需要{@link #computeScroll()}中不断判断
              */
-            protected void animateIfNeed ( ) {
+            private void animateIfNeed ( ) {
 
                   if( needMockMove() ) {
-                        if( calculateMovedByDy( mDirection * mCellHeight / 5f ) ) {
-                              requestLayout();
+                        if( calculateMovedBy( mDirection * mCellHeight / 5f ) ) {
+                              mParent.onCurrentPageExpandFolding( getMovedMeasureHeight() );
                         }
                   }
             }
@@ -545,30 +576,28 @@ public class MonthPage extends ViewGroup implements OnClickListener {
              *
              * @return true :没有完成,需要继续布局直至完成
              */
-            protected boolean needMockMove ( ) {
+            private boolean needMockMove ( ) {
 
                   int state = mStateManager.getState();
                   if( state == STATE_ANIMATE ) {
-                        if( mDirection == 1 ) {
+                        if( mDirection > 0 ) {
                               boolean result = mTopMoved != 0 || mBottomMoved != 0;
                               if( !result ) {
                                     mDirection = 0;
                                     mStateManager.setState( STATE_EXPAND );
-                                    MonthLayout parent = (MonthLayout) getParent();
-                                    parent.onMonthModeChange( mDate, mPosition, true );
+                                    mParent.onMonthModeChange( mDate, mPosition, true );
                               }
                               return result;
                         }
 
-                        if( mDirection == -1 ) {
+                        if( mDirection < 0 ) {
                               int topDis = mCurrentSelectedPosition / 7 * mCellHeight;
                               int bottomDis = mPageHeight - ( topDis + mCellHeight );
                               boolean result = mTopMoved != -topDis || mBottomMoved != -bottomDis;
                               if( !result ) {
                                     mDirection = 0;
                                     mStateManager.setState( STATE_FOLDED );
-                                    MonthLayout parent = (MonthLayout) getParent();
-                                    parent.onMonthModeChange( mDate, mPosition, false );
+                                    mParent.onMonthModeChange( mDate, mPosition, false );
                               }
                               return result;
                         }
@@ -580,7 +609,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             /**
              * 强制停止没有完成的展开折叠动画
              */
-            protected void forceStopAnimateIfRunning ( ) {
+            private void forceStopAnimateIfRunning ( ) {
 
                   if( mStateManager.getState() == STATE_ANIMATE ) {
                         mStateManager.setState( STATE_MOVING );
@@ -592,7 +621,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
              *
              * @param isMonthMode {@link MonthLayout}当前是否是月显示模式
              */
-            protected void checkAnimateState ( boolean isMonthMode ) {
+            private void checkAnimateState ( boolean isMonthMode ) {
 
                   if( mDirection != 0 ) {
                         setAnimateState( mDirection );

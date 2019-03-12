@@ -1,7 +1,6 @@
 package tech.threekilogram.calendar.month;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -36,7 +35,7 @@ public class MonthLayout extends ViewPager {
       /**
        * 展开折叠页面
        */
-      //private ExpandFoldPage       mExpandFoldPage;
+      private ExpandFoldPage       mExpandFoldPage;
       /**
        * 监听日期变化
        */
@@ -56,7 +55,7 @@ public class MonthLayout extends ViewPager {
 
       public void setDate ( Date date ) {
 
-            onDateChanged( date, mSource.mBasePosition, mSource.isMonthMode );
+            onDateChanged( date, mSource.mBasePosition, mSource.isMonthMode, true );
             if( mOnDateChangeListener != null ) {
                   mOnDateChangeListener.onNewDateClick( getCurrentPage().getDate() );
             }
@@ -79,19 +78,19 @@ public class MonthLayout extends ViewPager {
 
       public void setMonthMode ( boolean isMonthMode ) {
 
-            onDateChanged( mSource.mBaseDate, mSource.mBasePosition, isMonthMode );
+            onDateChanged( mSource.mBaseDate, mSource.mBasePosition, isMonthMode, true );
       }
 
       public void expandToMonthMode ( ) {
 
             //noinspection ConstantConditions
-            getCurrentPage().moveToExpand();
+            getCurrentPage().animateExpand();
       }
 
       public void foldToWeekMode ( ) {
 
             //noinspection ConstantConditions
-            getCurrentPage().moveToFold();
+            getCurrentPage().animateFold();
       }
 
       public void bindParent ( CalendarView calendarView ) {
@@ -108,13 +107,31 @@ public class MonthLayout extends ViewPager {
             mScroller = new OnPageScroller( this );
             addOnPageChangeListener( mScroller );
 
-            //mExpandFoldPage = new ExpandFoldPage();
+            mExpandFoldPage = new ExpandFoldPage();
             mCellSize = new CellSize();
+      }
+
+      /**
+       * 工具方法,获取当前页面
+       *
+       * @return 当前页面
+       */
+      public MonthPage getCurrentPage ( ) {
+
+            int currentItem = getCurrentItem();
+            int count = getChildCount();
+            for( int i = 0; i < count; i++ ) {
+                  MonthPage child = (MonthPage) getChildAt( i );
+                  if( child.getPosition() == currentItem ) {
+                        return child;
+                  }
+            }
+            return null;
       }
 
       public void notifyFirstDayIsMondayChanged ( boolean isFirstDayMonday ) {
 
-            onDateChanged( mSource.mBaseDate, mSource.mBasePosition, mSource.isMonthMode );
+            onDateChanged( mSource.mBaseDate, mSource.mBasePosition, mSource.isMonthMode, isFirstDayMonday );
       }
 
       public void setOnDateChangeListener ( OnDateChangeListener onDateChangeListener ) {
@@ -137,29 +154,20 @@ public class MonthLayout extends ViewPager {
             return mCellSize.mCellHeight;
       }
 
-      public void verticalMoveCurrentPageBy ( float dy ) {
-
-            MonthPage currentPage = getCurrentPage();
-            if( currentPage != null ) {
-                  currentPage.verticalScrollBy( dy );
-            }
-      }
-
       @Override
       protected void onMeasure ( int widthMeasureSpec, int heightMeasureSpec ) {
 
-            Log.i( TAG, "onMeasure: " );
             if( mScroller.isScrolling() ) {
                   if( mScroller.tryMeasure( widthMeasureSpec, heightMeasureSpec ) ) {
                         return;
                   }
             }
 
-//            if( mExpandFoldPage.isCurrentPageExpandFolding() ) {
-//                  if( mExpandFoldPage.tryMeasure( widthMeasureSpec, heightMeasureSpec ) ) {
-//                        return;
-//                  }
-//            }
+            if( mExpandFoldPage.isCurrentPageAnimateOrMoving() ) {
+                  if( mExpandFoldPage.tryMeasure( widthMeasureSpec, heightMeasureSpec ) ) {
+                        return;
+                  }
+            }
 
             int widthSize = MeasureSpec.getSize( widthMeasureSpec );
             int heightSize = MeasureSpec.getSize( heightMeasureSpec );
@@ -190,11 +198,11 @@ public class MonthLayout extends ViewPager {
                   }
             }
 
-//            if( mExpandFoldPage.isCurrentPageExpandFolding() ) {
-//                  if( mExpandFoldPage.tryLayout( l, t, r, b ) ) {
-//                        return;
-//                  }
-//            }
+            if( mExpandFoldPage.isCurrentPageAnimateOrMoving() ) {
+                  if( mExpandFoldPage.tryLayout( l, t, r, b ) ) {
+                        return;
+                  }
+            }
 
             super.onLayout( changed, l, t, r, b );
       }
@@ -206,28 +214,10 @@ public class MonthLayout extends ViewPager {
             mCellSize.decideCellSize();
       }
 
-//      @Override
-//      public boolean dispatchTouchEvent ( MotionEvent ev ) {
-//
-//            return mExpandFoldPage.handleMotionEvent( ev );
-//      }
+      @Override
+      public boolean dispatchTouchEvent ( MotionEvent ev ) {
 
-      /**
-       * 工具方法,获取当前页面
-       *
-       * @return 当前页面
-       */
-      public MonthPage getCurrentPage ( ) {
-
-            int currentItem = getCurrentItem();
-            int count = getChildCount();
-            for( int i = 0; i < count; i++ ) {
-                  MonthPage child = (MonthPage) getChildAt( i );
-                  if( child.getPosition() == currentItem ) {
-                        return child;
-                  }
-            }
-            return null;
+            return mExpandFoldPage.handleMotionEvent( ev );
       }
 
       /**
@@ -237,21 +227,35 @@ public class MonthLayout extends ViewPager {
        * @param position 基准日期对应的基准位置
        * @param monthMode 是否是月显示模式
        */
-      private void onDateChanged ( Date date, int position, boolean monthMode ) {
+      private void onDateChanged ( Date date, int position, boolean monthMode, boolean needRequestLayout ) {
+
+            onDateChanged( date, position, monthMode, mCalendarView.isFirstDayMonday(), needRequestLayout );
+      }
+
+      /**
+       * 重新设置基础日期
+       *
+       * @param date 新的基础日期
+       * @param position 基准日期对应的基准位置
+       * @param monthMode 是否是月显示模式
+       */
+      private void onDateChanged (
+          Date date, int position, boolean monthMode, boolean firstDayMonday, boolean needRequestLayout ) {
 
             mSource.resetDate( date, position );
             mSource.isMonthMode = monthMode;
             int childCount = getChildCount();
-            boolean firstDayMonday = mCalendarView.isFirstDayMonday();
             for( int i = 0; i < childCount; i++ ) {
                   MonthPage child = (MonthPage) getChildAt( i );
                   int childPosition = child.getPosition();
                   child.setInfo( mSource.getDate( childPosition ), childPosition, firstDayMonday, monthMode );
-                  child.requestLayout();
+                  if( needRequestLayout ) {
+                        child.requestLayout();
+                  }
             }
       }
 
-      private void onNewPageSelected ( int position ) {
+      void onNewPageSelected ( int position ) {
 
             if( mOnDateChangeListener != null ) {
                   mOnDateChangeListener.onNewPageSelected( mSource.getDate( position ) );
@@ -260,7 +264,7 @@ public class MonthLayout extends ViewPager {
 
       void onNewDateClicked ( Date date, int position ) {
 
-            onDateChanged( date, position, mSource.isMonthMode );
+            onDateChanged( date, position, mSource.isMonthMode, false );
 
             if( mOnDateChangeListener != null ) {
                   mOnDateChangeListener.onNewDateClick( date );
@@ -269,7 +273,174 @@ public class MonthLayout extends ViewPager {
 
       void onMonthModeChange ( Date date, int position, boolean monthMode ) {
 
-            onDateChanged( date, position, monthMode );
+            onDateChanged( date, position, monthMode, true );
+      }
+
+      void onCurrentPageExpandFolding ( int currentPageMovedHeight ) {
+
+            mExpandFoldPage.onCurrentPageHeightChange( currentPageMovedHeight );
+      }
+
+      /**
+       * 用于根据页面之间的位置信息/显示模式计算日期
+       */
+      private class DateSource {
+
+            /**
+             * 基准日期
+             */
+            private Date    mBaseDate;
+            private int     mBasePosition;
+            /**
+             * 是否是月模式
+             */
+            private boolean isMonthMode = true;
+
+            private DateSource ( Date baseDate, int basePosition ) {
+
+                  mBaseDate = baseDate;
+                  mBasePosition = basePosition;
+            }
+
+            private void resetDate ( Date date, int position ) {
+
+                  mBaseDate = date;
+                  mBasePosition = position;
+            }
+
+            private Date getDate ( int position ) {
+
+                  if( isMonthMode ) {
+                        return getMonthDate( position );
+                  } else {
+                        return getWeekDate( position );
+                  }
+            }
+
+            /**
+             * 获取该位置的日期,每次增加或者减少一个月
+             */
+            private Date getMonthDate ( int position ) {
+
+                  int step = position - mBasePosition;
+                  return CalendarUtils.getDateByAddMonth( mBaseDate, step );
+            }
+
+            /**
+             * 获取该位置的日期,每次增加或者减少一周
+             */
+            private Date getWeekDate ( int position ) {
+
+                  int step = position - mBasePosition;
+                  return CalendarUtils.getDateByAddWeek( mBaseDate, step );
+            }
+      }
+
+      /**
+       * adapter 设置页面
+       */
+      private class PagerMonthAdapter extends PagerAdapter {
+
+            /**
+             * 回收页面
+             */
+            private LinkedList<View> mReUsed = new LinkedList<>();
+
+            @Override
+            public int getCount ( ) {
+                  /* 日期的个数是无限的 */
+                  return Integer.MAX_VALUE;
+            }
+
+            @NonNull
+            @Override
+            public Object instantiateItem ( @NonNull ViewGroup container, int position ) {
+
+                  MonthPage page;
+                  if( mReUsed.isEmpty() ) {
+                        page = new MonthPage( container.getContext(), MonthLayout.this );
+                  } else {
+                        page = (MonthPage) mReUsed.pollFirst();
+                  }
+
+                  Date date = mSource.getDate( position );
+                  page.setInfo( date, position, mCalendarView.isFirstDayMonday(), mSource.isMonthMode );
+
+                  container.addView( page );
+                  return page;
+            }
+
+            @Override
+            public boolean isViewFromObject ( @NonNull View view, @NonNull Object object ) {
+
+                  return object == view;
+            }
+
+            @Override
+            public void destroyItem ( @NonNull ViewGroup container, int position, @NonNull Object object ) {
+
+                  View view = (View) object;
+                  container.removeView( view );
+                  mReUsed.add( view );
+            }
+      }
+
+      /**
+       * 此类用于将原始尺寸分成7*6份,并且计算每份的尺寸,每一页通过该类获取尺寸,以保证统一
+       */
+      private class CellSize {
+
+            /**
+             * 显示天的view的宽度
+             */
+            private int     mCellWidth       = -1;
+            /**
+             * 显示天的view的高度
+             */
+            private int     mCellHeight      = -1;
+            /**
+             * cellWidth 和 cellHeight 是否已经确定,当子view布局过了,就确定了
+             */
+            private boolean isCellSizeDecide = false;
+
+            /**
+             * 用于{@link #onMeasure(int, int)}中通过获得的尺寸计算基础尺寸
+             *
+             * @param widthSize 获得的宽度
+             * @param heightSize 获得的高度
+             */
+            private void calculateCellSize ( int widthSize, int heightSize ) {
+
+                  if( !isCellSizeDecide ) {
+                        mCellWidth = widthSize / 7;
+                        mCellHeight = heightSize / 6;
+                  }
+            }
+
+            /**
+             * 因为布局时需要多次测量,所以在{@link #onLayout(boolean, int, int, int, int)}后可以确定测量已经完成,
+             * 此时基础尺寸可以计算出,然后通知子view使用确定的基础尺寸重新布局一下,(可以防止5.1以上布局高度不正确)
+             * 注意:{@link #onLayout(boolean, int, int, int, int)}中调用{@link View#requestLayout()}不会起作用,
+             * 需要在{@link View#computeScroll()}中调用
+             */
+            private void decideCellSize ( ) {
+
+                  if( !mCellSize.isCellSizeDecide ) {
+                        mCellSize.isCellSizeDecide = true;
+                        notifyCellSizeDecide();
+                  }
+            }
+
+            /**
+             * 通知子view重新布局
+             */
+            private void notifyCellSizeDecide ( ) {
+
+                  int childCount = getChildCount();
+                  for( int i = 0; i < childCount; i++ ) {
+                        getChildAt( i ).requestLayout();
+                  }
+            }
       }
 
       /**
@@ -386,7 +557,6 @@ public class MonthLayout extends ViewPager {
 
                   if( calculateHeight != currentPageHeight ) {
                         mCalculateHeight = calculateHeight;
-                        Log.i( TAG, "onHeightChange: " );
                         requestLayout();
                   } else {
                         mCalculateHeight = -1;
@@ -398,11 +568,9 @@ public class MonthLayout extends ViewPager {
 
                   int widthSize = MeasureSpec.getSize( parentWidthSpec );
                   if( mCalculateHeight > 0 ) {
-                        Log.i( TAG, "onMeasureWhenScrolling: set" );
                         setMeasuredDimension( widthSize, mCalculateHeight );
                         return true;
                   }
-                  Log.i( TAG, "onMeasureWhenScrolling: not set" );
                   return false;
             }
 
@@ -419,7 +587,7 @@ public class MonthLayout extends ViewPager {
 //
 //                  MonthPage currentPage = getCurrentPage();
 //                  if( currentPage != null ) {
-//                        if( currentPage.isMoving() ) {
+//                        if( currentPage.isAnimateOrMoving() ) {
 //                              currentPage.measure( widthMeasureSpec, heightMeasureSpec );
 //                              setMeasuredDimension( widthSize, currentPage.getMeasuredHeight() );
 //                              return true;
@@ -432,7 +600,7 @@ public class MonthLayout extends ViewPager {
 //
 //                  MonthPage currentPage = getCurrentPage();
 //                  if( currentPage != null ) {
-//                        if( currentPage.isMoving() ) {
+//                        if( currentPage.isAnimateOrMoving() ) {
 //                              int measuredHeight = getMeasuredHeight();
 //                              int childCount = getChildCount();
 //                              for( int i = 0; i < childCount; i++ ) {
@@ -447,201 +615,6 @@ public class MonthLayout extends ViewPager {
 //                  return false;
 //            }
 //      }
-
-      /**
-       * 此类用于将原始尺寸分成7*6份,并且计算每份的尺寸,每一页通过该类获取尺寸,以保证统一
-       */
-      private class CellSize {
-
-            /**
-             * 显示天的view的宽度
-             */
-            private int     mCellWidth       = -1;
-            /**
-             * 显示天的view的高度
-             */
-            private int     mCellHeight      = -1;
-            /**
-             * cellWidth 和 cellHeight 是否已经确定,当子view布局过了,就确定了
-             */
-            private boolean isCellSizeDecide = false;
-
-            /**
-             * 用于{@link #onMeasure(int, int)}中通过获得的尺寸计算基础尺寸
-             *
-             * @param widthSize 获得的宽度
-             * @param heightSize 获得的高度
-             */
-            private void calculateCellSize ( int widthSize, int heightSize ) {
-
-                  if( !isCellSizeDecide ) {
-                        mCellWidth = widthSize / 7;
-                        mCellHeight = heightSize / 6;
-                  }
-            }
-
-            /**
-             * 因为布局时需要多次测量,所以在{@link #onLayout(boolean, int, int, int, int)}后可以确定测量已经完成,
-             * 此时基础尺寸可以计算出,然后通知子view使用确定的基础尺寸重新布局一下,(可以防止5.1以上布局高度不正确)
-             * 注意:{@link #onLayout(boolean, int, int, int, int)}中调用{@link View#requestLayout()}不会起作用,
-             * 需要在{@link View#computeScroll()}中调用
-             */
-            private void decideCellSize ( ) {
-
-                  if( !mCellSize.isCellSizeDecide ) {
-                        mCellSize.isCellSizeDecide = true;
-                        notifyCellSizeDecide();
-                  }
-            }
-
-            /**
-             * 通知子view重新布局
-             */
-            private void notifyCellSizeDecide ( ) {
-
-                  int childCount = getChildCount();
-                  for( int i = 0; i < childCount; i++ ) {
-                        getChildAt( i ).requestLayout();
-                  }
-            }
-      }
-
-      /**
-       * 用于根据页面之间的位置信息/显示模式计算日期
-       */
-      private class DateSource {
-
-            /**
-             * 基准日期
-             */
-            private Date    mBaseDate;
-            private int     mBasePosition;
-            /**
-             * 是否是月模式
-             */
-            private boolean isMonthMode = true;
-
-            private DateSource ( Date baseDate, int basePosition ) {
-
-                  mBaseDate = baseDate;
-                  mBasePosition = basePosition;
-            }
-
-            private void resetDate ( Date date, int position ) {
-
-                  mBaseDate = date;
-                  mBasePosition = position;
-            }
-
-            private Date getDate ( int position ) {
-
-                  if( isMonthMode ) {
-                        return getMonthDate( position );
-                  } else {
-                        return getWeekDate( position );
-                  }
-            }
-
-            /**
-             * 获取该位置的日期,每次增加或者减少一个月
-             */
-            private Date getMonthDate ( int position ) {
-
-                  int step = position - mBasePosition;
-                  return CalendarUtils.getDateByAddMonth( mBaseDate, step );
-            }
-
-            /**
-             * 获取该位置的日期,每次增加或者减少一周
-             */
-            private Date getWeekDate ( int position ) {
-
-                  int step = position - mBasePosition;
-                  return CalendarUtils.getDateByAddWeek( mBaseDate, step );
-            }
-      }
-
-      /**
-       * adapter 设置页面
-       */
-      private class PagerMonthAdapter extends PagerAdapter {
-
-            /**
-             * 回收页面
-             */
-            private LinkedList<View> mReUsed = new LinkedList<>();
-
-            @Override
-            public int getCount ( ) {
-                  /* 日期的个数是无限的 */
-                  return Integer.MAX_VALUE;
-            }
-
-            @NonNull
-            @Override
-            public Object instantiateItem ( @NonNull ViewGroup container, int position ) {
-
-                  MonthPage page;
-                  if( mReUsed.isEmpty() ) {
-                        page = new MonthPage( container.getContext() );
-                  } else {
-                        page = (MonthPage) mReUsed.pollFirst();
-                  }
-
-                  Date date = mSource.getDate( position );
-                  page.setInfo( date, position, mCalendarView.isFirstDayMonday(), mSource.isMonthMode );
-
-                  container.addView( page );
-                  return page;
-            }
-
-            @Override
-            public boolean isViewFromObject ( @NonNull View view, @NonNull Object object ) {
-
-                  return object == view;
-            }
-
-            @Override
-            public void destroyItem ( @NonNull ViewGroup container, int position, @NonNull Object object ) {
-
-                  View view = (View) object;
-                  container.removeView( view );
-                  mReUsed.add( view );
-            }
-      }
-
-      public interface OnCurrentPageExpandFoldStrategy {
-
-            void onCurrentPageHeightChange ( int currentPageHeight );
-
-            boolean onMeasureWhenCurrentPageExpandFold ( int parentWidthSpec, int parentHeightSpec );
-
-            boolean onLayoutWhenCurrentPageExpandFold ( int parentLeft, int parentTop, int parentRight, int parentBottom );
-      }
-
-      private class RelayoutCurrentPageExpandFoldStrategy implements OnCurrentPageExpandFoldStrategy {
-
-            private int mCurrentPageHeight;
-
-            @Override
-            public void onCurrentPageHeightChange ( int currentPageHeight ) {
-
-                  mCurrentPageHeight = currentPageHeight;
-            }
-
-            @Override
-            public boolean onMeasureWhenCurrentPageExpandFold ( int parentWidthSpec, int parentHeightSpec ) {
-
-                  return false;
-            }
-
-            @Override
-            public boolean onLayoutWhenCurrentPageExpandFold (
-                int parentLeft, int parentTop, int parentRight, int parentBottom ) {
-
-                  return false;
-            }
-      }
 
       /**
        * 用于竖直滑动时展开折叠当前页面
@@ -682,7 +655,7 @@ public class MonthLayout extends ViewPager {
                               mLastY = mDownY = y;
 
                               if( monthPage != null ) {
-                                    if( monthPage.isMoving() ) {
+                                    if( monthPage.isAnimateOrMoving() ) {
                                           monthPage.onDownTouchEvent();
                                           isVerticalMove = true;
                                     }
@@ -717,7 +690,7 @@ public class MonthLayout extends ViewPager {
 
                               if( isVerticalMove ) {
                                     if( monthPage != null ) {
-                                          monthPage.verticalScrollBy( dy );
+                                          monthPage.onMoveTouchEvent( dy );
                                           return true;
                                     }
                               }
@@ -730,7 +703,7 @@ public class MonthLayout extends ViewPager {
 
                               if( isVerticalMove ) {
                                     if( monthPage != null ) {
-                                          monthPage.releaseToExpandOrFold( y - mDownY, mSource.isMonthMode );
+                                          monthPage.onTouchEventRelease( y - mDownY, mSource.isMonthMode );
                                           isHorizontalMove = isVerticalMove = false;
                                           return true;
                                     }
@@ -746,11 +719,16 @@ public class MonthLayout extends ViewPager {
                   return MonthLayout.super.dispatchTouchEvent( ev );
             }
 
-            private boolean isCurrentPageExpandFolding ( ) {
+            private void onCurrentPageHeightChange ( int currentPageHeight ) {
+
+                  mStrategy.onCurrentPageHeightChange( currentPageHeight );
+            }
+
+            private boolean isCurrentPageAnimateOrMoving ( ) {
 
                   MonthPage currentPage = getCurrentPage();
                   if( currentPage != null ) {
-                        return currentPage.isMoving();
+                        return currentPage.isAnimateOrMoving();
                   }
                   return false;
             }
@@ -763,6 +741,56 @@ public class MonthLayout extends ViewPager {
             private boolean tryLayout ( int l, int t, int r, int b ) {
 
                   return mStrategy.onLayoutWhenCurrentPageExpandFold( l, t, r, b );
+            }
+      }
+
+      public interface OnCurrentPageExpandFoldStrategy {
+
+            void onCurrentPageHeightChange ( int currentPageHeight );
+
+            boolean onMeasureWhenCurrentPageExpandFold ( int parentWidthSpec, int parentHeightSpec );
+
+            boolean onLayoutWhenCurrentPageExpandFold ( int parentLeft, int parentTop, int parentRight, int parentBottom );
+      }
+
+      private class RelayoutCurrentPageExpandFoldStrategy implements OnCurrentPageExpandFoldStrategy {
+
+            private int mCurrentPageHeight;
+
+            @Override
+            public void onCurrentPageHeightChange ( int currentPageHeight ) {
+
+                  if( mCurrentPageHeight != currentPageHeight ) {
+                        mCurrentPageHeight = currentPageHeight;
+                        getCurrentPage().requestLayout();
+                  }
+            }
+
+            @Override
+            public boolean onMeasureWhenCurrentPageExpandFold ( int parentWidthSpec, int parentHeightSpec ) {
+
+                  MonthPage currentPage = getCurrentPage();
+                  currentPage.measure( parentWidthSpec, parentHeightSpec );
+                  setMeasuredDimension( MeasureSpec.getSize( parentWidthSpec ), currentPage.getMeasuredHeight() );
+                  return true;
+            }
+
+            @Override
+            public boolean onLayoutWhenCurrentPageExpandFold (
+                int parentLeft, int parentTop, int parentRight, int parentBottom ) {
+
+                  MonthPage currentPage = getCurrentPage();
+                  if( currentPage != null ) {
+                        int measuredHeight = getMeasuredHeight();
+                        currentPage.layout(
+                            currentPage.getLeft(),
+                            currentPage.getTop(),
+                            currentPage.getRight(),
+                            currentPage.getTop() + measuredHeight
+                        );
+                        return true;
+                  }
+                  return false;
             }
       }
 }

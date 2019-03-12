@@ -204,11 +204,6 @@ public class CalendarView extends ViewGroup {
             mLayoutStrategy.layoutChildren( this, mWeekBar, mMonthLayout );
       }
 
-      public void verticalMoveBy ( float dy ) {
-
-            mMonthLayout.verticalMoveCurrentPageBy( dy );
-      }
-
       /**
        * calendar布局策略
        */
