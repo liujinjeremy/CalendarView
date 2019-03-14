@@ -75,6 +75,20 @@ public class CalendarViewCoverBehavior<T extends View> extends Behavior<T> {
             @Override
             public boolean onHeightChange ( int currentPageHeight, int targetPageHeight, float offset, int calculateHeight ) {
 
+                  mCalendarView.layout(
+                      mCalendarView.getLeft(),
+                      mCalendarView.getTop(),
+                      mCalendarView.getRight(),
+                      mCalendarView.getTop() + mCalendarView.getWeekBar().getMeasuredHeight() + calculateHeight
+                  );
+
+                  mCover.layout(
+                      mCover.getLeft(),
+                      mCalendarView.getBottom(),
+                      mCover.getRight(),
+                      mCalendarView.getBottom() + mCover.getMeasuredHeight()
+                  );
+
                   return false;
             }
 
