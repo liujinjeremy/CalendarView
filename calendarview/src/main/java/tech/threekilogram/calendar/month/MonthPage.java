@@ -8,6 +8,7 @@ import android.content.Context;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import androidx.viewpager.widget.ViewPager;
 import java.util.Date;
 import tech.threekilogram.calendar.month.MonthLayout.MonthDayViewFactory;
 import tech.threekilogram.calendar.util.CalendarUtils;
@@ -19,8 +20,6 @@ import tech.threekilogram.calendar.util.CalendarUtils;
  */
 @SuppressLint("ViewConstructor")
 public class MonthPage extends ViewGroup implements OnClickListener {
-
-      private static final String TAG = MonthPage.class.getSimpleName();
 
       /**
        * 当前状态之一:已经展开
@@ -105,41 +104,65 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             mStateManager = new StateManager();
       }
 
+      /**
+       * 获取页面日期
+       */
       public Date getDate ( ) {
 
             return mDate;
       }
 
+      /**
+       * 获取页面在{@link ViewPager}中的位置
+       */
       public int getPosition ( ) {
 
             return mPosition;
       }
 
+      /**
+       * 使用动画展开
+       */
       public void animateExpand ( ) {
 
             mMoveHelper.setAnimateState( 1 );
       }
 
+      /**
+       * 使用动画折叠
+       */
       public void animateFold ( ) {
 
             mMoveHelper.setAnimateState( -1 );
       }
 
+      /**
+       * 是否处于动画或者移动状态
+       */
       public boolean isAnimateOrMoving ( ) {
 
             return mStateManager.isAnimateOrMoving();
       }
 
-      public boolean calculateMovedBy ( float dy ) {
+      /**
+       * 是否已经展开
+       */
+      public boolean isExpanded ( ) {
 
-            return mMoveHelper.calculateMovedBy( dy );
+            return mStateManager.isExpanded();
       }
 
-      public int getMovedMeasureHeight ( ) {
+      /**
+       * 是否已经折叠
+       */
+      public boolean isFolded ( ) {
 
-            return mMoveHelper.getMovedMeasureHeight();
+            return mStateManager.isFolded();
       }
 
+      /**
+       * 获取页面展开时高度
+       */
       public int getPageHeight ( ) {
 
             return mPageHeight;
@@ -323,6 +346,9 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             }
       }
 
+      /**
+       * 用于父布局通知手势按下
+       */
       void onDownTouchEvent ( ) {
 
             mMoveHelper.forceStopAnimateIfRunning();
@@ -372,6 +398,9 @@ public class MonthPage extends ViewGroup implements OnClickListener {
              */
             private int mState;
 
+            /**
+             * 设置状态,当不处于折叠时隐藏不是此月view
+             */
             private void setState ( int newState ) {
 
                   if( mState == newState ) {
@@ -391,9 +420,6 @@ public class MonthPage extends ViewGroup implements OnClickListener {
                   return mState;
             }
 
-            /**
-             * {@link}
-             */
             private void updateChildrenVisibility ( ) {
 
                   for( int i = 0; i < mFirstDayOffset; i++ ) {
@@ -418,8 +444,17 @@ public class MonthPage extends ViewGroup implements OnClickListener {
 
             private boolean isAnimateOrMoving ( ) {
 
-                  int state = mStateManager.getState();
-                  return state == STATE_MOVING || state == STATE_ANIMATE;
+                  return mState == STATE_MOVING || mState == STATE_ANIMATE;
+            }
+
+            private boolean isExpanded ( ) {
+
+                  return mState == STATE_EXPAND;
+            }
+
+            private boolean isFolded ( ) {
+
+                  return mState == STATE_FOLDED;
             }
       }
 

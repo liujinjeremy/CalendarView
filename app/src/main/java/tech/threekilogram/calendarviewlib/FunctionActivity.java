@@ -10,6 +10,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import java.util.Date;
 import tech.threekilogram.calendar.CalendarView;
 import tech.threekilogram.calendar.CalendarView.OnDateChangeListener;
+import tech.threekilogram.calendar.month.MonthLayout;
+import tech.threekilogram.calendar.month.MonthLayout.PageHeightChangeStrategy;
 import tech.threekilogram.calendar.util.CalendarUtils;
 
 public class FunctionActivity extends AppCompatActivity {
@@ -64,6 +66,33 @@ public class FunctionActivity extends AppCompatActivity {
                   public void onNewDateSet ( Date date ) {
 
                         mTextView.setText( CalendarUtils.getDateFormat( mCalendar.getCurrentPageDate() ) );
+                  }
+            } );
+
+            final MonthLayout monthLayout = mCalendar.getMonthLayout();
+            monthLayout.setPageHeightChangeStrategy( new PageHeightChangeStrategy() {
+
+                  @Override
+                  public void onHeightChanging ( int currentHeight, int which ) {
+
+                        monthLayout.reLayoutToPageHeight( currentHeight );
+                        mTextView.setY( monthLayout.getBottom() );
+                  }
+
+                  @Override
+                  public void onScrollFinished ( ) {
+
+                        mTextView.setY( monthLayout.getBottom() );
+                  }
+
+                  @Override
+                  public void onExpanded ( ) {
+
+                  }
+
+                  @Override
+                  public void onFolded ( ) {
+
                   }
             } );
       }

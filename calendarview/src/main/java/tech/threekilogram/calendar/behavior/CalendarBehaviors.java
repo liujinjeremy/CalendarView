@@ -13,7 +13,6 @@ import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.RecyclerView.OnScrollListener;
 import tech.threekilogram.calendar.CalendarView;
-import tech.threekilogram.calendar.month.MonthPage;
 
 /**
  * @author Liujin 2019/3/11:15:37:33
@@ -120,35 +119,6 @@ public class CalendarBehaviors {
                 @NonNull CoordinatorLayout coordinatorLayout, @NonNull RecyclerView child, @NonNull View target, int dx, int dy,
                 @NonNull int[] consumed, int type ) {
 
-                  if( mScrollListener.mMoved != 0 ) {
-                        return;
-                  }
-
-                  MonthPage currentPage = mCalendarView.getMonthLayout().getCurrentPage();
-                  if( currentPage.calculateMovedBy( -dy ) ) {
-                        int left = mCalendarView.getLeft();
-                        int top = mCalendarView.getTop();
-                        int right = mCalendarView.getRight();
-                        int weekBarHeight = mCalendarView.getWeekBar().getMeasuredHeight();
-                        int pageHeight = currentPage.getMovedMeasureHeight();
-
-                        mCalendarView.layout( left, top, right, top + weekBarHeight + pageHeight );
-                        currentPage.layout(
-                            currentPage.getLeft(),
-                            currentPage.getTop(),
-                            currentPage.getRight(),
-                            currentPage.getTop() + currentPage.getMovedMeasureHeight()
-                        );
-
-                        mRecyclerView.layout(
-                            mRecyclerView.getLeft(),
-                            mCalendarView.getBottom(),
-                            mRecyclerView.getRight(),
-                            mCalendarView.getBottom() + mRecyclerView.getMeasuredHeight()
-                        );
-
-                        consumed[ 1 ] = dy;
-                  }
             }
 
             @Override

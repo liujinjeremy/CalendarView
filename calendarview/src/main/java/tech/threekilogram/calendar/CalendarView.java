@@ -104,12 +104,12 @@ public class CalendarView extends ViewGroup {
 
       public void animateToMonthMode ( ) {
 
-            mMonthLayout.expandToMonthMode();
+            mMonthLayout.animateToMonthMode();
       }
 
       public void animateToWeekMode ( ) {
 
-            mMonthLayout.foldToWeekMode();
+            mMonthLayout.animateToWeekMode();
       }
 
       /**

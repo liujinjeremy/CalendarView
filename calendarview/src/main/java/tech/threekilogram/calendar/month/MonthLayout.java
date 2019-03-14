@@ -20,8 +20,6 @@ import tech.threekilogram.calendar.util.CalendarUtils;
 @SuppressLint("ViewConstructor")
 public class MonthLayout extends ViewPager {
 
-      private static final String TAG = MonthLayout.class.getSimpleName();
-
       /**
        * 父布局
        */
@@ -53,7 +51,7 @@ public class MonthLayout extends ViewPager {
       /**
        * 页面高度变化时使用的策略
        */
-      private PageHeightChangeStrategy mHeightChangeStrategy;
+      private PageHeightChangeStrategy mPageHeightChangeStrategy;
 
       /**
        * 只能new出来不能再布局中使用
@@ -84,52 +82,90 @@ public class MonthLayout extends ViewPager {
             mExpandFoldPage = new ExpandFoldPage();
             mCellSize = new CellSize();
             mMonthDayViewFactory = new DefaultItemFactory();
-            mHeightChangeStrategy = new DefaultPageHeightChangeStrategy();
+            mPageHeightChangeStrategy = new DefaultPageHeightChangeStrategy();
       }
 
+      /**
+       * 设置生成显示天信息的view的工厂
+       *
+       * @param monthDayViewFactory 生成天的view的工厂
+       */
       public void setMonthDayViewFactory ( MonthDayViewFactory monthDayViewFactory ) {
 
             mMonthDayViewFactory = monthDayViewFactory;
       }
 
+      /**
+       * 重设基准日期,所有页面的日期基于这个日期计算所得
+       *
+       * @param date 新的基准日期
+       */
       public void setDate ( Date date ) {
 
-            onDateChanged( date, mSource.mBasePosition, mSource.isMonthMode, true );
+            onDateChanged( date, mSource.mBasePosition, mSource.isMonthMode, mParent.isFirstDayMonday(), true );
             if( mOnDateChangeListener != null ) {
                   mOnDateChangeListener.onNewDateClick( getCurrentPage().getDate() );
             }
       }
 
+      /**
+       * 获取基准日期
+       *
+       * @return 基准日期
+       */
       public Date getDate ( ) {
 
             return mSource.mBaseDate;
       }
 
+      /**
+       * 当前现实的页面的日期
+       */
       public Date getCurrentPageDate ( ) {
 
             return getCurrentPage().getDate();
       }
 
+      /**
+       * 是否是月显示模式
+       *
+       * @return true:是月显示模式
+       */
       public boolean isMonthMode ( ) {
 
             return mSource.isMonthMode;
       }
 
+      /**
+       * 设置是否是月显示模式
+       *
+       * @param isMonthMode true:是月显示模式
+       */
       public void setMonthMode ( boolean isMonthMode ) {
 
-            onDateChanged( mSource.mBaseDate, mSource.mBasePosition, isMonthMode, true );
+            onDateChanged( mSource.mBaseDate, mSource.mBasePosition, isMonthMode, mParent.isFirstDayMonday(), true );
       }
 
-      public void expandToMonthMode ( ) {
+      /**
+       * 使用动画展开至月模式
+       */
+      public void animateToMonthMode ( ) {
 
-            //noinspection ConstantConditions
-            getCurrentPage().animateExpand();
+            MonthPage currentPage = getCurrentPage();
+            if( currentPage != null ) {
+                  currentPage.animateExpand();
+            }
       }
 
-      public void foldToWeekMode ( ) {
+      /**
+       * 使用动画折叠至周显示模式
+       */
+      public void animateToWeekMode ( ) {
 
-            //noinspection ConstantConditions
-            getCurrentPage().animateFold();
+            MonthPage currentPage = getCurrentPage();
+            if( currentPage != null ) {
+                  currentPage.animateFold();
+            }
       }
 
       /**
@@ -150,16 +186,29 @@ public class MonthLayout extends ViewPager {
             return null;
       }
 
+      /**
+       * 每周的第一天发生变更
+       *
+       * @param isFirstDayMonday true :第一天是周一
+       */
       public void notifyFirstDayIsMondayChanged ( boolean isFirstDayMonday ) {
 
             onDateChanged( mSource.mBaseDate, mSource.mBasePosition, mSource.isMonthMode, isFirstDayMonday, true );
       }
 
+      /**
+       * 设置日期变化监听
+       *
+       * @param onDateChangeListener 日期变化监听
+       */
       public void setOnDateChangeListener ( OnDateChangeListener onDateChangeListener ) {
 
             mOnDateChangeListener = onDateChangeListener;
       }
 
+      /**
+       * @return 获取设置的日期变化监听
+       */
       public OnDateChangeListener getOnDateChangeListener ( ) {
 
             return mOnDateChangeListener;
@@ -175,6 +224,11 @@ public class MonthLayout extends ViewPager {
             return mCellSize.mCellHeight;
       }
 
+      /**
+       * 从父布局到子布局全部重新{@link #layout(int, int, int, int)}
+       *
+       * @param currentPageHeight 当前页面高度
+       */
       public void reLayoutToPageHeight ( int currentPageHeight ) {
 
             /* 自顶向下重新布局 */
@@ -194,6 +248,17 @@ public class MonthLayout extends ViewPager {
                                 child.getTop() + currentPageHeight
                   );
             }
+      }
+
+      /**
+       * 设置当前页面高度发生变化时使用的策略,{@link PageHeightChangeStrategy#onHeightChanging(int, int)}
+       * 一般需要调用{@link #reLayoutToPageHeight(int)}重新布局一下
+       *
+       * @param pageHeightChangeStrategy 策略
+       */
+      public void setPageHeightChangeStrategy ( PageHeightChangeStrategy pageHeightChangeStrategy ) {
+
+            mPageHeightChangeStrategy = pageHeightChangeStrategy;
       }
 
       @Override
@@ -230,32 +295,38 @@ public class MonthLayout extends ViewPager {
 
             super.computeScroll();
             mCellSize.decideCellSize();
+
+            /* 当页面滚动完毕时,回调接口 */
+            if( mScroller.mState == ViewPager.SCROLL_STATE_IDLE ) {
+                  mPageHeightChangeStrategy.onScrollFinished();
+            }
+
+            /* 当页面展开或者折叠时,回调接口 */
+            MonthPage currentPage = getCurrentPage();
+            if( currentPage != null ) {
+                  if( currentPage.isExpanded() ) {
+                        mPageHeightChangeStrategy.onExpanded();
+                  } else if( currentPage.isFolded() ) {
+                        mPageHeightChangeStrategy.onFolded();
+                  }
+            }
       }
 
       @Override
       public boolean dispatchTouchEvent ( MotionEvent ev ) {
 
+            /* 控制手势分发 */
             return mExpandFoldPage.handleMotionEvent( ev );
       }
 
       /**
-       * 重新设置基础日期
+       * 重新日期信息
        *
        * @param date 新的基础日期
        * @param position 基准日期对应的基准位置
        * @param monthMode 是否是月显示模式
-       */
-      private void onDateChanged ( Date date, int position, boolean monthMode, boolean needRequestLayout ) {
-
-            onDateChanged( date, position, monthMode, mParent.isFirstDayMonday(), needRequestLayout );
-      }
-
-      /**
-       * 重新设置基础日期
-       *
-       * @param date 新的基础日期
-       * @param position 基准日期对应的基准位置
-       * @param monthMode 是否是月显示模式
+       * @param firstDayMonday 每周第一天是否是周一
+       * @param needRequestLayout 是否需要重新布局
        */
       private void onDateChanged (
           Date date, int position, boolean monthMode, boolean firstDayMonday, boolean needRequestLayout ) {
@@ -273,6 +344,9 @@ public class MonthLayout extends ViewPager {
             }
       }
 
+      /**
+       * 用于{@link OnPageChangeListener#onPageSelected(int)}回调接口
+       */
       void onNewPageSelected ( int position ) {
 
             if( mOnDateChangeListener != null ) {
@@ -280,23 +354,39 @@ public class MonthLayout extends ViewPager {
             }
       }
 
+      /**
+       * 用于{@link MonthPage#onClick(View)}回调接口
+       *
+       * @param date 被点击的日期
+       * @param position 被点击的页面位置
+       */
       void onNewDateClicked ( Date date, int position ) {
 
-            onDateChanged( date, position, mSource.isMonthMode, false );
+            onDateChanged( date, position, mSource.isMonthMode, mParent.isFirstDayMonday(), false );
 
             if( mOnDateChangeListener != null ) {
                   mOnDateChangeListener.onNewDateClick( date );
             }
       }
 
+      /**
+       * 用于{@link MonthPage}折叠或者展开时回调
+       *
+       * @param date 日期
+       * @param position 位置
+       * @param monthMode 是否是月模式
+       */
       void onMonthModeChange ( Date date, int position, boolean monthMode ) {
 
-            onDateChanged( date, position, monthMode, true );
+            onDateChanged( date, position, monthMode, mParent.isFirstDayMonday(), true );
       }
 
+      /**
+       * 用于{@link MonthPage}正在展开或者折叠时回调
+       */
       void onCurrentPageExpandFolding ( int currentPageHeight ) {
 
-            mHeightChangeStrategy.onHeightChanging( currentPageHeight, PageHeightChangeStrategy.EXPAND_FOLD );
+            mPageHeightChangeStrategy.onHeightChanging( currentPageHeight, PageHeightChangeStrategy.EXPAND_FOLD );
       }
 
       /**
@@ -354,6 +444,9 @@ public class MonthLayout extends ViewPager {
             }
       }
 
+      /**
+       * 用于构建{@link MonthDayView}显示天的信息
+       */
       public interface MonthDayViewFactory {
 
             /**
@@ -485,8 +578,8 @@ public class MonthLayout extends ViewPager {
        */
       public interface PageHeightChangeStrategy {
 
-            int SCROLLING   = 1;
-            int EXPAND_FOLD = 2;
+            public static final int SCROLLING   = 1;
+            public static final int EXPAND_FOLD = 2;
 
             /**
              * 页面高度变化时回调
@@ -495,10 +588,43 @@ public class MonthLayout extends ViewPager {
              * @param which 1:页面滚动中改变高度,2:当前页面收缩展开改变高度
              */
             void onHeightChanging ( int currentHeight, int which );
+
+            /**
+             * 滚动完成
+             */
+            void onScrollFinished ( );
+
+            /**
+             * 处于展开模式,显示月信息
+             */
+            void onExpanded ( );
+
+            /**
+             * 处于折叠模式,显示周信息
+             */
+            void onFolded ( );
+      }
+
+      private class DefaultPageHeightChangeStrategy implements PageHeightChangeStrategy {
+
+            @Override
+            public void onHeightChanging ( int currentHeight, int which ) {
+
+                  reLayoutToPageHeight( currentHeight );
+            }
+
+            @Override
+            public void onScrollFinished ( ) { }
+
+            @Override
+            public void onExpanded ( ) { }
+
+            @Override
+            public void onFolded ( ) { }
       }
 
       /**
-       * 滚动时改变页面高度
+       * 监听页面滚动
        */
       private class OnPageScroller extends ViewPagerScrollListener {
 
@@ -573,77 +699,8 @@ public class MonthLayout extends ViewPager {
 
                   int height = (int) ( currentHeight + ( targetHeight - currentHeight ) * Math.abs( offset ) );
                   if( height != currentHeight ) {
-                        mHeightChangeStrategy.onHeightChanging( height, PageHeightChangeStrategy.SCROLLING );
+                        mPageHeightChangeStrategy.onHeightChanging( height, PageHeightChangeStrategy.SCROLLING );
                   }
-            }
-      }
-
-      private class RequestLayoutHeightChangingListener {
-
-            private int mCurrentHeight = -1;
-
-            public boolean onHeightChanging ( int currentHeight, int which ) {
-
-                  if( which == 1 || which == 2 ) {
-                        if( mCurrentHeight != currentHeight ) {
-                              mCurrentHeight = currentHeight;
-                              return true;
-                        }
-                  }
-
-                  return false;
-            }
-
-            public boolean onMeasure ( int parentWidthSpec, int parentHeightSpec, int which ) {
-
-                  if( which == 1 ) {
-                        int widthSize = MeasureSpec.getSize( parentWidthSpec );
-                        if( mCurrentHeight > 0 ) {
-                              setMeasuredDimension( widthSize, mCurrentHeight );
-                              return true;
-                        }
-                  }
-
-                  if( which == 2 ) {
-                        MonthPage currentPage = getCurrentPage();
-                        currentPage.measure( parentWidthSpec, parentHeightSpec );
-                        setMeasuredDimension( MeasureSpec.getSize( parentWidthSpec ), currentPage.getMeasuredHeight() );
-                        return true;
-                  }
-
-                  return false;
-            }
-
-            public boolean onLayout ( int parentLeft, int parentTop, int parentRight, int parentBottom, int which ) {
-
-                  if( which == 1 ) {
-                        return true;
-                  }
-
-                  if( which == 2 ) {
-                        MonthPage currentPage = getCurrentPage();
-                        if( currentPage != null ) {
-                              int measuredHeight = getMeasuredHeight();
-                              currentPage.layout(
-                                  currentPage.getLeft(),
-                                  currentPage.getTop(),
-                                  currentPage.getRight(),
-                                  currentPage.getTop() + measuredHeight
-                              );
-                              return true;
-                        }
-                  }
-
-                  return false;
-            }
-      }
-
-      private class DefaultPageHeightChangeStrategy implements PageHeightChangeStrategy {
-
-            @Override
-            public void onHeightChanging ( int currentHeight, int which ) {
-
-                  reLayoutToPageHeight( currentHeight );
             }
       }
 
@@ -746,15 +803,6 @@ public class MonthLayout extends ViewPager {
             private boolean superDispatchTouchEvent ( MotionEvent ev ) {
 
                   return MonthLayout.super.dispatchTouchEvent( ev );
-            }
-
-            private boolean isCurrentPageAnimateOrMoving ( ) {
-
-                  MonthPage currentPage = getCurrentPage();
-                  if( currentPage != null ) {
-                        return currentPage.isAnimateOrMoving();
-                  }
-                  return false;
             }
       }
 }
