@@ -170,12 +170,12 @@ public class MonthLayout extends ViewPager {
 
       public void setOnPagerScrollHeightChangeStrategy ( OnPagerScrollHeightChangeStrategy strategy ) {
 
-            mScroller.mStrategy = strategy;
+            mScroller.setStrategy( strategy );
       }
 
       public void setOnCurrentPageExpandFoldStrategy ( OnCurrentPageExpandFoldStrategy strategy ) {
 
-            mExpandFoldPage.mStrategy = strategy;
+            mExpandFoldPage.setStrategy( strategy );
       }
 
       @Override
@@ -302,7 +302,9 @@ public class MonthLayout extends ViewPager {
 
       void onCurrentPageExpandFolding ( int currentPageMovedHeight ) {
 
-            mExpandFoldPage.onCurrentPageHeightChange( currentPageMovedHeight );
+            if( mExpandFoldPage.onCurrentPageHeightChange( currentPageMovedHeight ) ) {
+                  getCurrentPage().requestLayout();
+            }
       }
 
       /**
@@ -560,7 +562,9 @@ public class MonthLayout extends ViewPager {
                   }
 
                   int height = (int) ( currentHeight + ( nextHeight - currentHeight ) * Math.abs( offset ) );
-                  mStrategy.onHeightChange( currentHeight, nextHeight, offset, height );
+                  if( mStrategy.onHeightChange( currentHeight, nextHeight, offset, height ) ) {
+                        requestLayout();
+                  }
             }
 
             private void setStrategy ( OnPagerScrollHeightChangeStrategy strategy ) {
@@ -584,10 +588,26 @@ public class MonthLayout extends ViewPager {
        */
       public interface OnPagerScrollHeightChangeStrategy {
 
-            void onHeightChange ( int currentPageHeight, int targetPageHeight, float offset, int calculateHeight );
+            /**
+             * 页面滚动时,因为显示日期的不同,页面高度不一样,当滑动时需要在该方法中响应这种高度变化
+             *
+             * @param currentPageHeight 当前页面高度
+             * @param targetPageHeight 目标页面的高度
+             * @param offset 当前滑动进度
+             * @param calculateHeight 根据进度值计算的当前需要的高度
+             *
+             * @return true:需要重新布局{@link #requestLayout()}
+             */
+            boolean onHeightChange ( int currentPageHeight, int targetPageHeight, float offset, int calculateHeight );
 
+            /**
+             * 如果{@link #onHeightChange(int, int, float, int)}返回true,{@link #onMeasure(int, int)}时会在此处询问用户是否已经测量
+             */
             boolean onMeasureWhenScrolling ( int parentWidthSpec, int parentHeightSpec );
 
+            /**
+             * 如果{@link #onHeightChange(int, int, float, int)}返回true,{@link #onLayout(boolean, int, int, int, int)}时会在此处询问用户是否已经布局
+             */
             boolean onLayoutWhenScrolling ( int parentLeft, int parentTop, int parentRight, int parentBottom );
       }
 
@@ -596,13 +616,14 @@ public class MonthLayout extends ViewPager {
             private int mCalculateHeight = -1;
 
             @Override
-            public void onHeightChange ( int currentPageHeight, int targetPageHeight, float offset, int calculateHeight ) {
+            public boolean onHeightChange ( int currentPageHeight, int targetPageHeight, float offset, int calculateHeight ) {
 
                   if( calculateHeight != currentPageHeight ) {
                         mCalculateHeight = calculateHeight;
-                        requestLayout();
+                        return true;
                   } else {
                         mCalculateHeight = -1;
+                        return false;
                   }
             }
 
@@ -623,41 +644,6 @@ public class MonthLayout extends ViewPager {
                   return true;
             }
       }
-
-//      private class ChangeHeight {
-//
-//            private boolean trySetDimension ( int widthMeasureSpec, int heightMeasureSpec ) {
-//
-//                  MonthPage currentPage = getCurrentPage();
-//                  if( currentPage != null ) {
-//                        if( currentPage.isAnimateOrMoving() ) {
-//                              currentPage.measure( widthMeasureSpec, heightMeasureSpec );
-//                              setMeasuredDimension( widthSize, currentPage.getMeasuredHeight() );
-//                              return true;
-//                        }
-//                  }
-//                  return false;
-//            }
-//
-//            private boolean tryLayout ( ) {
-//
-//                  MonthPage currentPage = getCurrentPage();
-//                  if( currentPage != null ) {
-//                        if( currentPage.isAnimateOrMoving() ) {
-//                              int measuredHeight = getMeasuredHeight();
-//                              int childCount = getChildCount();
-//                              for( int i = 0; i < childCount; i++ ) {
-//                                    View child = getChildAt( i );
-//                                    child.layout( child.getLeft(), child.getTop(), child.getRight(),
-//                                                  child.getTop() + measuredHeight
-//                                    );
-//                              }
-//                              return true;
-//                        }
-//                  }
-//                  return false;
-//            }
-//      }
 
       /**
        * 用于竖直滑动时展开折叠当前页面
@@ -762,11 +748,6 @@ public class MonthLayout extends ViewPager {
                   return MonthLayout.super.dispatchTouchEvent( ev );
             }
 
-            private void onCurrentPageHeightChange ( int currentPageHeight ) {
-
-                  mStrategy.onCurrentPageHeightChange( currentPageHeight );
-            }
-
             private boolean isCurrentPageAnimateOrMoving ( ) {
 
                   MonthPage currentPage = getCurrentPage();
@@ -774,6 +755,16 @@ public class MonthLayout extends ViewPager {
                         return currentPage.isAnimateOrMoving();
                   }
                   return false;
+            }
+
+            private void setStrategy ( OnCurrentPageExpandFoldStrategy strategy ) {
+
+                  mStrategy = strategy;
+            }
+
+            private boolean onCurrentPageHeightChange ( int currentPageHeight ) {
+
+                  return mStrategy.onCurrentPageHeightChange( currentPageHeight );
             }
 
             private boolean tryMeasure ( int widthMeasureSpec, int heightMeasureSpec ) {
@@ -787,12 +778,36 @@ public class MonthLayout extends ViewPager {
             }
       }
 
+      /**
+       * 用于当前页面展开/折叠过程中使用何种策略完成该过程
+       */
       public interface OnCurrentPageExpandFoldStrategy {
 
-            void onCurrentPageHeightChange ( int currentPageHeight );
+            /**
+             * 当当前页面展开/折叠过程中回调
+             *
+             * @param currentPageHeight 当前高度
+             *
+             * @return 是否需要重新布局:true需要
+             */
+            boolean onCurrentPageHeightChange ( int currentPageHeight );
 
+            /**
+             * 当{@link #onCurrentPageHeightChange(int)}返回true时,
+             * 会触发重新布局,{@link #onMeasure(int, int)}中会回调该方法,用于通知用户:是否需要自己测量.
+             * 自己测量的话需要返回true,并且调用{@link #setMeasuredDimension(int, int)}设置尺寸
+             *
+             * @return true:用户自己测量过了
+             */
             boolean onMeasureWhenCurrentPageExpandFold ( int parentWidthSpec, int parentHeightSpec );
 
+            /**
+             * 当{@link #onCurrentPageHeightChange(int)}返回true时,
+             * 会触发重新布局,{@link #onLayout(boolean, int, int, int, int)}中会回调该方法,用于通知用户:是否需要自己布局.
+             * 自己布局的话需要返回true
+             *
+             * @return true:用户自己测量过了
+             */
             boolean onLayoutWhenCurrentPageExpandFold ( int parentLeft, int parentTop, int parentRight, int parentBottom );
       }
 
@@ -801,12 +816,13 @@ public class MonthLayout extends ViewPager {
             private int mCurrentPageHeight;
 
             @Override
-            public void onCurrentPageHeightChange ( int currentPageHeight ) {
+            public boolean onCurrentPageHeightChange ( int currentPageHeight ) {
 
                   if( mCurrentPageHeight != currentPageHeight ) {
                         mCurrentPageHeight = currentPageHeight;
-                        getCurrentPage().requestLayout();
+                        return true;
                   }
+                  return false;
             }
 
             @Override

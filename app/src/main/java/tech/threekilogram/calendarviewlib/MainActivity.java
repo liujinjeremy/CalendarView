@@ -24,4 +24,9 @@ public class MainActivity extends AppCompatActivity {
 
             BehaviorTestActivity.start( this );
       }
+
+      public void strategy ( View view ) {
+
+            StrategyActivity.start( this );
+      }
 }

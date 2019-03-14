@@ -25,8 +25,18 @@
           android:layout_height="wrap_content"
           android:layout_marginTop="8dp"
           android:layout_marginStart="8dp"
-          android:text="behavior"
           android:onClick="behavior"
+          android:text="behavior"
           app:layout_constraintStart_toStartOf="parent"
           app:layout_constraintTop_toBottomOf="@+id/button"/>
+      <Button
+          android:id="@+id/button9"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_marginTop="8dp"
+          android:layout_marginStart="8dp"
+          android:text="strategy"
+          android:onClick="strategy"
+          app:layout_constraintStart_toEndOf="@+id/button"
+          app:layout_constraintTop_toTopOf="parent"/>
 </androidx.constraintlayout.widget.ConstraintLayout>
