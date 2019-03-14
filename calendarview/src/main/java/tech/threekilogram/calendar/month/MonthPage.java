@@ -128,6 +128,21 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             return mStateManager.isAnimateOrMoving();
       }
 
+      public boolean calculateMovedBy ( float dy ) {
+
+            return mMoveHelper.calculateMovedBy( dy );
+      }
+
+      public int getMovedMeasureHeight ( ) {
+
+            return mMoveHelper.getMovedMeasureHeight();
+      }
+
+      public int getPageHeight ( ) {
+
+            return mPageHeight;
+      }
+
       /**
        * 设置页面显示信息
        *
@@ -359,6 +374,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
 
                   int old = mState;
                   mState = newState;
+
                   if( old == STATE_FOLDED && newState != STATE_FOLDED ) {
                         updateChildrenVisibility();
                   }
