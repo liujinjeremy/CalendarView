@@ -8,8 +8,6 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout.Behavior;
 import androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams;
 import tech.threekilogram.calendar.CalendarView;
 import tech.threekilogram.calendar.month.MonthLayout;
-import tech.threekilogram.calendar.month.MonthLayout.OnCurrentPageExpandFoldStrategy;
-import tech.threekilogram.calendar.month.MonthLayout.OnPagerScrollHeightChangeStrategy;
 
 /**
  * @author Liujin 2019/3/14:8:58:34
@@ -54,8 +52,6 @@ public class CalendarViewCoverBehavior<T extends View> extends Behavior<T> {
             ( (LayoutParams) mCover.getLayoutParams() ).setBehavior( this );
 
             MonthLayout monthLayout = mCalendarView.getMonthLayout();
-            monthLayout.setOnPagerScrollHeightChangeStrategy( new PagerScrollStrategy() );
-            monthLayout.setOnCurrentPageExpandFoldStrategy( new PageExpandFoldStrategy() );
       }
 
       @Override
@@ -68,62 +64,5 @@ public class CalendarViewCoverBehavior<T extends View> extends Behavior<T> {
             );
 
             return true;
-      }
-
-      private class PagerScrollStrategy implements OnPagerScrollHeightChangeStrategy {
-
-            @Override
-            public boolean onHeightChange ( int currentPageHeight, int targetPageHeight, float offset, int calculateHeight ) {
-
-                  mCalendarView.layout(
-                      mCalendarView.getLeft(),
-                      mCalendarView.getTop(),
-                      mCalendarView.getRight(),
-                      mCalendarView.getTop() + mCalendarView.getWeekBar().getMeasuredHeight() + calculateHeight
-                  );
-
-                  mCover.layout(
-                      mCover.getLeft(),
-                      mCalendarView.getBottom(),
-                      mCover.getRight(),
-                      mCalendarView.getBottom() + mCover.getMeasuredHeight()
-                  );
-
-                  return false;
-            }
-
-            @Override
-            public boolean onMeasureWhenScrolling ( int parentWidthSpec, int parentHeightSpec ) {
-
-                  return false;
-            }
-
-            @Override
-            public boolean onLayoutWhenScrolling ( int parentLeft, int parentTop, int parentRight, int parentBottom ) {
-
-                  return false;
-            }
-      }
-
-      private class PageExpandFoldStrategy implements OnCurrentPageExpandFoldStrategy {
-
-            @Override
-            public boolean onCurrentPageHeightChange ( int currentPageHeight ) {
-
-                  return false;
-            }
-
-            @Override
-            public boolean onMeasureWhenCurrentPageExpandFold ( int parentWidthSpec, int parentHeightSpec ) {
-
-                  return false;
-            }
-
-            @Override
-            public boolean onLayoutWhenCurrentPageExpandFold (
-                int parentLeft, int parentTop, int parentRight, int parentBottom ) {
-
-                  return false;
-            }
       }
 }

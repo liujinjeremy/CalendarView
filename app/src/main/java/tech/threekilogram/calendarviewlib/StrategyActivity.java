@@ -2,11 +2,13 @@ package tech.threekilogram.calendarviewlib;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import tech.threekilogram.calendar.CalendarView;
+import tech.threekilogram.calendar.month.MonthLayout;
 
 public class StrategyActivity extends AppCompatActivity {
 
@@ -31,9 +33,8 @@ public class StrategyActivity extends AppCompatActivity {
       private void initView ( ) {
 
             mCalendar = findViewById( R.id.calendar );
-            mCover = findViewById( R.id.cover );
-            mRoot = findViewById( R.id.root );
+            mCalendar.setBackgroundColor( Color.LTGRAY );
 
-            CalendarViewCoverBehavior<TextView> behavior = new CalendarViewCoverBehavior<>( mRoot, mCalendar, mCover );
+            MonthLayout monthLayout = mCalendar.getMonthLayout();
       }
 }

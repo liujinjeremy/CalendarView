@@ -20,6 +20,8 @@ import tech.threekilogram.calendar.util.CalendarUtils;
 @SuppressLint("ViewConstructor")
 public class MonthPage extends ViewGroup implements OnClickListener {
 
+      private static final String TAG = MonthPage.class.getSimpleName();
+
       /**
        * 当前状态之一:已经展开
        */
@@ -346,12 +348,12 @@ public class MonthPage extends ViewGroup implements OnClickListener {
        */
       void onTouchEventRelease ( float totalDy, boolean isMonthMode ) {
 
-            if( totalDy > 4 ) {
+            if( totalDy > 0 ) {
                   animateExpand();
                   return;
             }
 
-            if( totalDy < -4 ) {
+            if( totalDy < 0 ) {
                   animateFold();
                   return;
             }
@@ -372,10 +374,14 @@ public class MonthPage extends ViewGroup implements OnClickListener {
 
             private void setState ( int newState ) {
 
+                  if( mState == newState ) {
+                        return;
+                  }
+
                   int old = mState;
                   mState = newState;
 
-                  if( old == STATE_FOLDED && newState != STATE_FOLDED ) {
+                  if( old == STATE_FOLDED ) {
                         updateChildrenVisibility();
                   }
             }
