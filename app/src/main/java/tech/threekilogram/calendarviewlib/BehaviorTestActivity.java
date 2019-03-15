@@ -45,7 +45,7 @@ public class BehaviorTestActivity extends AppCompatActivity {
             mRecycler.setLayoutManager( new LinearLayoutManager( this ) );
             mRecycler.setAdapter( new Adapter() );
 
-            mBehaviors.setUp( mCalendar, mRecycler );
+            mBehaviors.setUpWith( mCalendar, mRecycler );
       }
 
       public void down ( View view ) {

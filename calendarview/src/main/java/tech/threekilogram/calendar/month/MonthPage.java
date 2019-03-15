@@ -359,9 +359,9 @@ public class MonthPage extends ViewGroup implements OnClickListener {
        *
        * @param dy 距离
        *
-       * @return 消费了多少距离
+       * @return true:消费了距离
        */
-      float onMoveTouchEvent ( float dy ) {
+      boolean onMoveTouchEvent ( float dy ) {
 
             return mMoveHelper.expandFoldBy( dy );
       }
@@ -485,17 +485,17 @@ public class MonthPage extends ViewGroup implements OnClickListener {
              *
              * @param dy 手势滑动的距离
              *
-             * @return 消费了所少距离
+             * @return true:消费了距离
              */
-            private float expandFoldBy ( float dy ) {
+            private boolean expandFoldBy ( float dy ) {
 
                   mStateManager.setState( STATE_MOVING );
                   if( calculateMovedBy( dy ) ) {
                         mParent.onCurrentPageExpandFolding( getMovedMeasureHeight() );
-                        return dy;
+                        return true;
                   }
 
-                  return 0;
+                  return false;
             }
 
             /**

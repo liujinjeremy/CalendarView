@@ -261,6 +261,16 @@ public class MonthLayout extends ViewPager {
             mPageHeightChangeStrategy = pageHeightChangeStrategy;
       }
 
+      public boolean isScrolling ( ) {
+
+            return mScroller.mState != ViewPager.SCROLL_STATE_IDLE;
+      }
+
+      public boolean dispatchMoveToCurrentPage ( float dy ) {
+
+            return mExpandFoldPage.dispatchMoveToCurrentPage( dy );
+      }
+
       @Override
       protected void onMeasure ( int widthMeasureSpec, int heightMeasureSpec ) {
 
@@ -803,6 +813,11 @@ public class MonthLayout extends ViewPager {
             private boolean superDispatchTouchEvent ( MotionEvent ev ) {
 
                   return MonthLayout.super.dispatchTouchEvent( ev );
+            }
+
+            private boolean dispatchMoveToCurrentPage ( float dy ) {
+
+                  return getCurrentPage().onMoveTouchEvent( dy );
             }
       }
 }

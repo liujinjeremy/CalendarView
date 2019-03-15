@@ -1,7 +1,6 @@
 package tech.threekilogram.calendar.behavior;
 
 import android.graphics.Color;
-import android.util.Log;
 import android.view.View;
 import android.view.View.MeasureSpec;
 import android.view.ViewGroup.MarginLayoutParams;
@@ -13,6 +12,8 @@ import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.RecyclerView.OnScrollListener;
 import tech.threekilogram.calendar.CalendarView;
+import tech.threekilogram.calendar.month.MonthLayout;
+import tech.threekilogram.calendar.month.MonthLayout.PageHeightChangeStrategy;
 
 /**
  * @author Liujin 2019/3/11:15:37:33
@@ -21,11 +22,18 @@ public class CalendarBehaviors {
 
       private static final String TAG = CalendarBehaviors.class.getSimpleName();
 
-      private RecyclerView           mRecyclerView;
       private CalendarView           mCalendarView;
-      private RecyclerBehavior       mRecyclerBehavior;
-      private CalendarBehavior       mCalendarBehavior;
+      private MonthLayout            mMonthLayout;
+      private RecyclerView           mRecyclerView;
       private RecyclerScrollListener mScrollListener;
+      private CalendarBehavior       mCalendarBehavior;
+      private RecyclerBehavior       mRecyclerBehavior;
+
+      private int mCalendarBottomMargin;
+      private int mRecyclerTopMargin;
+
+      private boolean mFlagMeasure;
+      private boolean mFlagLayout;
 
       /**
        * 为{@link CoordinatorLayout}的直接子view辅助创建{@link Behavior}
@@ -33,28 +41,135 @@ public class CalendarBehaviors {
        * @param calendarView 直接子view之一,当recycler竖直嵌套滑动时,会响应该滑动
        * @param recyclerView 直接子view之一
        */
-      public void setUp ( CalendarView calendarView, RecyclerView recyclerView ) {
+      public void setUpWith ( CalendarView calendarView, RecyclerView recyclerView ) {
 
             mCalendarView = calendarView;
             mCalendarView.setBackgroundColor( Color.LTGRAY );
             mRecyclerView = recyclerView;
 
-            /* set recycler behavior */
-            LayoutParams layoutParams = (LayoutParams) recyclerView.getLayoutParams();
-            mRecyclerBehavior = new RecyclerBehavior();
-            layoutParams.setBehavior( mRecyclerBehavior );
 
             /* calendar set behavior */
-            layoutParams = ( (LayoutParams) calendarView.getLayoutParams() );
+            LayoutParams layoutParams = ( (LayoutParams) calendarView.getLayoutParams() );
             mCalendarBehavior = new CalendarBehavior();
             layoutParams.setBehavior( mCalendarBehavior );
 
+            /* set recycler behavior */
+            layoutParams = (LayoutParams) recyclerView.getLayoutParams();
+            mRecyclerBehavior = new RecyclerBehavior();
+            layoutParams.setBehavior( mRecyclerBehavior );
+
+
+            /* monitor recycler */
             if( mScrollListener != null ) {
                   mRecyclerView.removeOnScrollListener( mScrollListener );
             } else {
                   mScrollListener = new RecyclerScrollListener();
             }
             mRecyclerView.addOnScrollListener( mScrollListener );
+
+            /* recycler follow calendar */
+            mMonthLayout = mCalendarView.getMonthLayout();
+            mMonthLayout.setPageHeightChangeStrategy( new HeightChangeStrategy() );
+      }
+
+      private void measureRecycler ( int parentWidthMeasureSpec, int parentHeightMeasureSpec ) {
+
+            MarginLayoutParams layoutParams = (MarginLayoutParams) mRecyclerView.getLayoutParams();
+            mRecyclerTopMargin = layoutParams.topMargin;
+
+            int width;
+            if( layoutParams.width > 0 ) {
+                  width = layoutParams.width;
+            } else {
+                  width = MeasureSpec.getSize( parentWidthMeasureSpec )
+                      - layoutParams.leftMargin - layoutParams.rightMargin;
+            }
+            int height;
+            if( layoutParams.height > 0 ) {
+                  height = layoutParams.height;
+            } else {
+                  MarginLayoutParams params = (MarginLayoutParams) mCalendarView.getLayoutParams();
+                  int margin = params.topMargin + params.bottomMargin + layoutParams.topMargin + layoutParams.bottomMargin;
+                  height = MeasureSpec.getSize( parentHeightMeasureSpec ) - mCalendarView.getMinimumHeight() - margin;
+            }
+
+            int childWidthSpec = MeasureSpec
+                .makeMeasureSpec( width, MeasureSpec.EXACTLY );
+            int childHeightSpec = MeasureSpec
+                .makeMeasureSpec( height, MeasureSpec.EXACTLY );
+
+            mRecyclerView.measure( childWidthSpec, childHeightSpec );
+      }
+
+      private void measureCalendar ( int parentWidthMeasureSpec, int parentHeightMeasureSpec ) {
+
+            MarginLayoutParams layoutParams = (MarginLayoutParams) mCalendarView.getLayoutParams();
+            mCalendarBottomMargin = layoutParams.bottomMargin;
+
+            int width;
+            if( layoutParams.width > 0 ) {
+                  width = layoutParams.width;
+            } else {
+                  width =
+                      MeasureSpec.getSize( parentWidthMeasureSpec ) - layoutParams.leftMargin - layoutParams.rightMargin;
+            }
+            int height;
+            if( layoutParams.height > 0 ) {
+                  height = layoutParams.height;
+            } else {
+                  height =
+                      MeasureSpec.getSize( parentHeightMeasureSpec ) - layoutParams.topMargin - layoutParams.bottomMargin;
+            }
+
+            int childWidthSpec = MeasureSpec
+                .makeMeasureSpec( width, MeasureSpec.EXACTLY );
+            int childHeightSpec = MeasureSpec
+                .makeMeasureSpec( height, MeasureSpec.AT_MOST );
+
+            mCalendarView.measure( childWidthSpec, childHeightSpec );
+      }
+
+      private void layoutRecycler ( ) {
+
+            MarginLayoutParams layoutParams = (MarginLayoutParams) mRecyclerView.getLayoutParams();
+
+            int l = layoutParams.leftMargin;
+            int t = mCalendarView.getBottom()
+                + ( (MarginLayoutParams) mCalendarView.getLayoutParams() ).bottomMargin
+                + layoutParams.topMargin;
+            int r = l + mRecyclerView.getMeasuredWidth();
+            int b = t + mRecyclerView.getMeasuredHeight();
+
+            mRecyclerView.layout( l, t, r, b );
+      }
+
+      private void layoutCalendar ( ) {
+
+            MarginLayoutParams layoutParams = (MarginLayoutParams) mCalendarView.getLayoutParams();
+            mCalendarView.layout(
+                layoutParams.leftMargin,
+                layoutParams.topMargin,
+                layoutParams.leftMargin + mCalendarView.getMeasuredWidth(),
+                layoutParams.topMargin + mCalendarView.getMeasuredHeight()
+            );
+      }
+
+      private void onMeasure ( int parentWidthMeasureSpec, int parentHeightMeasureSpec ) {
+
+            if( !mFlagMeasure ) {
+                  mFlagMeasure = true;
+                  measureCalendar( parentWidthMeasureSpec, parentHeightMeasureSpec );
+                  measureRecycler( parentWidthMeasureSpec, parentHeightMeasureSpec );
+            }
+      }
+
+      private void onLayout ( ) {
+
+            if( !mFlagLayout ) {
+                  mFlagLayout = true;
+                  layoutCalendar();
+                  layoutRecycler();
+            }
       }
 
       /**
@@ -67,42 +182,14 @@ public class CalendarBehaviors {
                 @NonNull CoordinatorLayout parent, @NonNull RecyclerView child, int parentWidthMeasureSpec, int widthUsed,
                 int parentHeightMeasureSpec, int heightUsed ) {
 
-                  MarginLayoutParams layoutParams = (MarginLayoutParams) child.getLayoutParams();
-                  int width;
-                  if( layoutParams.width > 0 ) {
-                        width = layoutParams.width;
-                  } else {
-                        width = MeasureSpec.getSize( parentWidthMeasureSpec );
-                  }
-                  int height;
-                  if( layoutParams.height > 0 ) {
-                        height = layoutParams.height;
-                  } else {
-                        int topMargin = ( (MarginLayoutParams) mCalendarView.getLayoutParams() ).topMargin;
-                        height = MeasureSpec.getSize( parentHeightMeasureSpec ) - mCalendarView.getMinimumHeight() - topMargin;
-                  }
-
-                  int childWidthSpec = MeasureSpec
-                      .makeMeasureSpec( width - layoutParams.leftMargin - layoutParams.rightMargin, MeasureSpec.EXACTLY );
-                  int childHeightSpec = MeasureSpec
-                      .makeMeasureSpec( height - layoutParams.topMargin - layoutParams.bottomMargin, MeasureSpec.EXACTLY );
-
-                  child.measure( childWidthSpec, childHeightSpec );
+                  onMeasure( parentWidthMeasureSpec, parentHeightMeasureSpec );
                   return true;
             }
 
             @Override
             public boolean onLayoutChild ( @NonNull CoordinatorLayout parent, @NonNull RecyclerView child, int layoutDirection ) {
 
-                  MarginLayoutParams layoutParams = (MarginLayoutParams) child.getLayoutParams();
-
-                  int l = layoutParams.leftMargin;
-                  int t = mCalendarView.getBottom() + ( (MarginLayoutParams) mCalendarView.getLayoutParams() ).topMargin;
-                  ;
-                  int r = l + child.getMeasuredWidth();
-                  int b = t + child.getMeasuredHeight();
-
-                  child.layout( l, t, r, b );
+                  onLayout();
                   return true;
             }
 
@@ -119,6 +206,17 @@ public class CalendarBehaviors {
                 @NonNull CoordinatorLayout coordinatorLayout, @NonNull RecyclerView child, @NonNull View target, int dx, int dy,
                 @NonNull int[] consumed, int type ) {
 
+                  if( mScrollListener.mMoved != 0 ) {
+                        return;
+                  }
+
+                  if( mMonthLayout.isScrolling() ) {
+                        return;
+                  }
+
+                  if( mMonthLayout.dispatchMoveToCurrentPage( -dy ) ) {
+                        consumed[ 1 ] = dy;
+                  }
             }
 
             @Override
@@ -126,7 +224,6 @@ public class CalendarBehaviors {
                 @NonNull CoordinatorLayout coordinatorLayout, @NonNull RecyclerView child, @NonNull View target, float velocityX,
                 float velocityY ) {
 
-                  Log.i( TAG, "onNestedPreFling: " );
                   return super.onNestedPreFling( coordinatorLayout, child, target, velocityX, velocityY );
             }
 
@@ -134,7 +231,6 @@ public class CalendarBehaviors {
             public void onStopNestedScroll (
                 @NonNull CoordinatorLayout coordinatorLayout, @NonNull RecyclerView child, @NonNull View target, int type ) {
 
-                  Log.i( TAG, "onStopNestedScroll: " );
                   super.onStopNestedScroll( coordinatorLayout, child, target, type );
             }
       }
@@ -149,37 +245,14 @@ public class CalendarBehaviors {
                 @NonNull CoordinatorLayout parent, @NonNull CalendarView child, int parentWidthMeasureSpec, int widthUsed,
                 int parentHeightMeasureSpec, int heightUsed ) {
 
-                  MarginLayoutParams layoutParams = (MarginLayoutParams) child.getLayoutParams();
-                  int width;
-                  if( layoutParams.width > 0 ) {
-                        width = layoutParams.width;
-                  } else {
-                        width = MeasureSpec.getSize( parentWidthMeasureSpec );
-                  }
-                  int height;
-                  if( layoutParams.height > 0 ) {
-                        height = layoutParams.height;
-                  } else {
-                        height = MeasureSpec.getSize( parentHeightMeasureSpec );
-                  }
-
-                  int childWidthSpec = MeasureSpec
-                      .makeMeasureSpec( width - layoutParams.leftMargin - layoutParams.rightMargin, MeasureSpec.EXACTLY );
-                  int childHeightSpec = MeasureSpec
-                      .makeMeasureSpec( height - layoutParams.topMargin - layoutParams.bottomMargin, MeasureSpec.EXACTLY );
-
-                  child.measure( childWidthSpec, childHeightSpec );
+                  onMeasure( parentWidthMeasureSpec, parentHeightMeasureSpec );
                   return true;
             }
 
             @Override
             public boolean onLayoutChild ( @NonNull CoordinatorLayout parent, @NonNull CalendarView child, int layoutDirection ) {
 
-                  MarginLayoutParams layoutParams = (MarginLayoutParams) child.getLayoutParams();
-                  child.layout( layoutParams.leftMargin, layoutParams.topMargin,
-                                layoutParams.leftMargin + child.getMeasuredWidth(),
-                                layoutParams.topMargin + child.getMeasuredHeight()
-                  );
+                  onLayout();
                   return true;
             }
       }
@@ -203,5 +276,30 @@ public class CalendarBehaviors {
 
                   mMoved += dy;
             }
+      }
+
+      private class HeightChangeStrategy implements PageHeightChangeStrategy {
+
+            @Override
+            public void onHeightChanging ( int currentHeight, int which ) {
+
+                  mMonthLayout.reLayoutToPageHeight( currentHeight );
+                  int bottom = mCalendarView.getBottom();
+                  mRecyclerView.setY( bottom + mCalendarBottomMargin + mRecyclerTopMargin );
+            }
+
+            @Override
+            public void onScrollFinished ( ) {
+
+                  int bottom = mCalendarView.getBottom();
+                  int y = bottom + mCalendarBottomMargin + mRecyclerTopMargin;
+                  mRecyclerView.setY( y );
+            }
+
+            @Override
+            public void onExpanded ( ) { }
+
+            @Override
+            public void onFolded ( ) { }
       }
 }
