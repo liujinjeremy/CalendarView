@@ -156,7 +156,9 @@ public class CalendarBehaviors {
 
       private void onMeasure ( int parentWidthMeasureSpec, int parentHeightMeasureSpec ) {
 
-            if( !mFlagMeasure ) {
+            if( mFlagMeasure ) {
+                  mFlagMeasure = false;
+            } else {
                   mFlagMeasure = true;
                   measureCalendar( parentWidthMeasureSpec, parentHeightMeasureSpec );
                   measureRecycler( parentWidthMeasureSpec, parentHeightMeasureSpec );
@@ -165,7 +167,9 @@ public class CalendarBehaviors {
 
       private void onLayout ( ) {
 
-            if( !mFlagLayout ) {
+            if( mFlagLayout ) {
+                  mFlagLayout = false;
+            } else {
                   mFlagLayout = true;
                   layoutCalendar();
                   layoutRecycler();
@@ -262,13 +266,13 @@ public class CalendarBehaviors {
        */
       private class RecyclerScrollListener extends OnScrollListener {
 
-            private int mState;
+            //private int mState;
             private int mMoved;
 
             @Override
             public void onScrollStateChanged ( @NonNull RecyclerView recyclerView, int newState ) {
 
-                  mState = newState;
+                  //mState = newState;
             }
 
             @Override
