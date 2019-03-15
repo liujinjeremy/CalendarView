@@ -1,6 +1,5 @@
 package tech.threekilogram.calendar.behavior;
 
-import android.graphics.Color;
 import android.view.View;
 import android.view.View.MeasureSpec;
 import android.view.ViewGroup.MarginLayoutParams;
@@ -10,7 +9,6 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout.Behavior;
 import androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams;
 import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.recyclerview.widget.RecyclerView.OnScrollListener;
 import tech.threekilogram.calendar.CalendarView;
 import tech.threekilogram.calendar.month.MonthLayout;
 import tech.threekilogram.calendar.month.MonthLayout.PageHeightChangeStrategy;
@@ -20,14 +18,9 @@ import tech.threekilogram.calendar.month.MonthLayout.PageHeightChangeStrategy;
  */
 public class CalendarBehaviors {
 
-      private static final String TAG = CalendarBehaviors.class.getSimpleName();
-
-      private CalendarView           mCalendarView;
-      private MonthLayout            mMonthLayout;
-      private RecyclerView           mRecyclerView;
-      private RecyclerScrollListener mScrollListener;
-      private CalendarBehavior       mCalendarBehavior;
-      private RecyclerBehavior       mRecyclerBehavior;
+      private CalendarView mCalendarView;
+      private MonthLayout  mMonthLayout;
+      private RecyclerView mRecyclerView;
 
       private int mCalendarBottomMargin;
       private int mRecyclerTopMargin;
@@ -44,34 +37,26 @@ public class CalendarBehaviors {
       public void setUpWith ( CalendarView calendarView, RecyclerView recyclerView ) {
 
             mCalendarView = calendarView;
-            mCalendarView.setBackgroundColor( Color.LTGRAY );
             mRecyclerView = recyclerView;
-
 
             /* calendar set behavior */
             LayoutParams layoutParams = ( (LayoutParams) calendarView.getLayoutParams() );
-            mCalendarBehavior = new CalendarBehavior();
-            layoutParams.setBehavior( mCalendarBehavior );
+            CalendarBehavior calendarBehavior = new CalendarBehavior();
+            layoutParams.setBehavior( calendarBehavior );
 
             /* set recycler behavior */
             layoutParams = (LayoutParams) recyclerView.getLayoutParams();
-            mRecyclerBehavior = new RecyclerBehavior();
-            layoutParams.setBehavior( mRecyclerBehavior );
-
-
-            /* monitor recycler */
-            if( mScrollListener != null ) {
-                  mRecyclerView.removeOnScrollListener( mScrollListener );
-            } else {
-                  mScrollListener = new RecyclerScrollListener();
-            }
-            mRecyclerView.addOnScrollListener( mScrollListener );
+            RecyclerBehavior recyclerBehavior = new RecyclerBehavior();
+            layoutParams.setBehavior( recyclerBehavior );
 
             /* recycler follow calendar */
             mMonthLayout = mCalendarView.getMonthLayout();
             mMonthLayout.setPageHeightChangeStrategy( new HeightChangeStrategy() );
       }
 
+      /**
+       * 测量recyclerView
+       */
       private void measureRecycler ( int parentWidthMeasureSpec, int parentHeightMeasureSpec ) {
 
             MarginLayoutParams layoutParams = (MarginLayoutParams) mRecyclerView.getLayoutParams();
@@ -101,6 +86,9 @@ public class CalendarBehaviors {
             mRecyclerView.measure( childWidthSpec, childHeightSpec );
       }
 
+      /**
+       * 测量calendarView
+       */
       private void measureCalendar ( int parentWidthMeasureSpec, int parentHeightMeasureSpec ) {
 
             MarginLayoutParams layoutParams = (MarginLayoutParams) mCalendarView.getLayoutParams();
@@ -129,6 +117,9 @@ public class CalendarBehaviors {
             mCalendarView.measure( childWidthSpec, childHeightSpec );
       }
 
+      /**
+       * 布局recyclerView
+       */
       private void layoutRecycler ( ) {
 
             MarginLayoutParams layoutParams = (MarginLayoutParams) mRecyclerView.getLayoutParams();
@@ -143,6 +134,9 @@ public class CalendarBehaviors {
             mRecyclerView.layout( l, t, r, b );
       }
 
+      /**
+       * 布局calendarView
+       */
       private void layoutCalendar ( ) {
 
             MarginLayoutParams layoutParams = (MarginLayoutParams) mCalendarView.getLayoutParams();
@@ -154,6 +148,9 @@ public class CalendarBehaviors {
             );
       }
 
+      /**
+       * 同时测量calendar 和 recycler,如果已经测量过,那么跳过
+       */
       private void onMeasure ( int parentWidthMeasureSpec, int parentHeightMeasureSpec ) {
 
             if( mFlagMeasure ) {
@@ -165,6 +162,9 @@ public class CalendarBehaviors {
             }
       }
 
+      /**
+       * 同时布局calendar 和 recycler,如果已经布局过,那么跳过
+       */
       private void onLayout ( ) {
 
             if( mFlagLayout ) {
@@ -180,6 +180,11 @@ public class CalendarBehaviors {
        * {@link #mRecyclerView}的{@link Behavior}
        */
       private class RecyclerBehavior extends Behavior<RecyclerView> {
+
+            /**
+             * 用于滑动完毕后最后判断方向,是收缩还是展开
+             */
+            private int mLastDy;
 
             @Override
             public boolean onMeasureChild (
@@ -210,25 +215,16 @@ public class CalendarBehaviors {
                 @NonNull CoordinatorLayout coordinatorLayout, @NonNull RecyclerView child, @NonNull View target, int dx, int dy,
                 @NonNull int[] consumed, int type ) {
 
-                  if( mScrollListener.mMoved != 0 ) {
+                  /* 已经折叠不响应滑动 */
+                  if( mMonthLayout.isFolded() ) {
                         return;
                   }
 
-                  if( mMonthLayout.isScrolling() ) {
-                        return;
-                  }
-
+                  /* 没有处于折叠 */
                   if( mMonthLayout.dispatchMoveToCurrentPage( -dy ) ) {
                         consumed[ 1 ] = dy;
+                        mLastDy = -dy;
                   }
-            }
-
-            @Override
-            public boolean onNestedPreFling (
-                @NonNull CoordinatorLayout coordinatorLayout, @NonNull RecyclerView child, @NonNull View target, float velocityX,
-                float velocityY ) {
-
-                  return super.onNestedPreFling( coordinatorLayout, child, target, velocityX, velocityY );
             }
 
             @Override
@@ -236,6 +232,18 @@ public class CalendarBehaviors {
                 @NonNull CoordinatorLayout coordinatorLayout, @NonNull RecyclerView child, @NonNull View target, int type ) {
 
                   super.onStopNestedScroll( coordinatorLayout, child, target, type );
+                  release();
+            }
+
+            /**
+             * 根据方向释放
+             */
+            private void release ( ) {
+
+                  if( mLastDy != 0 ) {
+                        mMonthLayout.dispatchReleaseToCurrentPage( mLastDy );
+                        mLastDy = 0;
+                  }
             }
       }
 
@@ -262,26 +270,8 @@ public class CalendarBehaviors {
       }
 
       /**
-       * {@link #mRecyclerView}的滚动监听,用于记录一共滚动了多少距离
+       * 布局策略,当高度变化时同时改变recyclerView位置
        */
-      private class RecyclerScrollListener extends OnScrollListener {
-
-            //private int mState;
-            private int mMoved;
-
-            @Override
-            public void onScrollStateChanged ( @NonNull RecyclerView recyclerView, int newState ) {
-
-                  //mState = newState;
-            }
-
-            @Override
-            public void onScrolled ( @NonNull RecyclerView recyclerView, int dx, int dy ) {
-
-                  mMoved += dy;
-            }
-      }
-
       private class HeightChangeStrategy implements PageHeightChangeStrategy {
 
             @Override

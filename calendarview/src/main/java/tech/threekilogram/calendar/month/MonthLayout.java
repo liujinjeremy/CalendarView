@@ -54,6 +54,15 @@ public class MonthLayout extends ViewPager {
       private PageHeightChangeStrategy mPageHeightChangeStrategy;
 
       /**
+       * 缓存的页面的索引,用于判断是否过期
+       */
+      private int       mCachedCurrentItem = -1;
+      /**
+       * 缓存的当前页面
+       */
+      private MonthPage mCachedCurrentPage;
+
+      /**
        * 只能new出来不能再布局中使用
        */
       public MonthLayout ( @NonNull Context context, CalendarView parent ) {
@@ -176,13 +185,23 @@ public class MonthLayout extends ViewPager {
       public MonthPage getCurrentPage ( ) {
 
             int currentItem = getCurrentItem();
+
+            if( currentItem == mCachedCurrentItem ) {
+                  return mCachedCurrentPage;
+            }
+
             int count = getChildCount();
             for( int i = 0; i < count; i++ ) {
                   MonthPage child = (MonthPage) getChildAt( i );
                   if( child.getPosition() == currentItem ) {
+                        mCachedCurrentItem = currentItem;
+                        mCachedCurrentPage = child;
                         return child;
                   }
             }
+
+            mCachedCurrentItem = -1;
+            mCachedCurrentPage = null;
             return null;
       }
 
@@ -268,7 +287,32 @@ public class MonthLayout extends ViewPager {
 
       public boolean dispatchMoveToCurrentPage ( float dy ) {
 
-            return mExpandFoldPage.dispatchMoveToCurrentPage( dy );
+            return getCurrentPage().onMoveTouchEvent( dy );
+      }
+
+      public void dispatchReleaseToCurrentPage ( int dy ) {
+
+            getCurrentPage().onTouchEventRelease( dy, mSource.isMonthMode );
+      }
+
+      public void dispatchDownToCurrentPage ( ) {
+
+            getCurrentPage().onDownTouchEvent();
+      }
+
+      public boolean isAnimatingOrMoving ( ) {
+
+            return getCurrentPage().isAnimatingOrMoving();
+      }
+
+      public boolean isExpanded ( ) {
+
+            return getCurrentPage().isExpanded();
+      }
+
+      public boolean isFolded ( ) {
+
+            return getCurrentPage().isFolded();
       }
 
       @Override
@@ -751,7 +795,7 @@ public class MonthLayout extends ViewPager {
                               mLastY = mDownY = y;
 
                               if( monthPage != null ) {
-                                    if( monthPage.isAnimateOrMoving() ) {
+                                    if( monthPage.isAnimatingOrMoving() ) {
                                           monthPage.onDownTouchEvent();
                                           isVerticalMove = true;
                                     }
@@ -813,11 +857,6 @@ public class MonthLayout extends ViewPager {
             private boolean superDispatchTouchEvent ( MotionEvent ev ) {
 
                   return MonthLayout.super.dispatchTouchEvent( ev );
-            }
-
-            private boolean dispatchMoveToCurrentPage ( float dy ) {
-
-                  return getCurrentPage().onMoveTouchEvent( dy );
             }
       }
 }

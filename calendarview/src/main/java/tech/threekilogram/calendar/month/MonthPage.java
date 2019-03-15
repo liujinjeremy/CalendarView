@@ -139,7 +139,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
       /**
        * 是否处于动画或者移动状态
        */
-      public boolean isAnimateOrMoving ( ) {
+      public boolean isAnimatingOrMoving ( ) {
 
             return mStateManager.isAnimateOrMoving();
       }
@@ -591,7 +591,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             private void animateIfNeed ( ) {
 
                   if( needMockMove() ) {
-                        if( calculateMovedBy( mDirection * mCellHeight / 5f ) ) {
+                        if( calculateMovedBy( mDirection * mCellHeight / 4f ) ) {
                               mParent.onCurrentPageExpandFolding( getMovedMeasureHeight() );
                         }
                   }
