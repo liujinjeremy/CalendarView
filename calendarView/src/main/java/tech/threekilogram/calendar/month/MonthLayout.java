@@ -15,6 +15,8 @@ import tech.threekilogram.calendar.CalendarView.OnDateChangeListener;
 import tech.threekilogram.calendar.util.CalendarUtils;
 
 /**
+ * 用于显示时间的页面
+ *
  * @author Liujin 2019/2/21:13:00:25
  */
 @SuppressLint("ViewConstructor")
@@ -54,11 +56,11 @@ public class MonthLayout extends ViewPager {
       private PageHeightChangeStrategy mPageHeightChangeStrategy;
 
       /**
-       * 缓存的页面的索引,用于判断是否过期
+       * 缓存的页面的索引,用于判断是否过期,简化判断
        */
       private int       mCachedCurrentItem = -1;
       /**
-       * 缓存的当前页面
+       * 缓存的当前页面,简化判断
        */
       private MonthPage mCachedCurrentPage;
 
@@ -508,7 +510,7 @@ public class MonthLayout extends ViewPager {
              *
              * @return 子view
              */
-            public MonthDayView generateItemView ( Context context );
+            MonthDayView generateItemView ( Context context );
       }
 
       private class DefaultItemFactory implements MonthDayViewFactory {
@@ -632,8 +634,8 @@ public class MonthLayout extends ViewPager {
        */
       public interface PageHeightChangeStrategy {
 
-            public static final int SCROLLING   = 1;
-            public static final int EXPAND_FOLD = 2;
+            int SCROLLING   = 1;
+            int EXPAND_FOLD = 2;
 
             /**
              * 页面高度变化时回调

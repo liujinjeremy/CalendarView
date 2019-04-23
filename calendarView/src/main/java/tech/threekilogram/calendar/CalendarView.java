@@ -298,14 +298,14 @@ public class CalendarView extends ViewGroup {
             void onNewPageSelected ( Date date );
 
             /**
-             * 当新的日期选择后
+             * 当新的日期被选择后
              *
              * @param newDate 新的选中的日期
              */
             void onNewDateClick ( Date newDate );
 
             /**
-             * 重设日期后的回调
+             * 被重设日期后的回调
              */
             void onNewDateSet ( Date date );
       }

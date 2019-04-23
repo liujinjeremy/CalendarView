@@ -180,10 +180,6 @@ public class MonthPage extends ViewGroup implements OnClickListener {
 
             mDate = date;
             mPosition = position;
-            /**
-             * 记录当前页面第一天是否是周一
-             */
-            boolean isFirstDayMonday1 = isFirstDayMonday;
 
             if( monthMode ) {
                   mStateManager.setState( STATE_EXPAND );
@@ -258,9 +254,6 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             int widthSize = MeasureSpec.getSize( widthMeasureSpec );
 
             /* 从父布局获取基础尺寸,保证所有页面基础尺寸一致 */
-            /**
-             * 显示天的view的宽度
-             */
             int cellWidth = mParent.getCellWidth();
             mCellHeight = mParent.getCellHeight();
 
@@ -303,7 +296,7 @@ public class MonthPage extends ViewGroup implements OnClickListener {
             int cellHeight = child.getMeasuredHeight();
 
             int count = getChildCount();
-            int topMoved = (int) mMoveHelper.mTopMoved;
+            int topMoved = mMoveHelper.mTopMoved;
             for( int i = 0; i < count; i++ ) {
                   View view = getChildAt( i );
                   int left = ( i % 7 ) * cellWidth;

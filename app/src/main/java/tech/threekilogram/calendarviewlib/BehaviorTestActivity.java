@@ -48,26 +48,6 @@ public class BehaviorTestActivity extends AppCompatActivity {
             mBehaviors.setUpWith( mCalendar, mRecycler );
       }
 
-      public void down ( View view ) {
-
-            mMockEvent.dispatchDown( mRecycler );
-      }
-
-      public void up ( View view ) {
-
-            mMockEvent.dispatchUp( mRecycler );
-      }
-
-      public void _move ( View view ) {
-
-            mMockEvent.dispatchMoveBy( mRecycler, -50, -50 );
-      }
-
-      public void move ( View view ) {
-
-            mMockEvent.dispatchMoveBy( mRecycler, 50, 50 );
-      }
-
       private class Holder extends ViewHolder {
 
             TextView mTextView;

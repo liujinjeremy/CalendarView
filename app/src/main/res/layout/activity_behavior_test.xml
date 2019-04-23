@@ -19,40 +19,4 @@
           >
       </androidx.recyclerview.widget.RecyclerView>
 
-      <!--<LinearLayout-->
-      <!--android:layout_width="match_parent"-->
-      <!--android:layout_height="wrap_content"-->
-      <!--android:layout_marginBottom="16dp"-->
-      <!--android:layout_gravity="bottom">-->
-
-      <!--<Button-->
-      <!--android:layout_width="0dp"-->
-      <!--android:layout_height="wrap_content"-->
-      <!--android:layout_weight="1"-->
-      <!--android:onClick="down"-->
-      <!--android:text="down"/>-->
-
-      <!--<Button-->
-      <!--android:layout_width="0dp"-->
-      <!--android:layout_height="wrap_content"-->
-      <!--android:layout_weight="1"-->
-      <!--android:onClick="move"-->
-      <!--android:text="+50"/>-->
-
-      <!--<Button-->
-      <!--android:layout_width="0dp"-->
-      <!--android:layout_height="wrap_content"-->
-      <!--android:layout_weight="1"-->
-      <!--android:onClick="_move"-->
-      <!--android:text="-50"/>-->
-
-      <!--<Button-->
-      <!--android:layout_width="0dp"-->
-      <!--android:layout_height="wrap_content"-->
-      <!--android:layout_weight="1"-->
-      <!--android:onClick="up"-->
-      <!--android:text="up"/>-->
-
-      <!--</LinearLayout>-->
-
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
