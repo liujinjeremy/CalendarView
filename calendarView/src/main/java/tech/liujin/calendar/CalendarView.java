@@ -1,4 +1,4 @@
-package tech.threekilogram.calendar;
+package tech.liujin.calendar;
 
 import android.content.Context;
 import android.util.AttributeSet;
@@ -17,11 +17,11 @@ public class CalendarView extends ViewGroup {
       /**
        * 头部星期条
        */
-      private LinearWeekBar         mWeekBar;
+      private LinearWeekBar mWeekBar;
       /**
        * 月视图
        */
-      private MonthLayout           mMonthLayout;
+      private MonthLayout mMonthLayout;
       /**
        * 布局策略
        */
@@ -29,7 +29,7 @@ public class CalendarView extends ViewGroup {
       /**
        * 每周的起始是不是周一
        */
-      private boolean               isFirstDayMonday = true;
+      private boolean isFirstDayMonday = true;
 
       public CalendarView ( Context context ) {
 
