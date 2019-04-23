@@ -12,9 +12,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.RecyclerView.ViewHolder;
 import java.util.Locale;
-import tech.threekilogram.calendar.CalendarView;
-import tech.threekilogram.calendar.behavior.CalendarBehaviors;
-
+import tech.liujin.calendar.CalendarView;
+import tech.liujin.calendar.behavior.CalendarBehaviors;
 public class BehaviorTestActivity extends AppCompatActivity {
 
       private static final String TAG = BehaviorTestActivity.class.getSimpleName();

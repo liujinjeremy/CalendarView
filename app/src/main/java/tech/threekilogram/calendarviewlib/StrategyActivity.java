@@ -7,8 +7,8 @@ import android.os.Bundle;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
-import tech.threekilogram.calendar.CalendarView;
-import tech.threekilogram.calendar.month.MonthLayout;
+import tech.liujin.calendar.CalendarView;
+import tech.liujin.calendar.month.MonthLayout;
 
 public class StrategyActivity extends AppCompatActivity {
 

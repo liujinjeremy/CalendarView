@@ -1,7 +1,7 @@
 package tech.liujin.calendar.month;
 
-import static tech.threekilogram.calendar.month.MonthDayView.SELECTED;
-import static tech.threekilogram.calendar.month.MonthDayView.UNSELECTED;
+import static tech.liujin.calendar.month.MonthDayView.SELECTED;
+import static tech.liujin.calendar.month.MonthDayView.UNSELECTED;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -10,8 +10,8 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import androidx.viewpager.widget.ViewPager;
 import java.util.Date;
-import tech.threekilogram.calendar.month.MonthLayout.MonthDayViewFactory;
-import tech.threekilogram.calendar.util.CalendarUtils;
+import tech.liujin.calendar.month.MonthLayout.MonthDayViewFactory;
+import tech.liujin.calendar.util.CalendarUtils;
 
 /**
  * {@link MonthLayout}的一个页面,用来显示一个月日期或者一周的日期,通过手势分发可以在月模式和周模式之间转换
