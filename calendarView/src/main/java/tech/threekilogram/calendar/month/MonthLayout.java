@@ -659,6 +659,9 @@ public class MonthLayout extends ViewPager {
             void onFolded ( );
       }
 
+      /**
+       * 默认高度变化策略
+       */
       private class DefaultPageHeightChangeStrategy implements PageHeightChangeStrategy {
 
             @Override

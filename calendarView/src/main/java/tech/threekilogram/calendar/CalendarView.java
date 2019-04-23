@@ -47,6 +47,11 @@ public class CalendarView extends ViewGroup {
             init( context );
       }
 
+      /**
+       * 初始化成员
+       *
+       * @param context context
+       */
       private void init ( Context context ) {
 
             mLayoutStrategy = new VerticalLinearMeasureLayoutStrategy();
@@ -58,11 +63,17 @@ public class CalendarView extends ViewGroup {
             addView( mWeekBar );
       }
 
+      /**
+       * @return 用于提示星期几的标题
+       */
       public LinearWeekBar getWeekBar ( ) {
 
             return mWeekBar;
       }
 
+      /**
+       * @return 主布局, 用于显示时间
+       */
       public MonthLayout getMonthLayout ( ) {
 
             return mMonthLayout;
@@ -77,7 +88,7 @@ public class CalendarView extends ViewGroup {
       }
 
       /**
-       * 获取基准日期,即:默认日期
+       * 获取基准日期,页面显示的日期都是基于此日期计算而得
        */
       public Date getBaseDate ( ) {
 
@@ -92,21 +103,33 @@ public class CalendarView extends ViewGroup {
             return mMonthLayout.getCurrentPageDate();
       }
 
+      /**
+       * @return true:当前是月显示模式,false:周显示模式
+       */
       public boolean isMonthMode ( ) {
 
             return mMonthLayout.isMonthMode();
       }
 
+      /**
+       * @param isMonthMode 改变当前显示模式
+       */
       public void setMonthMode ( boolean isMonthMode ) {
 
             mMonthLayout.setMonthMode( isMonthMode );
       }
 
+      /**
+       * 展开至月模式
+       */
       public void animateToMonthMode ( ) {
 
             mMonthLayout.animateToMonthMode();
       }
 
+      /**
+       * 展开至周模式
+       */
       public void animateToWeekMode ( ) {
 
             mMonthLayout.animateToWeekMode();
@@ -262,6 +285,9 @@ public class CalendarView extends ViewGroup {
             }
       }
 
+      /**
+       * 监听当前选中的日期变化
+       */
       public interface OnDateChangeListener {
 
             /**
