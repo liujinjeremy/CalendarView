@@ -6,11 +6,11 @@
     android:layout_height="match_parent"
     tools:context=".BehaviorTestActivity">
 
-      <tech.threekilogram.calendar.CalendarView
+      <tech.liujin.calendar.CalendarView
           android:id="@+id/calendar"
           android:layout_width="match_parent"
           android:layout_height="350dp">
-      </tech.threekilogram.calendar.CalendarView>
+      </tech.liujin.calendar.CalendarView>
 
       <androidx.recyclerview.widget.RecyclerView
           android:id="@+id/recycler"

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="tech.threekilogram.calendarviewlib">
+    package="tech.liujin.calendarviewlib">
 
       <application
           android:allowBackup="true"
@@ -9,13 +9,13 @@
           android:roundIcon="@mipmap/ic_launcher_round"
           android:supportsRtl="true"
           android:theme="@style/AppTheme">
-            <activity android:name=".StrategyActivity">
+            <activity android:name="tech.liujin.calendarviewlib.StrategyActivity">
             </activity>
-            <activity android:name=".BehaviorTestActivity">
+            <activity android:name="tech.liujin.calendarviewlib.BehaviorTestActivity">
             </activity>
-            <activity android:name=".FunctionActivity">
+            <activity android:name="tech.liujin.calendarviewlib.FunctionActivity">
             </activity>
-            <activity android:name=".MainActivity">
+            <activity android:name="tech.liujin.calendarviewlib.MainActivity">
                   <intent-filter>
                         <action android:name="android.intent.action.MAIN"/>
 

@@ -1,4 +1,4 @@
-package tech.threekilogram.calendarviewlib;
+package tech.liujin.calendarviewlib;
 
 import android.app.Activity;
 import android.os.SystemClock;

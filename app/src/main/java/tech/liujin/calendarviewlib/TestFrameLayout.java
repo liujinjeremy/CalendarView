@@ -1,4 +1,4 @@
-package tech.threekilogram.calendarviewlib;
+package tech.liujin.calendarviewlib;
 
 import android.content.Context;
 import android.util.AttributeSet;
